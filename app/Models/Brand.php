@@ -12,6 +12,8 @@ class Brand extends Model
         'icon',
         'layout_type',
         'custom_fields',
+        'is_returnable',
+        'is_loyalty_enabled',
     ];
 
     protected $casts = [

@@ -177,117 +177,120 @@
                     <div class="card-body p-4">
                         <div class="row">
                             @forelse($upcomingRewards as $reward)
-                                <div class="col-md-6 mb-4">
-                                    <div class="border p-4 h-100 position-relative bg-white" style="border-radius: 12px; border-color: #e2e8f0 !important; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
-                                        <!-- Brand Banner -->
-                                        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-                                            <h6 class="mb-0 fw-bold text-primary text-uppercase" style="letter-spacing: 1px;">{{ $reward['brand'] }}</h6>
-                                            <span class="badge bg-soft-primary text-primary rounded-pill px-2 py-1" style="font-size: 0.65rem; letter-spacing: 0.5px; border: 1px solid rgba(13, 110, 253, 0.2);">BRAND</span>
-                                        </div>
-                                        
-                                        <!-- Points Info -->
-                                        <div class="d-flex justify-content-between align-items-end mb-4">
-                                            <div>
-                                                <span class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.7rem;">Points</span>
-                                                <h3 class="mb-0 fw-bold text-dark">{{ number_format($reward['current_total'], 2) }}</h3>
+                                <div class="col-md-6 col-xl-4 mb-4">
+                                    <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; border: 1px solid #e2e8f0 !important; background: #fff;">
+                                        <div class="card-body p-4">
+                                            <!-- Brand Banner -->
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <h6 class="fw-bold mb-0 text-primary text-uppercase">{{ $reward['brand'] }}</h6>
+                                                @if($reward['next_reward'])
+                                                    <span class="badge bg-light text-dark border" style="font-size: 11px;"><i class="fa fa-gift me-1 text-muted"></i>{{ $reward['next_reward'] }}</span>
+                                                @else
+                                                    <span class="badge bg-light text-muted border" style="font-size: 11px;"><i class="fa fa-star me-1"></i>Max Level</span>
+                                                @endif
                                             </div>
+                                            
+                                            <!-- Points Info -->
+                                            <div class="d-flex justify-content-between text-muted mb-1 fw-semibold" style="font-size: 12px;">
+                                                <span>Current Points: <span class="text-dark">{{ number_format($reward['current_total'], 2) }}</span></span>
+                                                @if($reward['next_target'])
+                                                    <span>Target: {{ number_format($reward['next_target'], 2) }}</span>
+                                                @endif
+                                            </div>
+                                            
                                             @if($reward['next_target'])
-                                                <div class="text-end">
-                                                    <span class="text-muted small fw-semibold" style="font-size: 0.7rem;">Target: <span class="text-dark">{{ number_format($reward['next_target'], 2) }}</span></span><br>
-                                                    <span class="text-dark mt-1 d-inline-block fw-bold" style="font-size: 0.8rem;"><i class="fa fa-gift me-1 text-muted"></i>{{ $reward['next_reward'] }}</span>
+                                                @php
+                                                    $progress = min(100, ($reward['current_total'] / $reward['next_target']) * 100);
+                                                @endphp
+                                                <div class="progress mb-2" style="height: 6px; border-radius: 3px; background-color: rgba(13, 110, 253, 0.1);">
+                                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ $progress }}%;"></div>
+                                                </div>
+                                                <div class="text-end text-muted fw-semibold" style="font-size: 11px;">
+                                                    {{ number_format($reward['next_target'] - $reward['current_total'], 2) }} more for next reward
+                                                </div>
+                                            @else
+                                                <div class="progress mb-2" style="height: 6px; border-radius: 3px; background-color: rgba(13, 110, 253, 0.1);">
+                                                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+                                                </div>
+                                                <div class="text-end text-muted fw-semibold" style="font-size: 11px;">
+                                                    All rewards unlocked
+                                                </div>
+                                            @endif
+                                            
+                                            @if(count($reward['achieved_rewards']) > 0)
+                                                <div class="mt-3 pt-2 border-top border-light">
+                                                    <p class="mb-2 text-muted fw-bold" style="font-size: 11px;">Claimable Rewards:</p>
+                                                    <div class="d-flex flex-column gap-2">
+                                                        @foreach($reward['achieved_rewards'] as $achieved)
+                                                            <div class="d-flex justify-content-between align-items-center w-100 bg-light rounded px-3 py-2 border">
+                                                                <div>
+                                                                    <div class="fw-bold text-dark" style="font-size: 12px;">
+                                                                        <i class="fa fa-check-circle text-success me-1"></i> {{ $achieved['reward'] }}
+                                                                    </div>
+                                                                    <div class="text-muted" style="font-size: 10px;">Cost: {{ number_format($achieved['threshold'], 2) }} Points</div>
+                                                                </div>
+                                                                <button type="button" class="btn btn-sm rounded-pill fw-bold shadow-sm" style="background: linear-gradient(135deg, #FFB75E 0%, #ED8F03 100%); color: white; border: none; font-size: 10px; padding: 4px 12px;" data-bs-toggle="modal" data-bs-target="#claimModal{{ $achieved['slab_id'] }}">
+                                                                    Claim
+                                                                </button>
+                                                            </div>
+
+                                                            <!-- Modal for claiming reward -->
+                                                            <div class="modal fade" id="claimModal{{ $achieved['slab_id'] }}" tabindex="-1" aria-labelledby="claimModalLabel{{ $achieved['slab_id'] }}" aria-hidden="true">
+                                                                <div class="modal-dialog modal-dialog-centered">
+                                                                    <div class="modal-content border-0 rounded-4 shadow">
+                                                                        <div class="modal-header bg-light border-0 rounded-top-4">
+                                                                            <h5 class="modal-title fw-bold" id="claimModalLabel{{ $achieved['slab_id'] }}"><i class="fa fa-gift text-primary me-2"></i>Claim Reward</h5>
+                                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                        </div>
+                                                                        <div class="modal-body p-4 pb-2">
+                                                                            <p class="text-muted small mb-4" style="line-height: 1.5;">
+                                                                                <strong>Note:</strong> Claiming this reward will deduct <strong>{{ number_format($achieved['threshold'], 2) }}</strong> points from your <strong>{{ $reward['brand'] }}</strong> balance. You will need to earn points again to unlock future rewards in this brand.
+                                                                            </p>
+                                                                            
+                                                                            <form action="{{ route('retailer.loyalty-points.claim') }}" method="POST" id="claimForm{{ $achieved['slab_id'] }}">
+                                                                                @csrf
+                                                                                <input type="hidden" name="slab_id" value="{{ $achieved['slab_id'] }}">
+                                                                                
+                                                                                @if(isset($achieved['reward_options']) && count($achieved['reward_options']) > 0)
+                                                                                    <h6 class="fw-bold mb-3 text-dark">Select your preferred reward:</h6>
+                                                                                    <div class="reward-options-container">
+                                                                                        @foreach($achieved['reward_options'] as $index => $option)
+                                                                                            <label class="d-block m-0 p-0 w-100">
+                                                                                                <input type="radio" name="selected_reward" value="{{ $option }}" class="d-none premium-reward-input" required>
+                                                                                                <div class="premium-reward-option">
+                                                                                                    <div class="reward-icon">
+                                                                                                        <i class="fa fa-gift"></i>
+                                                                                                    </div>
+                                                                                                    <span class="reward-text" style="color: #333 !important;">{{ $option }}</span>
+                                                                                                    <div class="check-icon">
+                                                                                                        <i class="fa fa-check-circle"></i>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </label>
+                                                                                        @endforeach
+                                                                                    </div>
+                                                                                @else
+                                                                                    <input type="hidden" name="selected_reward" value="{{ $achieved['reward'] }}">
+                                                                                    <div class="p-3 bg-light rounded-3 text-center mb-3 border">
+                                                                                        <span class="fw-bold fs-5" style="color: #333 !important;">{{ $achieved['reward'] }}</span>
+                                                                                    </div>
+                                                                                @endif
+                                                                            </form>
+                                                                        </div>
+                                                                        <div class="modal-footer border-0 p-4 pt-2">
+                                                                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                                                                            <button type="button" class="btn rounded-pill px-4 fw-bold shadow-sm" style="background: linear-gradient(135deg, #FFB75E 0%, #ED8F03 100%); color: white;" onclick="var form = document.getElementById('claimForm{{ $achieved['slab_id'] }}'); var selected = form.querySelector('input[name=\'selected_reward\']:checked, input[type=\'hidden\'][name=\'selected_reward\']'); if(!selected) { alert('Please choose a reward option.'); return false; } form.submit();">
+                                                                                Confirm & Claim
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
                                                 </div>
                                             @endif
                                         </div>
-                                        
-                                        @if($reward['next_target'])
-                                            @php
-                                                $progress = min(100, ($reward['current_total'] / $reward['next_target']) * 100);
-                                            @endphp
-                                            <div class="progress mb-3 bg-light" style="height: 6px; border-radius: 3px;">
-                                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ $progress }}%;"></div>
-                                            </div>
-                                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                                @if($progress < 100)
-                                                    <div class="text-muted w-100 text-end">
-                                                        <p class="small mb-0" style="font-size: 0.75rem;">Requires <strong>{{ number_format($reward['next_target'] - $reward['current_total'], 2) }}</strong> more</p>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        @endif
-                                        
-                                        @if(count($reward['achieved_rewards']) > 0)
-                                            <hr>
-                                            <h6 class="fw-bold mb-3">Claimable Rewards:</h6>
-                                            @foreach($reward['achieved_rewards'] as $achieved)
-                                                <div class="d-flex justify-content-between align-items-center bg-white rounded-3 p-3 mb-3 shadow-sm border border-light position-relative overflow-hidden" style="transition: all 0.2s;">
-                                                    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(45deg, rgba(237, 143, 3, 0.05) 0%, transparent 100%); z-index: 0; pointer-events: none;"></div>
-                                                    
-                                                    <div class="d-flex flex-column" style="z-index: 1;">
-                                                        <span class="text-muted small fw-bold text-uppercase">Target Reached</span>
-                                                        <div class="fw-bold text-dark fs-5 mt-1">
-                                                            <i class="fa fa-star text-warning me-1"></i> {{ number_format($achieved['threshold'], 2) }}
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <button type="button" class="btn btn-sm rounded-pill px-3 fw-bold shadow-sm" style="background: linear-gradient(135deg, #FFB75E 0%, #ED8F03 100%); color: white; border: none; z-index: 1;" data-bs-toggle="modal" data-bs-target="#claimModal{{ $achieved['slab_id'] }}">
-                                                        Claim Reward
-                                                    </button>
-                                                </div>
-
-                                                <!-- Modal for claiming reward -->
-                                                <div class="modal fade" id="claimModal{{ $achieved['slab_id'] }}" tabindex="-1" aria-labelledby="claimModalLabel{{ $achieved['slab_id'] }}" aria-hidden="true">
-                                                    <div class="modal-dialog modal-dialog-centered">
-                                                        <div class="modal-content border-0 rounded-4 shadow">
-                                                            <div class="modal-header bg-light border-0 rounded-top-4">
-                                                                <h5 class="modal-title fw-bold" id="claimModalLabel{{ $achieved['slab_id'] }}"><i class="fa fa-gift text-primary me-2"></i>Claim Reward</h5>
-                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                            </div>
-                                                            <div class="modal-body p-4 pb-2">
-                                                                <p class="text-muted small mb-4" style="line-height: 1.5;">
-                                                                    <strong>Note:</strong> Claiming this reward will deduct <strong>{{ number_format($achieved['threshold'], 2) }}</strong> from your progress. You will need to earn points again to unlock future rewards.
-                                                                </p>
-                                                                
-                                                                <form action="{{ route('retailer.loyalty-points.claim') }}" method="POST" id="claimForm{{ $achieved['slab_id'] }}">
-                                                                    @csrf
-                                                                    <input type="hidden" name="slab_id" value="{{ $achieved['slab_id'] }}">
-                                                                    
-                                                                    @if(isset($achieved['reward_options']) && count($achieved['reward_options']) > 0)
-                                                                        <h6 class="fw-bold mb-3 text-white">Select your preferred reward:</h6>
-                                                                        <div class="reward-options-container">
-                                                                            @foreach($achieved['reward_options'] as $index => $option)
-                                                                                <label class="d-block m-0 p-0 w-100">
-                                                                                    <input type="radio" name="selected_reward" value="{{ $option }}" class="d-none premium-reward-input" required>
-                                                                                    <div class="premium-reward-option">
-                                                                                        <div class="reward-icon">
-                                                                                            <i class="fa fa-gift"></i>
-                                                                                        </div>
-                                                                                        <span class="reward-text" style="color: #333 !important;">{{ $option }}</span>
-                                                                                        <div class="check-icon">
-                                                                                            <i class="fa fa-check-circle"></i>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </label>
-                                                                            @endforeach
-                                                                        </div>
-                                                                    @else
-                                                                        <input type="hidden" name="selected_reward" value="{{ $achieved['reward'] }}">
-                                                                        <div class="p-3 bg-light rounded-3 text-center mb-3 border">
-                                                                            <span class="fw-bold fs-5" style="color: #333 !important;">{{ $achieved['reward'] }}</span>
-                                                                        </div>
-                                                                    @endif
-                                                                </form>
-                                                            </div>
-                                                            <div class="modal-footer border-0 p-4 pt-2">
-                                                                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                                                                <button type="button" class="btn rounded-pill px-4 fw-bold shadow-sm" style="background: linear-gradient(135deg, #FFB75E 0%, #ED8F03 100%); color: white;" onclick="var form = document.getElementById('claimForm{{ $achieved['slab_id'] }}'); var selected = form.querySelector('input[name=\'selected_reward\']:checked, input[type=\'hidden\'][name=\'selected_reward\']'); if(!selected) { alert('Please choose a reward option.'); return false; } form.submit();">
-                                                                    Confirm & Claim
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        @endif
                                     </div>
                                 </div>
                             @empty

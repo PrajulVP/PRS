@@ -236,6 +236,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/settings/general/save', [SettingsController::class, 'save'])->name('settings.save');
         Route::post('/settings/brands/save', [SettingsController::class, 'saveBrand'])->name('settings.brands.save');
         Route::post('/settings/brands/delete', [SettingsController::class, 'deleteBrand'])->name('settings.brands.delete');
+        Route::post('/settings/brands/toggle-feature', [SettingsController::class, 'toggleBrandFeature'])->name('settings.brands.toggle-feature');
         Route::post('/settings/leave-types/save', [SettingsController::class, 'saveLeaveType'])->name('settings.leave-types.save');
         Route::post('/settings/leave-types/delete', [SettingsController::class, 'deleteLeaveType'])->name('settings.leave-types.delete');
         Route::post('/settings/leave-types/allocate', [SettingsController::class, 'allocateLeaves'])->name('settings.leave-types.allocate');

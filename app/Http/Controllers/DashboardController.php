@@ -344,10 +344,11 @@ class DashboardController extends Controller
                 $totalInLocality = $localityRank->count();
 
                 // Upcoming Rewards Logic based on brand totals (PTR amount)
-                $slabs = \App\Models\LoyaltySlab::orderBy('min_points')->get();
+                $slabs = \App\Models\LoyaltySlab::with('brand')->orderBy('min_points')->get();
                 $loyaltyRules = [];
                 foreach ($slabs as $slab) {
-                    $brand = $slab->type;
+                    if (!$slab->brand) continue;
+                    $brand = $slab->brand->name;
                     if (!isset($loyaltyRules[$brand])) {
                         $loyaltyRules[$brand] = [];
                     }

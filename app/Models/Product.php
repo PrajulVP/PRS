@@ -103,9 +103,14 @@ class Product extends Model
             return false;
         }
 
-        $returnableBrandsRaw = \App\Models\Setting::getValue('returnable_brands', '');
-        $returnableBrands = array_map('trim', explode(',', $returnableBrandsRaw));
-        return in_array($this->brand, $returnableBrands);
+        $brandName = $this->brand;
+        $brandModel = \App\Models\Brand::where('name', $brandName)->first();
+        
+        if ($brandModel) {
+            return (bool) $brandModel->is_returnable;
+        }
+
+        return false;
     }
 
     public function getBrandAttribute($value)

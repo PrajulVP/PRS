@@ -195,9 +195,13 @@ class ProductController extends Controller
 
         $data = $request->all();
         
-        $returnableBrandsStr = \App\Models\Setting::where('slug', 'returnable_brands')->value('value');
-        $returnableBrands = $returnableBrandsStr ? explode(',', $returnableBrandsStr) : [];
-        $isBrandReturnable = (!empty($request->brand) && in_array(trim($request->brand), $returnableBrands)) ? 1 : 0;
+        $isBrandReturnable = 0;
+        if (!empty($request->brand)) {
+            $brandModel = \App\Models\Brand::where('name', $request->brand)->first();
+            if ($brandModel && $brandModel->is_returnable) {
+                $isBrandReturnable = 1;
+            }
+        }
         
         if (!isset($data['is_returnable'])) {
             $data['is_returnable'] = $isBrandReturnable;
@@ -434,9 +438,7 @@ class ProductController extends Controller
             while (($data = fgetcsv($handle, 0, ",")) !== FALSE) {
                 $rowCount++;
                 
-                $returnableBrandsStr = \App\Models\Setting::where('slug', 'returnable_brands')->value('value');
-                $returnableBrands = $returnableBrandsStr ? explode(',', $returnableBrandsStr) : [];
-                
+                // Settings check removed as it's handled via Brand model directly                
                 // Handle trailing empty columns in data or header
                 if (count($header) > count($data)) {
                     $data = array_pad($data, count($header), null);
@@ -572,7 +574,13 @@ class ProductController extends Controller
 
                     // If it was newly created, set its returnable status based on the brand
                     if ($p->wasRecentlyCreated) {
-                        $isBrandReturnable = (!empty($productData['brand']) && in_array(trim($productData['brand']), $returnableBrands)) ? 1 : 0;
+                        $isBrandReturnable = 0;
+                        if (!empty($productData['brand'])) {
+                            $brandModel = \App\Models\Brand::where('name', trim($productData['brand']))->first();
+                            if ($brandModel && $brandModel->is_returnable) {
+                                $isBrandReturnable = 1;
+                            }
+                        }
                         $p->is_returnable = $isBrandReturnable;
                         $p->save();
                     }

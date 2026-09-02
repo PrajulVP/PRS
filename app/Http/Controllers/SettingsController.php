@@ -25,13 +25,12 @@ class SettingsController extends Controller
         
         $brands = \App\Models\Brand::orderBy('id')->get();
         $product_brands = $brands->pluck('name')->implode(',');
-        $returnable_brands = Setting::getValue('returnable_brands', '');
-        $loyalty_brands = Setting::getValue('loyalty_brands', '');
         
-        $slabs = \App\Models\LoyaltySlab::orderBy('min_points')->get();
+        $slabs = \App\Models\LoyaltySlab::with('brand')->orderBy('min_points')->get();
         $loyalty_rules_array = [];
         foreach ($slabs as $slab) {
-            $brand = $slab->type;
+            if (!$slab->brand) continue;
+            $brand = $slab->brand->name;
             if (!isset($loyalty_rules_array[$brand])) {
                 $loyalty_rules_array[$brand] = [];
             }
@@ -56,11 +55,11 @@ class SettingsController extends Controller
         return view('admin.settings.general', compact(
             'value', 'cgst', 'sgst', 
             'geofence_radius', 'ta_rate_per_km', 'da_hq_rate', 'da_outstation_rate',
-            'hq_radius_km', 'product_brands', 'returnable_brands',
+            'hq_radius_km', 'product_brands',
             'type_medical_title', 'type_medical_desc',
             'type_ortho_title', 'type_ortho_desc',
             'type_general_title', 'type_general_desc',
-            'brands', 'leaveTypes', 'loyalty_brands', 'loyalty_rules'
+            'brands', 'leaveTypes', 'loyalty_rules'
         ));
     }
 
@@ -115,29 +114,27 @@ class SettingsController extends Controller
         } elseif ($data['slug'] === 'product_brands') {
             $title = 'Product Brands';
             $desc = 'Comma-separated list of available product brands.';
-        } elseif ($data['slug'] === 'returnable_brands') {
-            $title = 'Returnable Brands';
-            $desc = 'Comma-separated list of brands eligible for returns.';
-        } elseif ($data['slug'] === 'loyalty_brands') {
-            $title = 'Loyalty Brands';
-            $desc = 'Comma-separated list of brands with loyalty enabled.';
         } elseif ($data['slug'] === 'loyalty_rules') {
             $rulesData = json_decode($data['value'], true);
             $images = request()->file('images');
             
             \DB::transaction(function() use ($rulesData, $images) {
-                $existingSlabs = \App\Models\LoyaltySlab::all();
+                $existingSlabs = \App\Models\LoyaltySlab::with('brand')->get();
                 $incomingKeys = [];
                 
                 if (is_array($rulesData)) {
                     foreach ($rulesData as $brand => $rules) {
                         if (!is_array($rules)) continue;
+                        
+                        $brandModel = \App\Models\Brand::where('name', $brand)->first();
+                        if (!$brandModel) continue;
+
                         foreach ($rules as $rule) {
                             $key = $brand . '_' . $rule['threshold'];
                             $incomingKeys[] = $key;
                             
                             $slab = \App\Models\LoyaltySlab::firstOrNew([
-                                'type' => $brand,
+                                'brand_id' => $brandModel->id,
                                 'min_points' => $rule['threshold']
                             ]);
                             $slab->slab_name = $brand . ' - ₹' . $rule['threshold'];
@@ -152,7 +149,8 @@ class SettingsController extends Controller
                 }
                 
                 foreach ($existingSlabs as $slab) {
-                    $key = $slab->type . '_' . $slab->min_points;
+                    if (!$slab->brand) continue;
+                    $key = $slab->brand->name . '_' . $slab->min_points;
                     if (!in_array($key, $incomingKeys)) {
                         if ($slab->redemptions()->count() == 0) {
                             $slab->delete();
@@ -270,6 +268,49 @@ class SettingsController extends Controller
         return response()->json(['message' => 'Brand deleted successfully']);
     }
 
+    /**
+     * Delete Leave Type
+     */
+    public function deleteLeaveType(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:leave_types,id',
+        ]);
+
+        $leaveType = \App\Models\LeaveType::findOrFail($request->id);
+        
+        // Prevent deletion if in use
+        if ($leaveType->leaveRequests()->count() > 0 || $leaveType->leaveBalances()->count() > 0) {
+             return response()->json(['success' => false, 'message' => 'Cannot delete leave type. It is already assigned or used by staff.'], 400);
+        }
+
+        $leaveType->delete();
+        return response()->json(['success' => true, 'message' => 'Leave Type deleted successfully']);
+    }
+    
+    /**
+     * Toggle Brand Feature (Returnable/Loyalty)
+     */
+    public function toggleBrandFeature(Request $request)
+    {
+        $request->validate([
+            'brand_id' => 'required|exists:brands,id',
+            'feature' => 'required|in:is_returnable,is_loyalty_enabled',
+            'status' => 'required|boolean'
+        ]);
+
+        $brand = \App\Models\Brand::findOrFail($request->brand_id);
+        $feature = $request->feature;
+        $brand->$feature = $request->status;
+        $brand->save();
+
+        return response()->json([
+            'success' => true, 
+            'message' => 'Brand feature updated successfully.',
+            'brand' => $brand
+        ]);
+    }
+
     public function saveLeaveType(Request $request)
     {
         $request->validate([
@@ -314,15 +355,7 @@ class SettingsController extends Controller
         return response()->json(['message' => 'Leave Type saved and allocated successfully', 'leaveType' => $leaveType]);
     }
 
-    public function deleteLeaveType(Request $request)
-    {
-        $request->validate([
-            'id' => 'required|integer|exists:leave_types,id',
-        ]);
 
-        \App\Models\LeaveType::destroy($request->id);
-        return response()->json(['message' => 'Leave Type deleted successfully']);
-    }
 
     public function allocateLeaves(Request $request)
     {

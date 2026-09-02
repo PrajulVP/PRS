@@ -336,8 +336,8 @@
 
             // Brand Management Logic
             let brandsData = @json($brands);
-            let returnableBrands = '{{ $returnable_brands }}'.split(',').map(s => s.trim()).filter(s => s.length > 0);
-            let loyaltyBrands = '{{ $loyalty_brands }}'.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            let returnableBrands = brandsData.filter(b => b.is_returnable).map(b => b.name);
+            let loyaltyBrands = brandsData.filter(b => b.is_loyalty_enabled).map(b => b.name);
             let loyaltyRules = @json(json_decode($loyalty_rules, true) ?: (object)[]);
 
             function getBrandFieldsList(brandObj) {
@@ -421,7 +421,7 @@
                                                         </div>
                                                     </div>
                                                     <div class="form-check form-switch mb-0 mt-1">
-                                                        <input class="form-check-input returnable-toggle" style="width: 2.5em; height: 1.25em; cursor: pointer;" type="checkbox" data-brand="${brand}" ${isReturnable ? 'checked' : ''}>
+                                                        <input class="form-check-input returnable-toggle" style="width: 2.5em; height: 1.25em; cursor: pointer;" type="checkbox" data-brand="${brand}" data-brand-id="${brandObj.id}" ${isReturnable ? 'checked' : ''}>
                                                     </div>
                                                 </div>
                                                 
@@ -447,7 +447,7 @@
                                                         </div>
                                                     </div>
                                                     <div class="form-check form-switch mb-0 mt-1">
-                                                        <input class="form-check-input loyalty-toggle" style="width: 2.5em; height: 1.25em; cursor: pointer;" type="checkbox" data-brand="${brand}" ${isLoyalty ? 'checked' : ''}>
+                                                        <input class="form-check-input loyalty-toggle" style="width: 2.5em; height: 1.25em; cursor: pointer;" type="checkbox" data-brand="${brand}" data-brand-id="${brandObj.id}" ${isLoyalty ? 'checked' : ''}>
                                                     </div>
                                                 </div>
                                                 
@@ -469,20 +469,8 @@
                 $('#brands_tag_container').html(html);
                 let brandNames = brandsData.map(b => b.name);
                 $('#brands_final_value').val(brandNames.join(','));
-                
-                // Update hidden input for returnable_brands
-                if ($('#returnable_brands_input').length === 0) {
-                    $('#brands_form').append(`<input type="hidden" name="returnable_brands" id="returnable_brands_input" value="${returnableBrands.join(',')}">`);
-                } else {
-                    $('#returnable_brands_input').val(returnableBrands.join(','));
-                }
-                
-                // Update hidden input for loyalty_brands
-                if ($('#loyalty_brands_input').length === 0) {
-                    $('#brands_form').append(`<input type="hidden" name="loyalty_brands" id="loyalty_brands_input" value="${loyaltyBrands.join(',')}">`);
-                } else {
-                    $('#loyalty_brands_input').val(loyaltyBrands.join(','));
-                }
+                // Update hidden inputs removed since it is now stored directly in brands table
+
                 
                 if ($('#loyalty_rules_input').length === 0) {
                     $('#brands_form').append(`<input type="hidden" name="loyalty_rules" id="loyalty_rules_input" value='${JSON.stringify(loyaltyRules)}'>`);
@@ -493,6 +481,7 @@
 
             $(document).on('change', '.returnable-toggle', function() {
                 let brand = $(this).data('brand');
+                let brandId = $(this).data('brand-id');
                 let isChecked = $(this).is(':checked');
                 let $manageBtn = $(`.manage-products-btn[data-brand="${brand}"]`);
                 
@@ -504,16 +493,15 @@
                     returnableBrands = returnableBrands.filter(b => b !== brand);
                 }
                 
-                $('#returnable_brands_input').val(returnableBrands.join(','));
-                
                 // Save this specific setting immediately via AJAX to sync products
                 $.ajax({
-                    url: '{{ route('admin.settings.save') }}',
+                    url: '{{ route('admin.settings.brands.toggle-feature') }}',
                     method: 'POST',
                     data: {
                         _token: '{{ csrf_token() }}',
-                        slug: 'returnable_brands',
-                        value: returnableBrands.join(',')
+                        brand_id: brandId,
+                        feature: 'is_returnable',
+                        status: isChecked ? 1 : 0
                     },
                     success: function() {
                         // Now sync actual products
@@ -544,6 +532,7 @@
 
             $(document).on('change', '.loyalty-toggle', function() {
                 let brand = $(this).data('brand');
+                let brandId = $(this).data('brand-id');
                 let isChecked = $(this).is(':checked');
                 let $configBtn = $(`.config-loyalty-btn[data-brand="${brand}"]`);
                 
@@ -555,15 +544,14 @@
                     loyaltyBrands = loyaltyBrands.filter(b => b !== brand);
                 }
                 
-                $('#loyalty_brands_input').val(loyaltyBrands.join(','));
-                
                 $.ajax({
-                    url: '{{ route('admin.settings.save') }}',
+                    url: '{{ route('admin.settings.brands.toggle-feature') }}',
                     method: 'POST',
                     data: {
                         _token: '{{ csrf_token() }}',
-                        slug: 'loyalty_brands',
-                        value: loyaltyBrands.join(',')
+                        brand_id: brandId,
+                        feature: 'is_loyalty_enabled',
+                        status: isChecked ? 1 : 0
                     },
                     success: function() {
                         showToast('success', 'Saved', 'Loyalty status updated for ' + brand);
