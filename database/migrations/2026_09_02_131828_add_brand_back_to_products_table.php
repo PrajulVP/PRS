@@ -11,16 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->string('brand')->nullable()->after('product_name');
-        });
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('products', 'brand')) {
+            Schema::table('products', function (Blueprint $table) {
+                $table->string('brand')->nullable()->after('product_name');
+            });
+        } else {
+            \Illuminate\Support\Facades\DB::statement('ALTER TABLE products MODIFY COLUMN brand VARCHAR(191) AFTER product_name');
+        }
 
         // Auto-fill existing rows based on brand_id
         \Illuminate\Support\Facades\DB::statement('
             UPDATE products p
             JOIN brands b ON p.brand_id = b.id
             SET p.brand = b.name
-            WHERE p.brand IS NULL
+            WHERE p.brand IS NULL OR p.brand = ""
         ');
     }
 
