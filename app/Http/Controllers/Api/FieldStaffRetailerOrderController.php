@@ -29,7 +29,11 @@ class FieldStaffRetailerOrderController extends Controller
         $user = Auth::user();
         if (!$user->hasRole('fieldstaff')) return response()->json(['error' => 'Unauthorized'], 403);
 
-        $fieldStaffId = $user->fieldStaff->id;
+        $fieldStaff = $user->fieldStaff;
+        if (!$fieldStaff) {
+            return response()->json(['error' => 'Field Staff profile not found.'], 404);
+        }
+        $fieldStaffId = $fieldStaff->id;
 
         $query = RetailerOrder::with(['retailer.user', 'items.product', 'distributor.user', 'distributor.area', 'distributor.district'])
             ->whereHas('retailer', function ($qr) use ($fieldStaffId) {
@@ -107,7 +111,11 @@ class FieldStaffRetailerOrderController extends Controller
         $user = Auth::user();
         if (!$user->hasRole('fieldstaff')) return response()->json(['error' => 'Unauthorized'], 403);
 
-        $fieldStaffId = $user->fieldStaff->id;
+        $fieldStaff = $user->fieldStaff;
+        if (!$fieldStaff) {
+            return response()->json(['error' => 'Field Staff profile not found.'], 404);
+        }
+        $fieldStaffId = $fieldStaff->id;
 
         $order = RetailerOrder::with(['retailer.user', 'retailer.area', 'retailer.district', 'items.product', 'distributor.user', 'distributor.area', 'distributor.district'])
             ->whereHas('retailer', function ($qr) use ($fieldStaffId) {
@@ -284,7 +292,11 @@ class FieldStaffRetailerOrderController extends Controller
             'delivery_notes' => 'nullable|string'
         ]);
 
-        $fieldStaffId = $user->fieldStaff->id;
+        $fieldStaff = $user->fieldStaff;
+        if (!$fieldStaff) {
+            return response()->json(['error' => 'Field Staff profile not found.'], 404);
+        }
+        $fieldStaffId = $fieldStaff->id;
         
         $retailer = \App\Models\Retailer::where('id', $request->retailer_id)
             ->where('field_staff_id', $fieldStaffId)
@@ -536,7 +548,11 @@ class FieldStaffRetailerOrderController extends Controller
             'cancellation_reason' => 'required_if:status,rejected|string|nullable'
         ]);
 
-        $fieldStaffId = $user->fieldStaff->id;
+        $fieldStaff = $user->fieldStaff;
+        if (!$fieldStaff) {
+            return response()->json(['error' => 'Field Staff profile not found.'], 404);
+        }
+        $fieldStaffId = $fieldStaff->id;
         $order = RetailerOrder::whereHas('retailer', function ($qr) use ($fieldStaffId) {
             $qr->where('field_staff_id', $fieldStaffId);
         })->findOrFail($id);
@@ -862,7 +878,11 @@ class FieldStaffRetailerOrderController extends Controller
         $user = Auth::user();
         if (!$user->hasRole('fieldstaff')) return response()->json(['error' => 'Unauthorized'], 403);
 
-        $fieldStaffId = $user->fieldStaff->id;
+        $fieldStaff = $user->fieldStaff;
+        if (!$fieldStaff) {
+            return response()->json(['error' => 'Field Staff profile not found.'], 404);
+        }
+        $fieldStaffId = $fieldStaff->id;
         $retailerOrder = RetailerOrder::whereHas('retailer', function ($qr) use ($fieldStaffId) {
             $qr->where('field_staff_id', $fieldStaffId);
         })->findOrFail($id);

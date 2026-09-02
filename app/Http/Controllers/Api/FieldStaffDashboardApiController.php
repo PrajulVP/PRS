@@ -69,6 +69,13 @@ class FieldStaffDashboardApiController extends Controller
         }
 
         $fieldStaff = $user->fieldStaff;
+        
+        if (!$fieldStaff) {
+            return response()->json([
+                'error' => 'Field Staff profile not found. Please contact administrator to fix your account setup.'
+            ], 404);
+        }
+        
         $fieldStaffId = $fieldStaff->id;
 
         // 1. Basic Stats
@@ -195,7 +202,11 @@ class FieldStaffDashboardApiController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $fieldStaffId = $user->fieldStaff->id;
+        $fieldStaff = $user->fieldStaff;
+        if (!$fieldStaff) {
+            return response()->json(['error' => 'Field Staff profile not found.'], 404);
+        }
+        $fieldStaffId = $fieldStaff->id;
 
         $retailers = Retailer::with(['user', 'district', 'area'])
             ->where('field_staff_id', $fieldStaffId)
@@ -246,7 +257,11 @@ class FieldStaffDashboardApiController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $fieldStaffId = $user->fieldStaff->id;
+        $fieldStaff = $user->fieldStaff;
+        if (!$fieldStaff) {
+            return response()->json(['error' => 'Field Staff profile not found.'], 404);
+        }
+        $fieldStaffId = $fieldStaff->id;
 
         $retailer = Retailer::where('field_staff_id', $fieldStaffId)->findOrFail($id);
 
@@ -373,6 +388,9 @@ class FieldStaffDashboardApiController extends Controller
             $newUser->assignRole('retailer');
 
             $fieldstaff = $user->fieldStaff;
+            if (!$fieldstaff) {
+                return response()->json(['error' => 'Field Staff profile not found.'], 404);
+            }
 
             $retailer = new Retailer($retailerData);
             $retailer->user_id = $newUser->id;
@@ -443,7 +461,11 @@ class FieldStaffDashboardApiController extends Controller
                 break;
         }
 
-        $fieldStaffId = $user->fieldStaff->id;
+        $fieldStaff = $user->fieldStaff;
+        if (!$fieldStaff) {
+            return response()->json(['error' => 'Field Staff profile not found.'], 404);
+        }
+        $fieldStaffId = $fieldStaff->id;
         $query = RetailerOrder::where(function ($q) use ($fieldStaffId) {
             $q->where('fieldstaff_id', $fieldStaffId)
                 ->orWhereHas('retailer', function ($qr) use ($fieldStaffId) {
@@ -521,6 +543,9 @@ class FieldStaffDashboardApiController extends Controller
         }
 
         $fieldStaff   = $user->fieldStaff;
+        if (!$fieldStaff) {
+            return response()->json(['error' => 'Field Staff profile not found.'], 404);
+        }
         $fieldStaffId = $fieldStaff->id;
 
         // --- Build base query scoped to this field staff ---
