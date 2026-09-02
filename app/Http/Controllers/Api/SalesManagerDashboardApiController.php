@@ -31,7 +31,7 @@ class SalesManagerDashboardApiController extends Controller
      *         description="Dashboard data for the logged-in Sales Manager",
      *         @OA\JsonContent(
      *             @OA\Property(property="period", type="string"),
-     *             @OA\Property(property="target", type="number", format="float")
+     *             @OA\Property(property="target", type="number", format="float"),
      *             @OA\Property(property="achieved", type="number", format="float"),
      *             @OA\Property(property="remaining", type="number", format="float"),
      *             @OA\Property(property="retailer_order_stats", type="object"),
