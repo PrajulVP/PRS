@@ -12,7 +12,7 @@ class Product extends Model
     protected $fillable = [
         'product_code',
         'product_name',
-        'brand',
+        'brand_id',
         'generic_name',
         'pack',
         'strip_size',
@@ -63,21 +63,20 @@ class Product extends Model
 
             // Rule 1: SN- prefix -> Sudhneelgiri (Wellness/Herbal)
             if (str_starts_with($code, 'SN-')) {
-                $product->brand = 'Sudhneelgiri';
+                $product->brand_id = \App\Models\Brand::where('name', 'Sudhneelgiri')->value('id');
             }
             // Rule 2: AS- prefix -> Atomshield (Orthopedic/Travel)
             elseif (str_starts_with($code, 'AS-')) {
-                $product->brand = 'Atomshield';
+                $product->brand_id = \App\Models\Brand::where('name', 'Atomshield')->value('id');
             }
             // Rule 3: Medicine brand rules (Atomets)
-            // We also re-categorize from legacy names like 'Atomlife' or 'Generic' if patterns match
-            elseif (empty($product->brand) || in_array($product->brand, ['Atomlife', 'Generic', 'Other', 'NULL'])) {
+            elseif (empty($product->brand_id)) {
                 $searchable = $code . ' ' . $name;
                 $medicinePatterns = ['ATOM', 'TOM', 'TENE', 'TELM', 'PANT', 'GLIM', 'MET', 'ACE', 'FEN', 'DICL', 'OME', 'LEVO'];
                 
                 foreach ($medicinePatterns as $pattern) {
                     if (str_contains($searchable, $pattern)) {
-                        $product->brand = 'Atomets';
+                        $product->brand_id = \App\Models\Brand::where('name', 'Atomets')->value('id');
                         break;
                     }
                 }
@@ -103,8 +102,7 @@ class Product extends Model
             return false;
         }
 
-        $brandName = $this->brand;
-        $brandModel = \App\Models\Brand::where('name', $brandName)->first();
+        $brandModel = $this->brandModel;
         
         if ($brandModel) {
             return (bool) $brandModel->is_returnable;
@@ -113,21 +111,14 @@ class Product extends Model
         return false;
     }
 
-    public function getBrandAttribute($value)
+    public function brandModel()
     {
-        if (!$value) {
-            return $value;
-        }
+        return $this->belongsTo(Brand::class, 'brand_id');
+    }
 
-        $masterBrands = \App\Models\Brand::pluck('name')->toArray();
-
-        foreach ($masterBrands as $masterBrand) {
-            if (strcasecmp($masterBrand, $value) === 0) {
-                return $masterBrand;
-            }
-        }
-
-        return $value;
+    public function getBrandAttribute()
+    {
+        return $this->brandModel ? $this->brandModel->name : null;
     }
 }
 

@@ -132,12 +132,13 @@ class ProductController extends Controller
         $brands = \App\Models\Brand::orderBy('id')->get();
         $availableBrands = $brands->pluck('name')->toArray();
 
-        $brandStats = Product::select('brand', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
-            ->groupBy('brand')
+        $brandStats = Product::select('brand_id', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
+            ->groupBy('brand_id')
+            ->with('brandModel')
             ->get()
             ->map(function($item) {
                 return [
-                    'brand' => $item->brand ?: 'Standard',
+                    'brand' => $item->brandModel ? $item->brandModel->name : 'Standard',
                     'count' => $item->total
                 ];
             });
@@ -198,8 +199,11 @@ class ProductController extends Controller
         $isBrandReturnable = 0;
         if (!empty($request->brand)) {
             $brandModel = \App\Models\Brand::where('name', $request->brand)->first();
-            if ($brandModel && $brandModel->is_returnable) {
-                $isBrandReturnable = 1;
+            if ($brandModel) {
+                $data['brand_id'] = $brandModel->id;
+                if ($brandModel->is_returnable) {
+                    $isBrandReturnable = 1;
+                }
             }
         }
         
@@ -291,6 +295,13 @@ class ProductController extends Controller
         ]);
 
         $data = $request->all();
+        
+        if (!empty($request->brand)) {
+            $brandModel = \App\Models\Brand::where('name', $request->brand)->first();
+            if ($brandModel) {
+                $data['brand_id'] = $brandModel->id;
+            }
+        }
         
         if (!isset($data['loyalty_point_percentage']) || $data['loyalty_point_percentage'] === null) {
             $data['loyalty_point_percentage'] = 0;
@@ -528,6 +539,26 @@ class ProductController extends Controller
                 }
 
                 try {
+                    // Auto-register or find imported brand in DB
+                    $importedBrand = !empty($productData['brand']) ? trim($productData['brand']) : null;
+                    $brandId = null;
+                    if ($importedBrand) {
+                        $brandModel = \App\Models\Brand::where('name', $importedBrand)->first();
+                        if (!$brandModel) {
+                            $brandModel = \App\Models\Brand::create([
+                                'name' => $importedBrand,
+                                'description' => 'Imported Brand',
+                                'icon' => 'fa-tag',
+                                'layout_type' => 'general'
+                            ]);
+                            
+                            // Sync legacy product_brands setting
+                            $names = \App\Models\Brand::pluck('name')->implode(',');
+                            \App\Models\Setting::setValue('product_brands', $names);
+                        }
+                        $brandId = $brandModel->id;
+                    }
+
                     // Smarter Matching Strategy:
                     // 1. If code exists, match by code.
                     // 2. If no code, match by Name + Generic Name + Pack to distinguish different products.
@@ -554,7 +585,7 @@ class ProductController extends Controller
                             'product_code' => $productCode,
                             'product_name' => trim($productData['product_name']),
                             'generic_name' => !empty($productData['generic_name']) ? trim($productData['generic_name']) : null,
-                            'brand' => !empty($productData['brand']) ? trim($productData['brand']) : null,
+                            'brand_id' => $brandId,
                             'pack' => !empty($productData['pack']) ? trim($productData['pack']) : null,
                             'strip_size' => !empty($productData['strip_size']) ? trim($productData['strip_size']) : null,
                             'units_per_strip' => $unitsPerStrip,
@@ -586,23 +617,7 @@ class ProductController extends Controller
                     }
                     $successCount++;
 
-                    // Auto-register imported brand in DB if it is new
-                    $importedBrand = !empty($productData['brand']) ? trim($productData['brand']) : null;
-                    if ($importedBrand) {
-                        $exists = \App\Models\Brand::where('name', $importedBrand)->exists();
-                        if (!$exists) {
-                            \App\Models\Brand::create([
-                                'name' => $importedBrand,
-                                'description' => 'Imported Brand',
-                                'icon' => 'fa-tag',
-                                'layout_type' => 'general'
-                            ]);
-                            
-                            // Sync legacy product_brands setting
-                            $names = \App\Models\Brand::pluck('name')->implode(',');
-                            \App\Models\Setting::setValue('product_brands', $names);
-                        }
-                    }
+
                 } catch (\Exception $e) {
                     $errors[] = "Row $rowCount: " . $e->getMessage();
                 }
@@ -619,8 +634,11 @@ class ProductController extends Controller
 
     public function getByBrand($brand)
     {
-        $products = Product::where('brand', $brand)
-            ->select('id', 'product_name', 'product_code', 'is_returnable', 'brand')
+        $brandModel = \App\Models\Brand::where('name', $brand)->first();
+        $brandId = $brandModel ? $brandModel->id : 0;
+        $products = Product::where('brand_id', $brandId)
+            ->select('id', 'product_name', 'product_code', 'is_returnable', 'brand_id')
+            ->with('brandModel')
             ->orderBy('product_name')
             ->get();
         return response()->json($products);
@@ -640,7 +658,10 @@ class ProductController extends Controller
             'is_returnable' => 'required|boolean'
         ]);
 
-        Product::where('brand', $request->brand)->update(['is_returnable' => $request->is_returnable]);
+        $brandModel = \App\Models\Brand::where('name', $request->brand)->first();
+        if ($brandModel) {
+            Product::where('brand_id', $brandModel->id)->update(['is_returnable' => $request->is_returnable]);
+        }
 
         return response()->json(['success' => 'Products for brand ' . $request->brand . ' updated successfully.']);
     }
