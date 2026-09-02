@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('loyalty_slabs', function (Blueprint $table) {
-            $table->foreignId('brand_id')->nullable()->after('slab_name')->constrained()->onDelete('set null');
-        });
+        if (!Schema::hasColumn('loyalty_slabs', 'brand_id')) {
+            Schema::table('loyalty_slabs', function (Blueprint $table) {
+                $table->foreignId('brand_id')->nullable()->after('slab_name')->constrained()->onDelete('set null');
+            });
+        }
     }
 
     /**
