@@ -103,6 +103,9 @@
                 <svg class="fill-icon">
                   <use href="{{ $iconSprite }}#fill-bookmark"></use>
                 </svg><span>Loyalty</span>
+                @if(isset($actionCounts['retailer_claimable_rewards']) && $actionCounts['retailer_claimable_rewards'] > 0)
+                    <span id="badge-retailer-claimable-rewards" class="sidebar-badge" style="padding: 2px 4px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.7) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 10px;">{{ $actionCounts['retailer_claimable_rewards'] }}</span>
+                @endif
               </a>
             </li>
           @elseif (Auth::user()->hasRole('distributor'))

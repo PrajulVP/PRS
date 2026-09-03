@@ -177,11 +177,13 @@
                     <div class="card-body p-4">
                         <div class="row">
                             @forelse($upcomingRewards as $reward)
-                                <div class="col-md-6 col-xl-4 mb-4">
+                                <div class="col-12 mb-4">
                                     <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; border: 1px solid #e2e8f0 !important; background: #fff;">
                                         <div class="card-body p-4">
-                                            <!-- Brand Banner -->
-                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <div class="row align-items-center">
+                                                <!-- Brand Banner & Progress -->
+                                                <div class="col-lg-4 mb-4 mb-lg-0 border-end-lg" style="border-right: 1px solid #e2e8f0;">
+                                                    <div class="d-flex justify-content-between align-items-center mb-3">
                                                 <h6 class="fw-bold mb-0 text-primary text-uppercase">{{ $reward['brand'] }}</h6>
                                                 @if($reward['next_reward'])
                                                     <span class="badge bg-light text-dark border" style="font-size: 11px;"><i class="fa fa-gift me-1 text-muted"></i>{{ $reward['next_reward'] }}</span>
@@ -198,41 +200,59 @@
                                                 @endif
                                             </div>
                                             
-                                            @if($reward['next_target'])
-                                                @php
-                                                    $progress = min(100, ($reward['current_total'] / $reward['next_target']) * 100);
-                                                @endphp
-                                                <div class="progress mb-2" style="height: 6px; border-radius: 3px; background-color: rgba(13, 110, 253, 0.1);">
-                                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ $progress }}%;"></div>
-                                                </div>
-                                                <div class="text-end text-muted fw-semibold" style="font-size: 11px;">
-                                                    {{ number_format($reward['next_target'] - $reward['current_total'], 2) }} more for next reward
-                                                </div>
-                                            @else
-                                                <div class="progress mb-2" style="height: 6px; border-radius: 3px; background-color: rgba(13, 110, 253, 0.1);">
-                                                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
-                                                </div>
-                                                <div class="text-end text-muted fw-semibold" style="font-size: 11px;">
-                                                    All rewards unlocked
-                                                </div>
-                                            @endif
-                                            
-                                            @if(count($reward['achieved_rewards']) > 0)
-                                                <div class="mt-3 pt-2 border-top border-light">
-                                                    <p class="mb-2 text-muted fw-bold" style="font-size: 11px;">Claimable Rewards:</p>
-                                                    <div class="d-flex flex-column gap-2">
-                                                        @foreach($reward['achieved_rewards'] as $achieved)
-                                                            <div class="d-flex justify-content-between align-items-center w-100 bg-light rounded px-3 py-2 border">
-                                                                <div>
-                                                                    <div class="fw-bold text-dark" style="font-size: 12px;">
-                                                                        <i class="fa fa-check-circle text-success me-1"></i> {{ $achieved['reward'] }}
-                                                                    </div>
-                                                                    <div class="text-muted" style="font-size: 10px;">Cost: {{ number_format($achieved['threshold'], 2) }} Points</div>
-                                                                </div>
-                                                                <button type="button" class="btn btn-sm rounded-pill fw-bold shadow-sm" style="background: linear-gradient(135deg, #FFB75E 0%, #ED8F03 100%); color: white; border: none; font-size: 10px; padding: 4px 12px;" data-bs-toggle="modal" data-bs-target="#claimModal{{ $achieved['slab_id'] }}">
-                                                                    Claim
-                                                                </button>
+                                                        @if($reward['next_target'])
+                                                            @php
+                                                                $progress = min(100, ($reward['current_total'] / $reward['next_target']) * 100);
+                                                            @endphp
+                                                            <div class="progress mb-2" style="height: 6px; border-radius: 3px; background-color: rgba(13, 110, 253, 0.1);">
+                                                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ $progress }}%;"></div>
                                                             </div>
+                                                            <div class="text-end text-muted fw-semibold" style="font-size: 11px;">
+                                                                {{ number_format($reward['next_target'] - $reward['current_total'], 2) }} more for next reward
+                                                            </div>
+                                                        @else
+                                                            <div class="progress mb-2" style="height: 6px; border-radius: 3px; background-color: rgba(13, 110, 253, 0.1);">
+                                                                <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+                                                            </div>
+                                                            <div class="text-end text-muted fw-semibold" style="font-size: 11px;">
+                                                                All rewards unlocked
+                                                            </div>
+                                                        @endif
+                                                    </div>
+
+                                                    <!-- Claimable Rewards -->
+                                                    <div class="col-lg-8 ps-lg-4">
+                                                        @if(count($reward['achieved_rewards']) > 0)
+                                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                                <h6 class="mb-0 text-dark fw-bold"><i class="fa fa-gift text-primary me-2"></i>Claimable Rewards</h6>
+                                                                <span class="badge bg-success rounded-pill">{{ count($reward['achieved_rewards']) }} Available</span>
+                                                            </div>
+                                                            <div class="row row-cols-1 row-cols-md-2 g-3">
+                                                                @foreach($reward['achieved_rewards'] as $achieved)
+                                                                    <div class="col">
+                                                                        <div class="position-relative overflow-hidden w-100 bg-white rounded-3 p-3 border shadow-sm h-100 d-flex flex-column justify-content-between" style="border-top: 4px solid var(--med-primary) !important;">
+                                                                            <i class="fa fa-gift position-absolute text-light" style="font-size: 4rem; right: -10px; bottom: -10px; opacity: 0.3; transform: rotate(-15deg);"></i>
+                                                                            
+                                                                            <div class="mb-3 position-relative" style="z-index: 1;">
+                                                                                <div class="text-muted fw-bold text-uppercase mb-2" style="font-size: 10px; letter-spacing: 1px;">
+                                                                                    <i class="fa fa-unlock-alt me-1 text-success"></i> Unlocked at {{ number_format($achieved['threshold'], 0) }} Pts
+                                                                                </div>
+                                                                                <div class="d-flex flex-wrap gap-1">
+                                                                                    @php $options = $achieved['reward_options'] ?? [$achieved['reward']]; @endphp
+                                                                                    @foreach($options as $opt)
+                                                                                        <div class="d-inline-flex align-items-center bg-soft-primary text-primary px-2 py-1 rounded-pill fw-bold border border-primary-subtle" style="font-size: 11px;">
+                                                                                            <i class="fa fa-star me-1" style="font-size: 9px; color: #f59e0b;"></i>{{ $opt }}
+                                                                                        </div>
+                                                                                    @endforeach
+                                                                                </div>
+                                                                            </div>
+                                                                            
+                                                                            <div class="position-relative mt-auto pt-2" style="z-index: 1;">
+                                                                                <button type="button" class="btn btn-primary btn-sm fw-bold shadow-sm w-100 rounded-pill d-flex align-items-center justify-content-center gap-2" data-bs-toggle="modal" data-bs-target="#claimModal{{ $achieved['slab_id'] }}" style="transition: all 0.2s ease;">
+                                                                                    <span>Claim Reward</span> <i class="fa fa-arrow-right"></i>
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
 
                                                             <!-- Modal for claiming reward -->
                                                             <div class="modal fade" id="claimModal{{ $achieved['slab_id'] }}" tabindex="-1" aria-labelledby="claimModalLabel{{ $achieved['slab_id'] }}" aria-hidden="true">
@@ -286,13 +306,21 @@
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                        @endforeach
+                                                                </div>
+                                                            @endforeach
+                                                            </div>
+                                                        @else
+                                                            <div class="h-100 d-flex flex-column align-items-center justify-content-center text-muted p-4 bg-light rounded-3" style="min-height: 150px; border: 1px dashed #ced4da;">
+                                                                <i class="fa fa-gift mb-2 text-secondary" style="font-size: 24px;"></i>
+                                                                <span style="font-size: 12px; font-weight: 500;">No rewards available to claim yet.</span>
+                                                                <span style="font-size: 11px;">Keep earning points to unlock rewards!</span>
+                                                            </div>
+                                                        @endif
                                                     </div>
                                                 </div>
-                                            @endif
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
                             @empty
                                 <div class="col-12 text-center text-muted py-4">No reward slabs configured yet.</div>
                             @endforelse

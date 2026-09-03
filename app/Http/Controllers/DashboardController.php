@@ -499,7 +499,8 @@ class DashboardController extends Controller
                     }
                     $loyaltyRules[$brand][] = [
                         'threshold' => $slab->min_points,
-                        'reward' => $slab->gift_name
+                        'reward' => $slab->gift_name,
+                        'reward_options' => json_decode($slab->reward_options, true) ?: [$slab->gift_name]
                     ];
                 }
 
@@ -538,6 +539,7 @@ class DashboardController extends Controller
                             'current_total' => $currentTotal,
                             'next_target' => $nextRule ? $nextRule['threshold'] : null,
                             'next_reward' => $nextRule ? $nextRule['reward'] : null,
+                            'next_reward_options' => $nextRule ? $nextRule['reward_options'] : null,
                             'achieved_rewards' => $achievedRules
                         ];
                     }

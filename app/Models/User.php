@@ -305,6 +305,62 @@ class User extends Authenticatable implements JWTSubject
             $counts['loyalty_redemptions'] = $query->count();
         }
 
+        if ($this->hasRole('retailer') && $this->retailer) {
+            $brandTotalsQuery = \App\Models\RetailerOrderItem::join('retailer_orders', 'retailer_order_items.retailer_order_id', '=', 'retailer_orders.id')
+                ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
+                ->join('brands', 'products.brand_id', '=', 'brands.id')
+                ->where('retailer_orders.retailer_id', $this->retailer->id)
+                ->where('retailer_orders.status', \App\Models\RetailerOrder::STATUS_DELIVERED)
+                ->selectRaw('brands.name as brand, SUM(retailer_order_items.quantity * retailer_order_items.unit_price) as total_amount')
+                ->groupBy('brands.name')
+                ->get();
+
+            $brandTotals = [];
+            foreach ($brandTotalsQuery as $row) {
+                $cleanBrand = strtoupper(trim($row->brand));
+                $brandTotals[$cleanBrand] = ($brandTotals[$cleanBrand] ?? 0) + $row->total_amount;
+            }
+
+            $slabs = \App\Models\LoyaltySlab::with('brand')->orderBy('min_points')->get();
+            $loyaltyRules = [];
+            foreach ($slabs as $slab) {
+                if (!$slab->brand) continue;
+                $brand = strtoupper(trim($slab->brand->name));
+                $loyaltyRules[$brand][] = [
+                    'id' => $slab->id,
+                    'threshold' => $slab->min_points,
+                ];
+            }
+
+            $redemptions = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
+                ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
+                ->join('brands', 'loyalty_slabs.brand_id', '=', 'brands.id')
+                ->where('loyalty_redemptions.retailer_id', $this->retailer->id)
+                ->select('loyalty_slabs.id', 'brands.name as type', 'loyalty_slabs.min_points')
+                ->get();
+
+            $claimableCount = 0;
+            foreach ($loyaltyRules as $brand => $rules) {
+                $brandRedemptions = $redemptions->filter(function($item) use ($brand) {
+                    return strtoupper(trim($item->type)) === $brand;
+                });
+                $totalSpent = $brandRedemptions->sum('min_points');
+                $currentTotal = ($brandTotals[$brand] ?? 0) - $totalSpent;
+                if ($currentTotal < 0) $currentTotal = 0;
+
+                usort($rules, function($a, $b) { return $a['threshold'] <=> $b['threshold']; });
+
+                foreach ($rules as $rule) {
+                    if ($currentTotal >= $rule['threshold']) {
+                        $claimableCount++;
+                        // We do not subtract currentTotal here because we want to mimic controller logic where user must have passed the threshold (meaning they have that total balance).
+                        // Actually, in LoyaltyPointsController, it just pushes to $achievedRewards if $currentTotal >= $rule['threshold']. It does NOT subtract.
+                    }
+                }
+            }
+            $counts['retailer_claimable_rewards'] = $claimableCount;
+        }
+
         return $counts;
     }
 

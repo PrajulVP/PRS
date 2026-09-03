@@ -458,10 +458,10 @@
                             <div class="mt-1 text-muted small" id="ret_view_owner"></div>
                         </div>
                         <div class="d-flex flex-column gap-2 align-items-end">
-                            <div class="bg-white p-2 px-3 rounded-3 border shadow-sm" style="min-width: 140px;">
+                            {{-- <div class="bg-white p-2 px-3 rounded-3 border shadow-sm" style="min-width: 140px;">
                                 <div class="text-muted fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Loyalty Pts</div>
                                 <div class="fw-bold text-dark" id="ret_header_points" style="font-size: 1.1rem; line-height: 1.2;">0.00</div>
-                            </div>
+                            </div> --}}
                             <div class="bg-white p-2 px-3 rounded-3 border shadow-sm" style="min-width: 140px;">
                                 <div class="text-muted fw-bold text-uppercase" style="font-size: 0.6rem; letter-spacing: 0.5px;">Credit Wallet</div>
                                 <div class="fw-bold text-dark" id="ret_header_credits" style="font-size: 1.1rem; line-height: 1.2;">₹0.00</div>

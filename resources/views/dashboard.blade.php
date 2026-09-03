@@ -425,10 +425,10 @@
                                         <i data-feather="award"></i>
                                         <span>Locality Rank: #{{ $myRank ?? 'N/A' }} / {{ $totalInLocality ?? '1' }}</span>
                                     </div>
-                                    <div class="profile-info-item text-warning" style="background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.2);">
+                                    {{-- <div class="profile-info-item text-warning" style="background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.2);">
                                         <i data-feather="database"></i>
                                         <span>Loyalty Points: {{ number_format($totalLoyaltyPoints) }}</span>
-                                    </div>
+                                    </div> --}}
                                 </div>
                             </div>
                         </div>
@@ -440,8 +440,8 @@
                                 <i data-feather="user" class="text-info" style="width: 20px;"></i>
                             </div>
                             <div>
-                                <p class="text-muted small mb-0 fw-bold text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">Assigned Sales Rep</p>
-                                <h6 class="fw-800 mb-0 retailer-rep-name">{{ $user->retailer->fieldStaff->user->name }}</h6>
+                                <p class="text-muted small mb-1 fw-bold text-uppercase" style="font-size: 10px; letter-spacing: 0.5px;">Assigned Sales Rep</p>
+                                <h6 class="fw-800 mb-1 retailer-rep-name">{{ $user->retailer->fieldStaff->user->name }}</h6>
                                 <p class="mb-0 small text-primary fw-bold"><i class="fa fa-phone me-1"></i>{{ $user->retailer->fieldStaff->user->contact_no }}</p>
                             </div>
                         </div>
@@ -453,6 +453,9 @@
                         <div class="section-header-modern mt-3 mb-3">
                             <div class="dash"></div>
                             <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">Brand Rewards Progress</h5>
+                            <a href="{{ route('retailer.loyalty-points.index') }}" class="btn btn-sm btn-primary fw-bold ms-auto d-flex align-items-center gap-1 shadow-sm" style="border-radius: 8px;">
+                                <i data-feather="gift" style="width: 14px; height: 14px;"></i> Redeem Rewards
+                            </a>
                         </div>
                         <div class="row mb-4">
                             @foreach($upcomingRewards as $reward)
@@ -496,10 +499,17 @@
                                             
                                             @if(isset($reward['achieved_rewards']) && count($reward['achieved_rewards']) > 0)
                                                 <div class="mt-3 pt-2 border-top border-light">
-                                                    <p class="mb-1 text-muted fw-bold" style="font-size: 11px;">Rewards Earned:</p>
-                                                    <div class="d-flex flex-wrap gap-1">
+                                                    <p class="mb-2 text-muted fw-bold" style="font-size: 11px;">Unlocked Reward Levels:</p>
+                                                    <div class="d-flex flex-column gap-2">
                                                         @foreach($reward['achieved_rewards'] as $achieved)
-                                                            <span class="badge bg-soft-primary text-primary" style="font-size: 10px;"><i class="fa fa-check-circle me-1"></i>{{ $achieved['reward'] }}</span>
+                                                            <div class="d-flex align-items-center gap-2 p-2 rounded" style="background: rgba(var(--med-primary-rgb), 0.05); border-left: 3px solid var(--med-primary);">
+                                                                <div class="text-primary fw-bold d-flex align-items-center" style="font-size: 11px; min-width: 75px;">
+                                                                    <i class="fa fa-check-circle me-1 text-success"></i> ₹{{ number_format($achieved['threshold'], 0) }}
+                                                                </div>
+                                                                <div class="text-dark fw-bold" style="font-size: 11px; word-break: break-word;">
+                                                                    {{ implode(', ', $achieved['reward_options'] ?? [$achieved['reward']]) }}
+                                                                </div>
+                                                            </div>
                                                         @endforeach
                                                     </div>
                                                 </div>

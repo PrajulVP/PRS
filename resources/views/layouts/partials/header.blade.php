@@ -225,7 +225,7 @@
             <div class="mode-toggle mode"><i class="moon" data-feather="moon"></i></div>
           </li>
 
-          @if(Auth::guard('web')->check() && Auth::guard('web')->user()->hasRole('retailer') && Auth::guard('web')->user()->retailer)
+          {{-- @if(Auth::guard('web')->check() && Auth::guard('web')->user()->hasRole('retailer') && Auth::guard('web')->user()->retailer)
             <li class="onhover-dropdown loyalty-header-item">
               <a href="{{ route('admin.loyalty-points.index') }}">
                 <div class="premium-loyalty-badge" title="My Loyalty Points">
@@ -321,7 +321,7 @@
                 letter-spacing: -0.5px;
               }
             </style>
-          @endif
+          @endif --}}
 
           <li class="onhover-dropdown">
             <div class="notification-box">
