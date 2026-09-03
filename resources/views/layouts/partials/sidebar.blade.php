@@ -117,27 +117,24 @@
               </a>
             </li>
           @else
-            <li class="sidebar-list" style="position: relative;">
-              <a class="sidebar-link sidebar-title" href="javascript:void(0)">
+            <li class="sidebar-main-title">
+              <div>
+                <h6>Loyalty</h6>
+              </div>
+            </li>
+            <li class="sidebar-list">
+              <a class="sidebar-link sidebar-title link-nav {{ request()->routeIs('admin.loyalty-points.index') ? 'active' : '' }}" href="{{ route('admin.loyalty-points.index') }}">
                 <svg class="stroke-icon">
                   <use href="{{ $iconSprite }}#stroke-bookmark"></use>
                 </svg>
                 <svg class="fill-icon">
                   <use href="{{ $iconSprite }}#fill-bookmark"></use>
                 </svg>
-                <span>Loyalty</span>
+                <span>Retailer</span>
+                @if(isset($actionCounts['loyalty_redemptions']) && $actionCounts['loyalty_redemptions'] > 0)
+                    <span id="badge-loyalty-redemptions" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.8) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $actionCounts['loyalty_redemptions'] }}</span>
+                @endif
               </a>
-                <ul class="sidebar-submenu">
-                  <li>
-                      <a href="{{ route('admin.loyalty-points.index') }}" class="d-flex align-items-center justify-content-between">
-                          <span>Retailer</span>
-                          @if(isset($actionCounts['loyalty_redemptions']) && $actionCounts['loyalty_redemptions'] > 0)
-                              <span id="badge-loyalty-redemptions" class="sidebar-badge badge rounded-pill" style="padding: 3px 8px !important; font-size: 10px !important; min-width: 22px; text-align: center; background-color: rgba(255, 255, 255, 0.75) !important; color: #1e3a5f !important; font-weight: bold !important; line-height: 1 !important; box-shadow: none !important;">{{ $actionCounts['loyalty_redemptions'] }}</span>
-                          @endif
-                      </a>
-                  </li>
-                  {{-- <li><a href="{{ route('admin.distributor-wallet.index') }}">Distributor</a></li> --}}
-              </ul>
             </li>
           @endif
         @endif

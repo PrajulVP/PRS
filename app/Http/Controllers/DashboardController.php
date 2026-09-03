@@ -168,6 +168,87 @@ class DashboardController extends Controller
                 ->groupBy('fieldstaff_id')->orderByDesc('total_orders')->take(5)
                 ->with('fieldStaff.user')->get();
 
+            // Target Calculations for Admin/Superadmin
+            $monthStr = $startDate->format('m');
+            $yearStr = $startDate->format('Y');
+            
+            $globalTotalTarget = 0;
+            $globalTotalAchieved = 0;
+            
+            $fieldStaffs = FieldStaff::with(['user', 'salesManager.user'])->get();
+            $fsPerformance = [];
+            $managerPerformanceData = [];
+
+            foreach ($fieldStaffs as $fs) {
+                $fsAchieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr);
+                $fsTargets = $fs->salesTargets()
+                    ->where('year', $yearStr)
+                    ->where('month', $startDate->format('F'))
+                    ->get();
+                $fsTargetSum = $fsTargets->sum('amount');
+                
+                $globalTotalTarget += $fsTargetSum;
+                $globalTotalAchieved += $fsAchieved;
+                
+                $percent = $fsTargetSum > 0 ? round(($fsAchieved / $fsTargetSum) * 100, 1) : 0;
+                
+                if ($fsTargetSum > 0) {
+                    $fsPerformance[] = [
+                        'id' => $fs->id,
+                        'name' => $fs->user ? $fs->user->name : 'Unknown',
+                        'manager' => ($fs->salesManager && $fs->salesManager->user) ? $fs->salesManager->user->name : 'No Manager',
+                        'target' => $fsTargetSum,
+                        'achieved' => $fsAchieved,
+                        'remaining' => max(0, $fsTargetSum - $fsAchieved),
+                        'achievement_percent' => $percent
+                    ];
+                }
+                
+                // Aggregate by manager
+                $managerId = $fs->sales_manager_id ?? 0;
+                if (!isset($managerPerformanceData[$managerId])) {
+                    $managerName = ($fs->salesManager && $fs->salesManager->user) ? $fs->salesManager->user->name : 'No Manager assigned';
+                    $managerPerformanceData[$managerId] = [
+                        'id' => $managerId,
+                        'name' => $managerName,
+                        'target' => 0,
+                        'achieved' => 0,
+                    ];
+                }
+                $managerPerformanceData[$managerId]['target'] += $fsTargetSum;
+                $managerPerformanceData[$managerId]['achieved'] += $fsAchieved;
+            }
+
+            // Process Manager Data
+            $managerPerformance = [];
+            foreach ($managerPerformanceData as $mId => $mData) {
+                if ($mId == 0) continue; // skip "No Manager"
+                $mData['achievement_percent'] = $mData['target'] > 0 ? round(($mData['achieved'] / $mData['target']) * 100, 1) : 0;
+                $mData['remaining'] = max(0, $mData['target'] - $mData['achieved']);
+                $managerPerformance[] = $mData;
+            }
+            usort($managerPerformance, function($a, $b) {
+                return $b['achievement_percent'] <=> $a['achievement_percent']; // Highest first
+            });
+            $topManagers = array_slice($managerPerformance, 0, 10);
+            
+            // Process Field Staff Data (already filtered for > 0 targets)
+            usort($fsPerformance, function($a, $b) {
+                return $b['achievement_percent'] <=> $a['achievement_percent'];
+            });
+            
+            $top5FieldStaffs = array_slice($fsPerformance, 0, 5);
+            $bottom5FieldStaffs = array_slice(array_reverse($fsPerformance), 0, 5);
+
+            $data_extra['global_target'] = $globalTotalTarget;
+            $data_extra['global_achieved'] = $globalTotalAchieved;
+            $data_extra['global_remaining'] = max(0, $globalTotalTarget - $globalTotalAchieved);
+            $data_extra['global_percent'] = $globalTotalTarget > 0 ? round(($globalTotalAchieved / $globalTotalTarget) * 100, 1) : 0;
+            
+            $data_extra['top_managers'] = $topManagers;
+            $data_extra['top_5_fieldstaff'] = $top5FieldStaffs;
+            $data_extra['bottom_5_fieldstaff'] = $bottom5FieldStaffs;
+
             $topAreas = \App\Models\Area::withCount('retailers')
                 ->with(['district'])
                 ->get()

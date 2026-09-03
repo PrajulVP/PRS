@@ -1048,6 +1048,146 @@
                             </div>
                         </div>
 
+                        @if(Auth::user()->hasAnyRole(['superadmin', 'admin']))
+                            <!-- GLOBAL ADMIN TARGETS WIDGET -->
+                            <div class="col-lg-12 mb-4">
+                                <div class="card p-4 border-0 shadow-sm h-100" style="border-radius: 20px;">
+                                    <div class="mb-4 d-flex align-items-center justify-content-between">
+                                        <h6 class="fw-800 text-uppercase mb-0" style="font-size: 0.8rem; letter-spacing: 1px; color: var(--med-primary);">Global Company Performance</h6>
+                                    </div>
+                                    <div class="row text-center mb-4">
+                                        <div class="col-md-3">
+                                            <div class="text-muted small fw-bold text-uppercase">Total Target</div>
+                                            <h4 class="fw-800 text-dark">₹{{ number_format($data_extra['global_target'] ?? 0) }}</h4>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-muted small fw-bold text-uppercase">Total Achieved</div>
+                                            <h4 class="fw-800 text-success">₹{{ number_format($data_extra['global_achieved'] ?? 0) }}</h4>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-muted small fw-bold text-uppercase">Remaining</div>
+                                            <h4 class="fw-800 text-warning">₹{{ number_format($data_extra['global_remaining'] ?? 0) }}</h4>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-muted small fw-bold text-uppercase">Completion</div>
+                                            <h4 class="fw-800 text-primary">{{ $data_extra['global_percent'] ?? 0 }}%</h4>
+                                        </div>
+                                    </div>
+
+                                    <h6 class="fw-800 text-uppercase mt-4 mb-3" style="font-size: 0.75rem; letter-spacing: 1px; color: var(--med-primary);">Top Sales Managers Performance</h6>
+                                    <div class="table-responsive mb-4">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="bg-light">
+                                                <tr>
+                                                    <th class="px-4 py-2 border-0 small fw-800 text-uppercase text-muted" style="font-size: 9px;">Sales Manager</th>
+                                                    <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Team Target</th>
+                                                    <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Team Achieved</th>
+                                                    <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Remaining</th>
+                                                    <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @forelse($data_extra['top_managers'] ?? [] as $sm)
+                                                <tr>
+                                                    <td class="px-4 py-2 fw-700 small">
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <div class="icon-circle-sm bg-soft-primary" style="width: 30px; height: 30px; border-radius: 8px;">
+                                                                <i data-feather="user-check" class="text-primary" style="width: 14px;"></i>
+                                                            </div>
+                                                            <div class="text-dark">{{ $sm['name'] }}</div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-3 py-2 text-end text-dark fw-bold small">₹{{ number_format($sm['target']) }}</td>
+                                                    <td class="px-3 py-2 text-end text-success fw-bold small">₹{{ number_format($sm['achieved']) }}</td>
+                                                    <td class="px-3 py-2 text-end text-warning fw-bold small">₹{{ number_format($sm['remaining']) }}</td>
+                                                    <td class="px-3 py-2 text-end" style="width: 20%;">
+                                                        <div class="progress mb-1" style="height: 6px; border-radius: 3px;">
+                                                            <div class="progress-bar {{ $sm['achievement_percent'] >= 100 ? 'bg-success' : 'bg-primary' }}" role="progressbar" style="width: {{ min(100, $sm['achievement_percent']) }}%"></div>
+                                                        </div>
+                                                        <div class="text-muted" style="font-size: 9px;">{{ $sm['achievement_percent'] }}%</div>
+                                                    </td>
+                                                </tr>
+                                                @empty
+                                                <tr>
+                                                    <td colspan="5" class="text-center py-4 text-muted small">No active manager targets found.</td>
+                                                </tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="fw-800 text-uppercase mb-3" style="font-size: 0.75rem; letter-spacing: 1px; color: var(--med-primary);">Top 5 Field Staffs (Performers)</h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-hover align-middle mb-0">
+                                                    <thead class="bg-light">
+                                                        <tr>
+                                                            <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted" style="font-size: 9px;">Field Staff</th>
+                                                            <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Completion</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @forelse($data_extra['top_5_fieldstaff'] ?? [] as $fs)
+                                                        <tr>
+                                                            <td class="px-3 py-2 fw-700 small">
+                                                                <div class="text-dark">{{ $fs['name'] }}</div>
+                                                                <div class="text-muted" style="font-size: 10px;">{{ $fs['manager'] }}</div>
+                                                            </td>
+                                                            <td class="px-3 py-2 text-end" style="width: 40%;">
+                                                                <div class="progress mb-1" style="height: 6px; border-radius: 3px;">
+                                                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ min(100, $fs['achievement_percent']) }}%"></div>
+                                                                </div>
+                                                                <div class="text-success fw-bold" style="font-size: 10px;">{{ $fs['achievement_percent'] }}%</div>
+                                                            </td>
+                                                        </tr>
+                                                        @empty
+                                                        <tr>
+                                                            <td colspan="2" class="text-center py-3 text-muted small">No data.</td>
+                                                        </tr>
+                                                        @endforelse
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="fw-800 text-uppercase mb-3" style="font-size: 0.75rem; letter-spacing: 1px; color: var(--med-primary);">Bottom 5 Field Staffs (Needs Attention)</h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-hover align-middle mb-0">
+                                                    <thead class="bg-light">
+                                                        <tr>
+                                                            <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted" style="font-size: 9px;">Field Staff</th>
+                                                            <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Completion</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @forelse($data_extra['bottom_5_fieldstaff'] ?? [] as $fs)
+                                                        <tr>
+                                                            <td class="px-3 py-2 fw-700 small">
+                                                                <div class="text-dark">{{ $fs['name'] }}</div>
+                                                                <div class="text-muted" style="font-size: 10px;">{{ $fs['manager'] }}</div>
+                                                            </td>
+                                                            <td class="px-3 py-2 text-end" style="width: 40%;">
+                                                                <div class="progress mb-1" style="height: 6px; border-radius: 3px;">
+                                                                    <div class="progress-bar bg-danger" role="progressbar" style="width: {{ min(100, $fs['achievement_percent']) }}%"></div>
+                                                                </div>
+                                                                <div class="text-danger fw-bold" style="font-size: 10px;">{{ $fs['achievement_percent'] }}%</div>
+                                                            </td>
+                                                        </tr>
+                                                        @empty
+                                                        <tr>
+                                                            <td colspan="2" class="text-center py-3 text-muted small">No data.</td>
+                                                        </tr>
+                                                        @endforelse
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
                         @if(Auth::user()->hasRole('salesmanager'))
                             <!-- SALES MANAGER TARGETS WIDGET -->
                             <div class="col-lg-12 mb-4">

@@ -125,8 +125,14 @@ class SalesManagerDashboardApiController extends Controller
 
         // 4. Top FieldStaff performance
         $topFieldStaff = RetailerOrder::select('fieldstaff_id', DB::raw('COUNT(id) as total_orders'), DB::raw('SUM(total_amount) as total_revenue'))
-            ->whereIn('fieldstaff_id', $fieldStaffIds)
-            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where(function($q) use ($fieldStaffIds) {
+                $q->whereIn('fieldstaff_id', $fieldStaffIds)
+                  ->orWhereHas('retailer', function ($qr) use ($fieldStaffIds) {
+                      $qr->whereIn('field_staff_id', $fieldStaffIds);
+                  });
+            })
+            ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED)
+            ->whereBetween('delivered_at', [$startDate, $endDate])
             ->groupBy('fieldstaff_id')->orderByDesc('total_orders')->take(5)
             ->with('fieldStaff.user')->get();
 
@@ -575,8 +581,7 @@ class SalesManagerDashboardApiController extends Controller
             })
             ->get()
             ->map(function ($staff) {
-                $targetObj = $staff->getCurrentMonthTarget();
-                $targetAmount = $targetObj ? $targetObj->amount : 0;
+                $targetAmount = $staff->getCurrentMonthTargets()->sum('amount');
                 $achievedAmount = $staff->getCurrentMonthAchieved();
                 
                 $staff->target = round($targetAmount, 2);
