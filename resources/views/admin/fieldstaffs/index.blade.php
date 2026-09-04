@@ -923,11 +923,11 @@
                                         <div class="fw-bold small mb-1" style="color: var(--med-text-main);">${bt.brand}</div>
                                         <div class="d-flex justify-content-between small">
                                             <span class="text-muted">Target:</span>
-                                            <span class="fw-semibold" style="color: var(--med-text-main);">₹${parseFloat(bt.target).toFixed(2)}</span>
+                                            <span class="fw-semibold" style="color: var(--med-text-main);">₹${parseFloat(bt.target).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                         </div>
                                         <div class="d-flex justify-content-between small">
                                             <span class="text-muted">Achieved:</span>
-                                            <span class="fw-semibold text-${bt.achieved >= bt.target && bt.target > 0 ? 'success' : 'primary'}">₹${parseFloat(bt.achieved).toFixed(2)}</span>
+                                            <span class="fw-semibold text-${bt.achieved >= bt.target && bt.target > 0 ? 'success' : 'primary'}">₹${parseFloat(bt.achieved).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -939,11 +939,11 @@
                                         <div class="fw-bold small mb-1 text-primary">Total Overall</div>
                                         <div class="d-flex justify-content-between small">
                                             <span class="text-muted">Target:</span>
-                                            <span class="fw-semibold" style="color: var(--med-text-main);">₹${parseFloat(fs.current_month_target_amount || 0).toFixed(2)}</span>
+                                            <span class="fw-semibold" style="color: var(--med-text-main);">₹${parseFloat(fs.current_month_target_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                         </div>
                                         <div class="d-flex justify-content-between small">
                                             <span class="text-muted">Achieved:</span>
-                                            <span class="fw-semibold text-success">₹${parseFloat(fs.achieved_target || 0).toFixed(2)}</span>
+                                            <span class="fw-semibold text-success">₹${parseFloat(fs.achieved_target || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1047,8 +1047,8 @@
                             
                             return `<tr>
                                 <td class="fw-bold">${target.month} ${target.year}</td>
-                                <td>₹${parseFloat(target.amount).toFixed(2)}</td>
-                                <td>₹${parseFloat(target.achieved_amount).toFixed(2)}</td>
+                                <td>₹${parseFloat(target.amount).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td>₹${parseFloat(target.achieved_amount).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                                 <td><span class="badge ${badgeClass}">${percentage}%</span></td>
                             </tr>`;
                         }).join('') || '<tr><td colspan="4" class="text-center text-muted">No historical targets</td></tr>';
@@ -1093,7 +1093,7 @@
                         <div class="col-6">
                             <div class="quick-card">
                                 <div class="label"><i class="fa fa-award bg-warning-light text-warning me-1"></i>Loyalty Points</div>
-                                <div class="value text-warning">${parseFloat(data.loyalty_points || 0).toFixed(2)}</div>
+                                <div class="value text-warning">${parseFloat(data.loyalty_points || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                             </div>
                         </div>
                         <div class="col-12">

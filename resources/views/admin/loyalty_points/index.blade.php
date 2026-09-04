@@ -283,13 +283,15 @@
                                                 <div class="small text-muted">Cost: {{ number_format($pending->threshold, 2) }} Points</div>
                                             </td>
                                             <td class="text-end">
-                                                <form action="{{ route('admin.loyalty-points.mark-reward-given', $pending->retailer_id) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    <input type="hidden" name="redemption_id" value="{{ $pending->redemption_id }}">
-                                                    <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 shadow-sm" onclick="return confirm('Approve this reward?');">
-                                                        <i class="fa fa-check me-1"></i> Approve
-                                                    </button>
-                                                </form>
+                                                @if(Auth::user()->hasAnyRole(['superadmin', 'admin']))
+                                                    <form action="{{ route('admin.loyalty-points.mark-reward-given', $pending->retailer_id) }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        <input type="hidden" name="redemption_id" value="{{ $pending->redemption_id }}">
+                                                        <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 shadow-sm" onclick="return confirm('Approve this reward?');">
+                                                            <i class="fa fa-check me-1"></i> Approve
+                                                        </button>
+                                                    </form>
+                                                @endif
                                                 <a href="{{ route('admin.loyalty-points.detail', $pending->retailer_id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 ms-1 shadow-sm">
                                                     View Details
                                                 </a>

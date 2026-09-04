@@ -276,7 +276,7 @@ class ReportController extends Controller
     public function orderReports(Request $request)
     {
         $user = Auth::user();
-        abort_if(!$user->hasPermissionToCategory('master_order_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
+        abort_if(!$user->hasPermissionToCategory('master_order_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view') && !$user->hasRole('salesmanager'), 403);
         if ($request->ajax()) {
             $type = $request->order_type ?? 'retailer';
             
@@ -339,7 +339,7 @@ class ReportController extends Controller
     public function distributorReports(Request $request)
     {
         $user = Auth::user();
-        abort_if(!$user->hasPermissionToCategory('distributor_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
+        abort_if(!$user->hasPermissionToCategory('distributor_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view') && !$user->hasRole('salesmanager'), 403);
         if ($request->ajax()) {
             $query = Distributor::with('user')->select('distributors.*');
             
@@ -403,7 +403,7 @@ class ReportController extends Controller
     public function retailerReports(Request $request)
     {
         $user = Auth::user();
-        abort_if(!$user->hasPermissionToCategory('retailer_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
+        abort_if(!$user->hasPermissionToCategory('retailer_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view') && !$user->hasRole('salesmanager'), 403);
         if ($request->ajax()) {
             $query = Retailer::with(['user', 'fieldStaff.user'])->select('retailers.*');
 
@@ -463,7 +463,7 @@ class ReportController extends Controller
     public function productReports(Request $request)
     {
         $user = Auth::user();
-        abort_if(!$user->hasPermissionToCategory('product_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
+        abort_if(!$user->hasPermissionToCategory('product_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view') && !$user->hasRole('salesmanager'), 403);
         if ($request->ajax()) {
             $type = $request->order_type ?? 'retailer';
             $orderModel = ($type === 'distributor') ? \App\Models\DistributorOrder::class : \App\Models\RetailerOrder::class;
@@ -549,7 +549,7 @@ class ReportController extends Controller
     public function brandReports(Request $request)
     {
         $user = Auth::user();
-        abort_if(!$user->hasPermissionToCategory('product_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
+        abort_if(!$user->hasPermissionToCategory('product_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view') && !$user->hasRole('salesmanager'), 403);
         if ($request->ajax()) {
             $type = $request->order_type ?? 'retailer';
             $orderItemModel = ($type === 'distributor') ? \App\Models\DistributorOrderItem::class : \App\Models\RetailerOrderItem::class;
@@ -598,7 +598,7 @@ class ReportController extends Controller
     public function areaReports(Request $request)
     {
         $user = Auth::user();
-        abort_if(!$user->hasPermissionToCategory('retailer_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
+        abort_if(!$user->hasPermissionToCategory('retailer_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view') && !$user->hasRole('salesmanager'), 403);
         
         if ($request->ajax()) {
             [$fromDate, $toDate] = $this->getFilterDates($request);
@@ -826,7 +826,7 @@ class ReportController extends Controller
     public function visitReports(Request $request)
     {
         $user = Auth::user();
-        abort_if(!$user->hasPermissionToCategory('performance_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
+        abort_if(!$user->hasPermissionToCategory('performance_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view') && !$user->hasRole('salesmanager'), 403);
         if ($request->ajax()) {
             $query = FieldStaff::with(['user', 'salesManager.user'])->select('fieldstaffs.*');
             $this->applyGlobalFilters($query, $request);
@@ -910,7 +910,7 @@ class ReportController extends Controller
     public function outstandingReports(Request $request)
     {
         $user = Auth::user();
-        abort_if(!$user->hasPermissionToCategory('retailer_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
+        abort_if(!$user->hasPermissionToCategory('retailer_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view') && !$user->hasRole('salesmanager'), 403);
         if ($request->ajax()) {
             $type = $request->order_type ?? 'retailer';
             
@@ -982,7 +982,7 @@ class ReportController extends Controller
     public function targetReports(Request $request)
     {
         $user = Auth::user();
-        abort_if(!$user->hasPermissionToCategory('performance_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
+        abort_if(!$user->hasPermissionToCategory('performance_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view') && !$user->hasRole('salesmanager'), 403);
         
         if ($request->ajax()) {
 
@@ -1005,7 +1005,7 @@ class ReportController extends Controller
                 ->addColumn('name', fn($fs) => $fs->user->name ?? 'N/A')
                 ->addColumn('achievement_display', function($fs) use ($monthStr, $yearStr, $request) {
                     $achieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr, $request->brand);
-                    return '₹' . number_format($achieved, 2);
+                    return '₹' . preg_replace("/(\d+?)(?=(\d\d)+(\d)(?!\d))(\.\d+)?/i", "$1,", number_format($achieved, 2, '.', ''));
                 })
                 ->addColumn('target_display', function($fs) use ($request) {
                     $targetObj = $fs->salesTargets->first();
@@ -1017,7 +1017,7 @@ class ReportController extends Controller
                         $latest = $latestQuery->latest('id')->first();
                         $targetAmount = $latest ? $latest->amount : 0;
                     }
-                    return '₹' . number_format($targetAmount, 2);
+                    return '₹' . preg_replace("/(\d+?)(?=(\d\d)+(\d)(?!\d))(\.\d+)?/i", "$1,", number_format($targetAmount, 2, '.', ''));
                 })
                 ->addColumn('variance', function($fs) use ($monthStr, $yearStr, $request) {
                     $achieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr, $request->brand);
@@ -1066,7 +1066,7 @@ class ReportController extends Controller
     public function managerTargetReports(Request $request)
     {
         $user = Auth::user();
-        abort_if(!$user->hasPermissionToCategory('performance_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
+        abort_if(!$user->hasPermissionToCategory('performance_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view') && !$user->hasRole('salesmanager'), 403);
         
         if ($request->ajax()) {
 
@@ -1102,14 +1102,14 @@ class ReportController extends Controller
                             $totalTarget += $latest ? $latest->amount : 0;
                         }
                     }
-                    return '₹' . number_format($totalTarget, 2);
+                    return '₹' . preg_replace("/(\d+?)(?=(\d\d)+(\d)(?!\d))(\.\d+)?/i", "$1,", number_format($totalTarget, 2, '.', ''));
                 })
                 ->addColumn('achievement_display', function($sm) use ($monthStr, $yearStr, $request) {
                     $totalAchieved = 0;
                     foreach($sm->fieldStaffs as $fs) {
                         $totalAchieved += $fs->getAchievedAmountForMonth($monthStr, $yearStr, $request->brand);
                     }
-                    return '₹' . number_format($totalAchieved, 2);
+                    return '₹' . preg_replace("/(\d+?)(?=(\d\d)+(\d)(?!\d))(\.\d+)?/i", "$1,", number_format($totalAchieved, 2, '.', ''));
                 })
                 ->addColumn('variance', function($sm) use ($monthStr, $yearStr, $request) {
                     $achieved = 0;
@@ -1174,7 +1174,7 @@ class ReportController extends Controller
     public function monitoring()
     {
         $user = Auth::user();
-        abort_if(!$user->hasPermissionToCategory('performance_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view'), 403);
+        abort_if(!$user->hasPermissionToCategory('performance_reports', 'view') && !$user->hasPermissionToCategory('executive_reports', 'view') && !$user->hasRole('salesmanager'), 403);
         $salesManagers = SalesManager::with('user')->get();
         return view('admin.reports.monitoring', compact('salesManagers'));
     }

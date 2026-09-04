@@ -71,11 +71,13 @@
                                         <span class="badge bg-dark text-white" style="font-size: 12px;">{{ $pending->gift_name }} <span class="badge bg-white text-dark ms-1">{{ $pending->brand }}</span></span>
                                         <div class="text-muted small mt-1" style="font-size: 11px;">Cost: {{ number_format($pending->threshold, 2) }} Points | Claimed on: {{ \Carbon\Carbon::parse($pending->created_at)->format('d M, Y') }}</div>
                                     </div>
-                                    <form action="{{ route('admin.loyalty-points.mark-reward-given', $selectedRetailer->id) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        <input type="hidden" name="redemption_id" value="{{ $pending->redemption_id }}">
-                                        <button type="submit" class="btn btn-sm btn-outline-dark rounded-pill px-3 py-1 fw-semibold" onclick="return confirm('Mark this reward as given?');">Mark Given</button>
-                                    </form>
+                                    @if(auth()->user()->hasAnyRole(['admin', 'superadmin']))
+                                        <form action="{{ route('admin.loyalty-points.mark-reward-given', $selectedRetailer->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <input type="hidden" name="redemption_id" value="{{ $pending->redemption_id }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-dark rounded-pill px-3 py-1 fw-semibold" onclick="return confirm('Mark this reward as given?');">Mark Given</button>
+                                        </form>
+                                    @endif
                                 </div>
                             @endforeach
                         </div>

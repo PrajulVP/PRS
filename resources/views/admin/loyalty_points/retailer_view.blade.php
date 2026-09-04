@@ -263,7 +263,7 @@
                                                 </div>
                                             @endforeach
                                         @endif
-                                    </div>
+                                    </div>  
                                 </div>
                             @empty
                                 <div class="col-12 text-center text-muted py-4">No reward slabs configured yet.</div>
@@ -335,7 +335,7 @@
                                                 <span class="badge {{ $badgeClass }} text-uppercase" style="font-size: 10px;">
                                                     {{ str_replace('_', ' ', $item->status) }}
                                                 </span>
-                                                @if($item->type === 'REWARD' && $item->status === 'pending' && auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
+                                                @if($item->type === 'REWARD' && $item->status === 'pending' && auth()->user()->hasAnyRole(['admin', 'superadmin']))
                                                     <form action="{{ route('admin.loyalty-points.mark-reward-given', $retailer->id) }}" method="POST" class="mt-1">
                                                         @csrf
                                                         <input type="hidden" name="redemption_id" value="{{ $item->id }}">

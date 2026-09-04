@@ -22,19 +22,24 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $period = $request->get('period', 'monthly');
-        $data = $this->calculateDashboardData($period);
+        $monthParam = $request->get('month', date('Y-m'));
+        $data = $this->calculateDashboardData($monthParam);
+        
+        if ($request->ajax()) {
+            return view('partials.dashboard_content', $data)->render();
+        }
+        
         return view('dashboard', $data);
     }
 
     public function getStats(Request $request)
     {
-        $period = $request->get('period', 'monthly');
-        $data = $this->calculateDashboardData($period);
+        $monthParam = $request->get('month', date('Y-m'));
+        $data = $this->calculateDashboardData($monthParam);
         
         // Return JSON with specific subsets needed for AJAX updates
         return response()->json([
-            'period' => $data['period'],
+            'monthParam' => $data['monthParam'],
             'counts' => $data['counts'],
             'retailerOrderStats' => $data['retailerOrderStats'],
             'distributorOrderStats' => $data['distributorOrderStats'],
@@ -102,29 +107,21 @@ class DashboardController extends Controller
         return response()->json(['data' => $data]);
     }
 
-    private function calculateDashboardData($period)
+    private function calculateDashboardData($monthParam)
     {
         $user = Auth::user();
-        $endDate = now();
-        $startDate = now();
-        $fieldStaffIds = null;
-
-        switch ($period) {
-            case 'daily':
-                $startDate = now()->startOfDay();
-                break;
-            case 'weekly':
-                $startDate = now()->subDays(6)->startOfDay();
-                break;
-            case 'yearly':
-                $startDate = now()->startOfYear();
-                break;
-            case 'monthly':
-            default:
-                $period = 'monthly';
-                $startDate = now()->startOfMonth();
-                break;
+        
+        try {
+            $date = \Carbon\Carbon::createFromFormat('Y-m', $monthParam);
+        } catch (\Exception $e) {
+            $date = now();
+            $monthParam = $date->format('Y-m');
         }
+        
+        $startDate = $date->copy()->startOfMonth();
+        $endDate = $date->copy()->endOfMonth();
+        $period = 'monthly';
+        $fieldStaffIds = null;
 
         // Base Queries
         $retailerQuery = Retailer::query();
@@ -320,11 +317,16 @@ class DashboardController extends Controller
                     $fsTargetSum = $fsTargets->sum('amount');
                     $totalTarget += $fsTargetSum;
                     
+                    $fsOrders = \App\Models\RetailerOrder::where('fieldstaff_id', $fs->id)
+                        ->whereBetween('created_at', [$startDate, $endDate])
+                        ->count();
+                        
                     $fieldStaffPerformance[] = [
                         'id' => $fs->id,
                         'name' => $fs->user ? $fs->user->name : 'Unknown',
                         'target' => $fsTargetSum,
                         'achieved' => $fsAchieved,
+                        'orders' => $fsOrders,
                         'remaining' => max(0, $fsTargetSum - $fsAchieved),
                         'achievement_percent' => $fsTargetSum > 0 ? round(($fsAchieved / $fsTargetSum) * 100, 1) : 0
                     ];
@@ -648,6 +650,7 @@ class DashboardController extends Controller
             'isTopRetailer',
             'monthlyDistributorOrdersChart',
             'period',
+            'monthParam',
             'activeOffers',
             'myRank',
             'totalInLocality',
