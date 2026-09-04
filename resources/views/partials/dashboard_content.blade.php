@@ -1099,7 +1099,7 @@ if (!function_exists('format_inr')) {
                                                 <tr>
                                                     <td class="px-4 py-2 fw-700 small">
                                                         <div class="d-flex align-items-center gap-2">
-                                                            <div class="icon-circle-sm bg-soft-primary" style="width: 30px; height: 30px; border-radius: 8px;">
+                                                            <div class="icon-circle-sm bg-soft-primary d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; border-radius: 8px;">
                                                                 <i data-feather="user-check" class="text-primary" style="width: 14px;"></i>
                                                             </div>
                                                             <div class="text-dark">{{ $sm['name'] }}</div>
@@ -1143,7 +1143,7 @@ if (!function_exists('format_inr')) {
                                                     <tr>
                                                         <td class="px-4 py-2 fw-700 small">
                                                             <div class="d-flex align-items-center gap-2">
-                                                                <div class="icon-circle-sm bg-soft-primary" style="width: 30px; height: 30px; border-radius: 8px;">
+                                                                <div class="icon-circle-sm bg-soft-primary d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; border-radius: 8px;">
                                                                     <i data-feather="user" class="text-primary" style="width: 14px;"></i>
                                                                 </div>
                                                                 <div class="text-dark">{{ $fs['name'] }}</div>
@@ -1521,7 +1521,7 @@ if (!function_exists('format_inr')) {
 
                 <!-- Scripts for Charts -->
                     <script>
-                        (function () {
+function initDashboardCharts() {
                             // Theme Detection for charts
                             var isDark = document.body.classList.contains('dark-only') || document.documentElement.getAttribute('data-theme') === 'dark';
                             var chartTheme = isDark ? 'dark' : 'light';
@@ -1692,7 +1692,7 @@ if (!function_exists('format_inr')) {
                                     window.charts.brandSalesChart.render();
                                 }
                             @endif
-                        })();
+                        }
 
                         function updateDashboardPeriod(btn, period) {
                             // Update active button state immediately for responsiveness
@@ -1961,7 +1961,21 @@ if (!function_exists('format_inr')) {
                                 .catch(error => {
                                     container.innerHTML = '<div class="alert alert-danger">Error loading retailers.</div>';
                                 });
-                        }
+                            }
+                            // Works for both initial page load and AJAX reinjects
+function tryInitDashboard() {
+    if (typeof ApexCharts !== 'undefined') {
+        initDashboardCharts();
+    } else {
+        setTimeout(tryInitDashboard, 50);
+    }
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', tryInitDashboard);
+} else {
+    tryInitDashboard();
+}
+                    
                     </script>
 
             </div>

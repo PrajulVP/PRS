@@ -102,10 +102,13 @@ class FieldStaff extends Model
                         $qr->where('field_staff_id', $this->id);
                     });
             })
-            ->where('retailer_orders.status', \App\Models\RetailerOrder::STATUS_DELIVERED)
-            ->whereMonth('retailer_orders.delivered_at', $month)
-            ->whereYear('retailer_orders.delivered_at', $year);
-            
+            ->whereIn('retailer_orders.status', [
+                \App\Models\RetailerOrder::STATUS_APPROVED,
+                \App\Models\RetailerOrder::STATUS_PROCESSING,
+                \App\Models\RetailerOrder::STATUS_DELIVERED
+            ])
+            ->whereMonth('retailer_orders.created_at', $month)
+            ->whereYear('retailer_orders.created_at', $year);
         if ($brand) {
             $query->join('products', 'retailer_order_items.product_id', '=', 'products.id')
                 ->join('brands', 'products.brand_id', '=', 'brands.id')

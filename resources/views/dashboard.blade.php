@@ -43,9 +43,23 @@ if (!function_exists('format_inr')) {
         .then(response => response.text())
         .then(html => {
             if(container) {
-                // Using jQuery to replace HTML ensures script tags are evaluated
-                $('#dashboard-dynamic-content').html(html);
+                // Destroy existing charts before replacing HTML to avoid memory leaks
+                if (window.charts) {
+                    Object.values(window.charts).forEach(c => { try { c.destroy(); } catch(e) {} });
+                }
+                // Using innerHTML to replace content AND execute embedded scripts
+                container.innerHTML = html;
                 container.style.opacity = '1';
+                // Re-run any <script> tags in the new HTML (innerHTML doesn't auto-execute)
+                container.querySelectorAll('script').forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    newScript.textContent = oldScript.textContent;
+                    document.head.appendChild(newScript);
+                    document.head.removeChild(newScript);
+                });
+                if (typeof initDashboardCharts === 'function') {
+                    initDashboardCharts();
+                }
                 if (typeof feather !== 'undefined') {
                     feather.replace();
                 }

@@ -87,11 +87,18 @@ class SystemController extends Controller
     public function optimize()
     {
         try {
-            Artisan::call('optimize');
+            \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+            
+            $opcacheMsg = '';
+            if (function_exists('opcache_reset')) {
+                opcache_reset();
+                $opcacheMsg = ' and OPcache cleared';
+            }
+            
             return response()->json([
                 'status' => 'success',
-                'message' => 'Application optimized successfully.',
-                'output' => Artisan::output()
+                'message' => 'Application optimized' . $opcacheMsg . ' successfully.',
+                'output' => \Illuminate\Support\Facades\Artisan::output()
             ]);
         } catch (\Exception $e) {
             return response()->json([
