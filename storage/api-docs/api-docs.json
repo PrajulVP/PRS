@@ -5689,7 +5689,7 @@
                 "tags": [
                     "Sales Manager Dashboard"
                 ],
-                "summary": "Approve (activate) a retailer account",
+                "summary": "Approve (activate) or Deactivate a retailer account",
                 "operationId": "477a26f1ba120e3aa322348febfe30f2",
                 "parameters": [
                     {
@@ -5701,9 +5701,29 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "description": "Status to set. Defaults to active",
+                                        "type": "string",
+                                        "enum": [
+                                            "active",
+                                            "inactive"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Retailer approved successfully"
+                        "description": "Retailer status updated successfully"
                     }
                 },
                 "security": [

@@ -518,14 +518,20 @@ class SalesManagerDashboardApiController extends Controller
     /**
      * @OA\Post(
      *     path="/api/sales-manager/retailers/{id}/approve",
-     *     summary="Approve (activate) a retailer account",
+     *     summary="Approve (activate) or Deactivate a retailer account",
      *     tags={"Sales Manager Dashboard"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Retailer approved successfully")
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", enum={"active", "inactive"}, description="Status to set. Defaults to active")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Retailer status updated successfully")
      * )
      */
-    public function approveRetailer($id)
+    public function approveRetailer(Request $request, $id)
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
@@ -542,17 +548,25 @@ class SalesManagerDashboardApiController extends Controller
 
         $retailer = Retailer::whereIn('field_staff_id', $fieldStaffIds)->findOrFail($id);
 
-        $retailer->user->update(['status' => 'active']);
+        $status = $request->input('status', 'active');
+        if (!in_array($status, ['active', 'inactive'])) {
+            return response()->json(['error' => 'Invalid status provided.'], 400);
+        }
 
-        // OneSignal Push
-        $this->sendOneSignalPush(
-            [$retailer->user->id],
-            "Your retailer account has been approved and activated. Welcome!",
-            ['user_id' => $retailer->user->id, 'type' => 'user_approval'],
-            'Account Activated'
-        );
+        $retailer->user->update(['status' => $status]);
 
-        return response()->json(['message' => "Retailer {$retailer->user->name} approved successfully."]);
+        if ($status === 'active') {
+            // OneSignal Push
+            $this->sendOneSignalPush(
+                [$retailer->user->id],
+                "Your retailer account has been approved and activated. Welcome!",
+                ['user_id' => $retailer->user->id, 'type' => 'user_approval'],
+                'Account Activated'
+            );
+            return response()->json(['message' => "Retailer {$retailer->user->name} approved successfully."]);
+        } else {
+            return response()->json(['message' => "Retailer {$retailer->user->name} deactivated successfully."]);
+        }
     }
 
     /**
