@@ -1554,7 +1554,7 @@ class ReportController extends Controller
 
             $events = collect();
             $punches->each(fn($p) => $events->push(['time' => $p->timestamp, 'type' => 'Attendance', 'details' => str_replace('_', ' ', $p->type), 'lat' => $p->latitude, 'lng' => $p->longitude]));
-            $visits->each(fn($v) => $events->push(['time' => $v->check_in_at, 'type' => 'Visit', 'details' => $v->customer_name . " (" . $v->customer_category . ")", 'lat' => $v->latitude, 'lng' => $v->longitude]));
+            $visits->each(fn($v) => $events->push(['time' => $v->check_in_at, 'type' => 'Visit', 'details' => $v->customer_name . " (" . $v->customer_category . ") | Start: " . \Carbon\Carbon::parse($v->check_in_at)->format('h:i A') . " | End: " . ($v->check_out_at ? \Carbon\Carbon::parse($v->check_out_at)->format('h:i A') : 'Ongoing'), 'lat' => $v->latitude, 'lng' => $v->longitude]));
             $offlineLogs->each(function($o) use ($events) {
                 $duration = $o->to_time ? \App\Http\Controllers\ReportController::formatDurationHumans($o->from_time, $o->to_time) : "Ongoing";
                 $reasonText = $o->reason ? " (" . $o->reason . ")" : "";

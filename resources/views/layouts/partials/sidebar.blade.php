@@ -179,7 +179,8 @@
              Auth::user()->hasPermissionToCategory('retailer_reports', 'view') || 
              Auth::user()->hasPermissionToCategory('performance_reports', 'view') ||
              Auth::user()->hasPermissionToCategory('product_reports', 'view') ||
-             Auth::user()->hasPermissionToCategory('master_order_reports', 'view'))
+             Auth::user()->hasPermissionToCategory('master_order_reports', 'view') ||
+             Auth::user()->hasRole('salesmanager'))
         <li class="sidebar-main-title">
           <div>
             <h6>Reports</h6>

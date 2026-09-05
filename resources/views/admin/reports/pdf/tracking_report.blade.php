@@ -10,11 +10,11 @@
         .logo { font-size: 20pt; font-weight: bold; color: #7366ff; }
         .title { text-align: right; font-size: 14pt; font-weight: bold; }
         .info-block { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        .stats-grid { display: table; width: 100%; margin-bottom: 20px; }
-        .stat-item { display: table-cell; width: 25%; text-align: center; border-right: 1px solid #eee; }
+        .stats-grid { display: table; width: 100%; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
+        .stat-item { display: table-cell; width: 20%; text-align: center; border-right: 1px solid #e2e8f0; padding: 10px; }
         .stat-item:last-child { border-right: none; }
-        .stat-label { font-size: 8pt; color: #64748b; text-transform: uppercase; font-weight: bold; }
-        .stat-value { font-size: 14pt; font-weight: bold; color: #1e293b; }
+        .stat-label { font-size: 8pt; color: #64748b; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; display: block; }
+        .stat-value { font-size: 12pt; font-weight: bold; color: #1e293b; }
         
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         th { background: #f1f5f9; color: #475569; font-size: 8pt; text-transform: uppercase; padding: 8px; border: 1px solid #e2e8f0; text-align: left; }

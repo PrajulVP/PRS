@@ -16,6 +16,32 @@ if (!function_exists('format_inr')) {
                     }
 
                     /* Premium Executive Cards (Centered Icon) */
+                    .dashboard-table-wrapper {
+                        overflow-x: hidden !important;
+                    }
+                    .dashboard-table-wrapper table {
+                        border-collapse: collapse !important;
+                        border-spacing: 0 !important;
+                        width: 100% !important;
+                    }
+                    .dashboard-table-wrapper table thead {
+                        background-color: #f8f9fa !important;
+                        border-radius: 0 !important;
+                    }
+                    .dashboard-table-wrapper table thead th {
+                        background: transparent !important;
+                        border: none !important;
+                        border-radius: 0 !important;
+                    }
+                    .dashboard-table-wrapper table th:first-child,
+                    .dashboard-table-wrapper table td:first-child {
+                        padding-left: 1.5rem !important;
+                    }
+                    .dashboard-table-wrapper table th:last-child,
+                    .dashboard-table-wrapper table td:last-child {
+                        padding-right: 1.5rem !important;
+                    }
+
                     .executive-metric-card {
                         transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
                         border: 1px solid rgba(0, 0, 0, 0.05) !important;
@@ -1233,7 +1259,7 @@ if (!function_exists('format_inr')) {
 
                     </div>
 
-                    @if(Auth::user()->hasAnyRole(['admin', 'superadmin']))
+                    @if(Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
                     <!-- Master Order Watch & Ops Center -->
                     <div class="row">
                         <div class="col-12">
@@ -1262,19 +1288,19 @@ if (!function_exists('format_inr')) {
                                         <div class="col-4">
                                             <div class="p-3 bg-light rounded-4 text-center">
                                                 <h6 class="text-muted small mb-1">Active</h6>
-                                                <h5 class="fw-800 mb-0">--</h5>
+                                                <h5 class="fw-800 mb-0">{{ $pulseStats['active'] ?? '--' }}</h5>
                                             </div>
                                         </div>
                                         <div class="col-4">
                                             <div class="p-3 bg-light rounded-4 text-center">
                                                 <h6 class="text-muted small mb-1">Visits</h6>
-                                                <h5 class="fw-800 mb-0">--</h5>
+                                                <h5 class="fw-800 mb-0">{{ $pulseStats['visits'] ?? '--' }}</h5>
                                             </div>
                                         </div>
                                         <div class="col-4">
                                             <div class="p-3 bg-light rounded-4 text-center">
                                                 <h6 class="text-muted small mb-1">Alerts</h6>
-                                                <h5 class="fw-800 mb-0 text-danger">0</h5>
+                                                <h5 class="fw-800 mb-0 text-danger">{{ $pulseStats['alerts'] ?? '0' }}</h5>
                                             </div>
                                         </div>
                                     </div>
@@ -1340,6 +1366,7 @@ if (!function_exists('format_inr')) {
                         </div>
                     @endif
                     </div>
+
 
 
                     </div>
@@ -1422,7 +1449,7 @@ if (!function_exists('format_inr')) {
                                 </h5>
                             </div>
                             <div class="card border-0 shadow-sm overflow-hidden h-100" style="border-radius: 20px;">
-                                <div class="table-responsive">
+                                <div class="table-responsive dashboard-table-wrapper">
                                     <table class="table table-hover align-middle mb-0">
                                         <thead class="bg-light" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
                                             <tr>
@@ -1480,7 +1507,7 @@ if (!function_exists('format_inr')) {
                                 <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">Recent Distributor Orders</h5>
                             </div>
                             <div class="card border-0 shadow-sm overflow-hidden h-100" style="border-radius: 20px;">
-                                <div class="table-responsive">
+                                <div class="table-responsive dashboard-table-wrapper">
                                     <table class="table table-hover align-middle mb-0">
                                         <thead class="bg-light" style="font-size: 11px; text-transform: uppercase;">
                                             <tr>

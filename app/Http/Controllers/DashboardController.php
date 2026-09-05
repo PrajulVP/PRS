@@ -636,6 +636,41 @@ class DashboardController extends Controller
             $monthlyDistributorOrdersChart = $this->generateChartData($distributorOrderQuery->clone()->whereBetween('created_at', [$startDate, $endDate]), $period, $startDate, $endDate);
         }
 
+        // 9. Live Pulse Stats
+        $pulseStats = ['active' => 0, 'visits' => 0, 'alerts' => 0];
+        if ($user->hasAnyRole(['admin', 'superadmin', 'salesmanager'])) {
+            $today = now()->toDateString();
+            
+            $activeFsQuery = \App\Models\AttendanceLog::whereDate('timestamp', $today)
+                ->where('type', 'punch_in')
+                ->whereHas('user', function($q) { $q->whereHas('roles', function($r) { $r->where('name', 'fieldstaff'); }); });
+                
+            $visitsQuery = \App\Models\VisitLog::whereDate('check_in_at', $today)
+                ->whereHas('user', function($q) { $q->whereHas('roles', function($r) { $r->where('name', 'fieldstaff'); }); });
+                
+            if ($user->hasRole('salesmanager') && $user->salesManager) {
+                $managerId = $user->salesManager->id;
+                $activeFsQuery->whereHas('user.fieldStaff', function($q) use ($managerId) {
+                    $q->where('sales_manager_id', $managerId);
+                });
+                $visitsQuery->whereHas('user.fieldStaff', function($q) use ($managerId) {
+                    $q->where('sales_manager_id', $managerId);
+                });
+            }
+            
+            $pulseStats['active'] = $activeFsQuery->distinct('user_id')->count();
+            $pulseStats['visits'] = $visitsQuery->count();
+            // Optional: calculate alerts, e.g. mock gps usage today
+            $pulseStats['alerts'] = \App\Models\LocationLog::whereDate('timestamp', $today)
+                ->where('is_mock_location', true)
+                ->when($user->hasRole('salesmanager') && $user->salesManager, function($query) use ($user) {
+                    $query->whereHas('user.fieldStaff', function($q) use ($user) {
+                        $q->where('sales_manager_id', $user->salesManager->id);
+                    });
+                })
+                ->count();
+        }
+
         return compact(
             'counts',
             'retailerOrderStats',
@@ -658,7 +693,8 @@ class DashboardController extends Controller
             'data_extra',
             'brandSalesDistribution',
             'topAreas',
-            'upcomingRewards'
+            'upcomingRewards',
+            'pulseStats'
         );
     }
 
