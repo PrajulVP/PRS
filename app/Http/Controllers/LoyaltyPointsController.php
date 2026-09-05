@@ -63,14 +63,18 @@ class LoyaltyPointsController extends Controller
                 $nextRule = null;
                 
                 foreach ($rules as $rule) {
+                    $isRedeemed = in_array($rule->id, $redeemedSlabIds);
+                    
                     if ($currentTotal >= $rule->min_points) {
-                        $achievedRules[] = [
-                            'slab_id' => $rule->id,
-                            'threshold' => $rule->min_points, 
-                            'reward' => $rule->gift_name,
-                            'reward_options' => json_decode($rule->reward_options, true) ?: [$rule->gift_name],
-                            'is_redeemed' => false // Since points are deducted, any rule they can still reach is achievable again
-                        ];
+                        if (!$isRedeemed) {
+                            $achievedRules[] = [
+                                'slab_id' => $rule->id,
+                                'threshold' => $rule->min_points, 
+                                'reward' => $rule->gift_name,
+                                'reward_options' => json_decode($rule->reward_options, true) ?: [$rule->gift_name],
+                                'is_redeemed' => false
+                            ];
+                        }
                     } else {
                         if (!$nextRule) {
                             $nextRule = $rule;
@@ -102,24 +106,32 @@ class LoyaltyPointsController extends Controller
             ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED)
             ->sum('loyalty_points_earned');
             
-        $totalSpent = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
+        $redemptions = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
             ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
             ->where('loyalty_redemptions.retailer_id', $retailer->id)
-            ->sum('loyalty_slabs.min_points');
+            ->select('loyalty_slabs.id', 'loyalty_slabs.min_points')
+            ->get();
+            
+        $redeemedSlabIds = $redemptions->pluck('id')->toArray();
+        $totalSpent = $redemptions->sum('min_points');
 
         $availablePoints = $totalEarned - $totalSpent;
+        if ($availablePoints < 0) $availablePoints = 0;
         
         $achievedRewards = [];
         $nextRule = null;
         
         foreach ($loyaltyRules as $rule) {
+            $isRedeemed = in_array($rule->id, $redeemedSlabIds);
             if ($availablePoints >= $rule->min_points) {
-                $achievedRewards[] = [
-                    'slab_id' => $rule->id,
-                    'threshold' => $rule->min_points, 
-                    'reward' => $rule->gift_name,
-                    'reward_options' => json_decode($rule->reward_options, true) ?: [$rule->gift_name],
-                ];
+                if (!$isRedeemed) {
+                    $achievedRewards[] = [
+                        'slab_id' => $rule->id,
+                        'threshold' => $rule->min_points, 
+                        'reward' => $rule->gift_name,
+                        'reward_options' => json_decode($rule->reward_options, true) ?: [$rule->gift_name],
+                    ];
+                }
             } else {
                 if (!$nextRule) {
                     $nextRule = $rule;
@@ -215,15 +227,21 @@ class LoyaltyPointsController extends Controller
             $redemptions = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
                 ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
                 ->where('loyalty_redemptions.retailer_id', $retailer->id)
-                ->select('loyalty_redemptions.*', 'loyalty_slabs.gift_name', 'loyalty_slabs.min_points')
+                ->select('loyalty_redemptions.*', 'loyalty_slabs.gift_name', 'loyalty_slabs.min_points', 'loyalty_slabs.reward_options')
                 ->get();
             
             $redemptionHistory = $redemptions->map(function ($r) {
+                $options = json_decode($r->reward_options, true) ?: [];
+                $optionsStr = implode(', ', $options);
+                $details = 'Claimed: ' . ($r->selected_reward ?: $r->gift_name);
+                if ($optionsStr) {
+                    $details .= '<br><span class="text-muted small">Options available: ' . $optionsStr . '</span>';
+                }
                 return (object)[
                     'id' => $r->id,
                     'date' => $r->created_at,
                     'reference' => 'REW-' . $r->id,
-                    'details' => 'Redeemed: ' . $r->gift_name,
+                    'details' => $details,
                     'amount' => -$r->min_points,
                     'status' => $r->status,
                     'type' => 'REWARD'
@@ -736,10 +754,22 @@ class LoyaltyPointsController extends Controller
         
         $slab = \App\Models\LoyaltySlab::with('brand')->find($request->slab_id);
         
+        $alreadyClaimed = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
+            ->where('retailer_id', $retailer->id)
+            ->where('loyalty_slab_id', $slab->id)
+            ->exists();
+            
+        if ($alreadyClaimed) {
+            return redirect()->back()->with('error', 'You have already claimed this reward milestone.');
+        }
+        
         $upcomingRewards = $this->calculateUpcomingRewards($retailer, 'brand');
         $targetReward = collect($upcomingRewards)->firstWhere('brand', $slab->brand->name ?? '');
         
-        if (!$targetReward || $targetReward['current_total'] < $slab->min_points) {
+        // Ensure they have reached the points for this slab (whether they have a next target or not)
+        $currentTotal = $targetReward['current_total'] ?? 0;
+        
+        if ($currentTotal < $slab->min_points) {
             return redirect()->back()->with('error', 'Not enough points to claim this reward.');
         }
 

@@ -461,7 +461,7 @@
                                             </td>
                                             <td><span class="fw-bold {{ $item->type === 'CR' ? 'text-info' : 'text-primary' }}">{{ $item->reference }}</span></td>
                                             <td class="small">
-                                                {{ $item->details }}
+                                                {!! $item->details !!}
                                             </td>
                                             <td class="text-center">
                                                 @php
@@ -633,6 +633,7 @@
                 // Premium SweetAlert
                 Swal.fire({
                     html: `
+                        <style>.swal2-icon { display: none !important; }</style>
                         <div style="padding: 20px;">
                             <div style="font-size: 60px; margin-bottom: 10px; animation: bounce-icon 2s infinite;">🏆</div>
                             <h2 style="font-weight: 800; font-size: 28px; background: linear-gradient(135deg, #FFB75E 0%, #ED8F03 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 15px;">Reward Claimed!</h2>

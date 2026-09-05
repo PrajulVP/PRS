@@ -94,11 +94,22 @@ class LoyaltyApiController extends Controller
 
         $slab = LoyaltySlab::with('brand')->find($request->slab_id);
         
+        $alreadyClaimed = DB::table('loyalty_redemptions')
+            ->where('retailer_id', $retailer->id)
+            ->where('loyalty_slab_id', $slab->id)
+            ->exists();
+            
+        if ($alreadyClaimed) {
+            return response()->json(['status' => false, 'message' => 'You have already claimed this reward milestone.'], 400);
+        }
+        
         $controller = new \App\Http\Controllers\LoyaltyPointsController();
         $upcomingRewards = $controller->calculateUpcomingRewards($retailer, 'brand');
         $targetReward = collect($upcomingRewards)->firstWhere('brand', $slab->brand->name ?? '');
         
-        if (!$targetReward || $targetReward['current_total'] < $slab->min_points) {
+        $currentTotal = $targetReward['current_total'] ?? 0;
+        
+        if ($currentTotal < $slab->min_points) {
             return response()->json(['status' => false, 'message' => 'Not enough points to claim this reward.'], 400);
         }
 

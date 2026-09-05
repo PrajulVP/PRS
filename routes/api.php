@@ -83,6 +83,8 @@ Route::middleware('auth:api')->group(function () {
     // Sales Manager Dashboard
     Route::prefix('sales-manager')->group(function () {
         Route::get('dashboard', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'index']);
+        Route::get('targets', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getTargetsByMonth']);
+        Route::get('fieldstaff-targets', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getFieldstaffTargetsByMonth']);
         Route::get('pending-retailers', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getPendingRetailers']);
         Route::get('online-fieldstaffs', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getOnlineFieldStaffs']);
         Route::get('live-tracking', [\App\Http\Controllers\Api\SalesManagerDashboardApiController::class, 'getLiveTracking']);
@@ -111,6 +113,7 @@ Route::middleware('auth:api')->group(function () {
     // Field Staff Dashboard & Orders
     Route::prefix('field-staff')->middleware(['device.binding'])->group(function () {
         Route::get('dashboard', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'index']);
+        Route::get('targets', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getTargetsByMonth']);
         Route::get('performance-trend', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'performanceTrend']);
         Route::get('reports/sales-orders', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'generateSalesOrdersReport']);
         Route::get('retailers', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailers']);

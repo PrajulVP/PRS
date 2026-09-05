@@ -362,10 +362,10 @@ class FieldStaffDashboardApiController extends Controller
         $retailerData = $request->validate([
             'shop_name' => 'required|string|max:255',
             'pincode' => 'required',
-            'gst' => 'required|unique:retailers',
-            'drug_license_no' => 'nullable|string|max:255',
+            'gst' => 'nullable|unique:retailers',
+            'drug_license_no' => 'required|string|max:255',
             'contact_no' => 'required|digits:10',
-            'address' => 'required',
+            'address' => 'nullable|string',
             'district_id' => 'required|exists:districts,id',
             'area_id' => 'required|exists:areas,id',
             'latitude' => 'required|numeric',
@@ -757,5 +757,74 @@ class FieldStaffDashboardApiController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/field-staff/targets",
+     *     tags={"Field Staff Dashboard"},
+     *     summary="Get monthly targets and achievements",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="month", in="query", required=false, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="year", in="query", required=false, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Successful operation")
+     * )
+     */
+    public function getTargetsByMonth(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('fieldstaff')) {
+            return response()->json(['error' => 'Unauthorized.'], 403);
+        }
+
+        $fieldStaff = $user->fieldStaff;
+        if (!$fieldStaff) {
+            return response()->json(['error' => 'Field Staff profile not found.'], 404);
+        }
+
+        $monthInt = $request->get('month', now()->month);
+        $yearInt = $request->get('year', now()->year);
+
+        $monthStr = str_pad($monthInt, 2, '0', STR_PAD_LEFT);
+        $yearStr = (string)$yearInt;
+        $monthName = \Carbon\Carbon::createFromDate($yearInt, $monthInt, 1)->format('F');
+
+        $targets = $fieldStaff->salesTargets()
+            ->where('year', $yearStr)
+            ->where('month', $monthName)
+            ->get();
+            
+        $targetAmount = $targets->sum('amount');
+        $achievementValue = $fieldStaff->getAchievedAmountForMonth($monthStr, $yearStr);
+        $achievementPercent = $targetAmount > 0 ? ($achievementValue / $targetAmount) * 100 : 0;
+
+        $brand_targets = [];
+        $uniqueBrands = \App\Models\Brand::pluck('name');
+        
+        foreach ($uniqueBrands as $brand) {
+            $bTarget = $targets->where('brand', $brand)->first();
+            $bTargetAmount = $bTarget ? $bTarget->amount : 0;
+            $bAchieved = $fieldStaff->getAchievedAmountForMonth($monthStr, $yearStr, $brand);
+            
+            $brand_targets[] = [
+                'brand' => $brand,
+                'target' => number_format($bTargetAmount, 2, '.', ''),
+                'achievement' => number_format($bAchieved, 2, '.', ''),
+                'remaining' => number_format(max(0, $bTargetAmount - $bAchieved), 2, '.', ''),
+                'achievement_percent' => $bTargetAmount > 0 ? round(($bAchieved / $bTargetAmount) * 100, 2) : 0
+            ];
+        }
+        
+        return response()->json([
+            'period' => 'monthly',
+            'month' => (int)$monthInt,
+            'year' => (int)$yearInt,
+            'target' => round($targetAmount, 2),
+            'achieved' => round($achievementValue, 2),
+            'remaining' => max(0, round($targetAmount - $achievementValue, 2)),
+            'achievement_percent' => round($achievementPercent, 2),
+            'brand_targets' => $brand_targets,
+        ]);
     }
 }

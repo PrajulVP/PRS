@@ -46,158 +46,158 @@ class SalesManagerDashboardApiController extends Controller
     public function index(Request $request)
     {
         try {
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
+            /** @var \App\Models\User $user */
+            $user = Auth::user();
 
-        $period = $request->get('period', 'monthly');
-        $endDate = now();
-        $startDate = now();
+            $period = $request->get('period', 'monthly');
+            $endDate = now();
+            $startDate = now();
 
-        switch ($period) {
-            case 'weekly':
-                $startDate = now()->subDays(6)->startOfDay();
-                break;
-            case 'yearly':
-                $startDate = now()->startOfYear();
-                break;
-            case 'monthly':
-            default:
-                $period = 'monthly';
-                $startDate = now()->startOfMonth();
-                break;
-        }
-        $user = Auth::user();
-
-        if (!$user->hasRole('salesmanager')) {
-            return response()->json(['error' => 'Only Sales Managers can access this dashboard'], 403);
-        }
-
-        $salesManager = $user->salesManager;
-        if (!$salesManager) {
-            return response()->json(['error' => 'Sales Manager profile not found'], 404);
-        }
-
-        $fieldStaffIds = \App\Models\FieldStaff::where(function ($q) use ($salesManager) {
-            $q->where('sales_manager_id', $salesManager->id)
-                ->orWhere('sales_manager_id', $salesManager->user_id);
-        })->pluck('id');
-
-        // 1. Retailer Order Stats (Orders under this SM's fieldstaff or placed by them)
-        $retailerOrderQuery = RetailerOrder::where(function ($q) use ($fieldStaffIds) {
-            $q->whereHas('retailer', function ($q2) use ($fieldStaffIds) {
-                $q2->whereIn('field_staff_id', $fieldStaffIds);
-            })->orWhereIn('fieldstaff_id', $fieldStaffIds);
-        })->whereBetween('created_at', [$startDate, $endDate]);
-
-        $retailerOrderStats = [
-            'total' => (clone $retailerOrderQuery)->count(),
-            'pending' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_PENDING)->count(),
-            'processing' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_PROCESSING)->count(),
-            'accepted' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_APPROVED)->count(),
-            'delivered' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_DELIVERED)->count(),
-            'cancelled' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_CANCELLED)->count(),
-        ];
-
-        // 2. Distributor Order Stats (Orders by distributors assigned to this SM)
-        $distributorOrderQuery = DistributorOrder::whereHas('distributor', function ($q) use ($salesManager) {
-            $q->where('sales_manager_id', $salesManager->id);
-        })->whereBetween('created_at', [$startDate, $endDate]);
-
-        $distributorOrderStats = [
-            'total' => (clone $distributorOrderQuery)->count(),
-            'pending' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_PENDING)->count(),
-            'processing' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_PROCESSING)->count(),
-            'accepted' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_APPROVED)->count(),
-            'delivered' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_DELIVERED)->count(),
-            'cancelled' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_CANCELLED)->count(),
-        ];
-
-        // 3. Counts
-        $counts = [
-            'distributors' => \App\Models\Distributor::where('sales_manager_id', $salesManager->id)->count(),
-            'field_staff' => $fieldStaffIds->count(),
-            'retailers' => Retailer::whereIn('field_staff_id', $fieldStaffIds)->count(),
-            'pending_retailer_approvals' => Retailer::whereIn('field_staff_id', $fieldStaffIds)
-                ->whereHas('user', function ($q) {
-                    $q->where('status', 'inactive');
-                })->count(),
-        ];
-
-        // 4. Top FieldStaff performance
-        $topFieldStaff = RetailerOrder::select('fieldstaff_id', DB::raw('COUNT(id) as total_orders'), DB::raw('SUM(total_amount) as total_revenue'))
-            ->where(function($q) use ($fieldStaffIds) {
-                $q->whereIn('fieldstaff_id', $fieldStaffIds)
-                  ->orWhereHas('retailer', function ($qr) use ($fieldStaffIds) {
-                      $qr->whereIn('field_staff_id', $fieldStaffIds);
-                  });
-            })
-            ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED)
-            ->whereBetween('delivered_at', [$startDate, $endDate])
-            ->groupBy('fieldstaff_id')->orderByDesc('total_orders')->take(5)
-            ->with('fieldStaff.user')->get();
-
-        // Aggregate targets and achievements
-        $monthStr = $startDate->format('m');
-        $yearStr = $startDate->format('Y');
-
-        $totalTarget = 0;
-        $totalAchieved = 0;
-        $brand_targets = [];
-        $uniqueBrands = \App\Models\Brand::pluck('name');
-        
-        foreach ($uniqueBrands as $brand) {
-            $brand_targets[$brand] = [
-                'brand' => $brand,
-                'target' => 0,
-                'achieved' => 0,
-            ];
-        }
-        
-        $fieldStaffs = \App\Models\FieldStaff::whereIn('id', $fieldStaffIds)->get();
-        foreach ($fieldStaffs as $fs) {
-            // Achievement
-            $totalAchieved += $fs->getAchievedAmountForMonth($monthStr, $yearStr);
-            
-            // Target
-            $fsTargets = $fs->salesTargets()
-                ->where('year', $yearStr)
-                ->where('month', $startDate->format('F'))
-                ->get();
-            $totalTarget += $fsTargets->sum('amount');
-            
-            foreach ($uniqueBrands as $brand) {
-                $bTarget = $fsTargets->where('brand', $brand)->first();
-                $bTargetAmount = $bTarget ? $bTarget->amount : 0;
-                $bAchieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr, $brand);
-                
-                $brand_targets[$brand]['target'] += $bTargetAmount;
-                $brand_targets[$brand]['achieved'] += $bAchieved;
+            switch ($period) {
+                case 'weekly':
+                    $startDate = now()->subDays(6)->startOfDay();
+                    break;
+                case 'yearly':
+                    $startDate = now()->startOfYear();
+                    break;
+                case 'monthly':
+                default:
+                    $period = 'monthly';
+                    $startDate = now()->startOfMonth();
+                    break;
             }
-        }
-        
-        // Format brand_targets array
-        $formatted_brand_targets = [];
-        foreach ($brand_targets as $bt) {
-            $formatted_brand_targets[] = [
-                'brand' => $bt['brand'],
-                'target' => number_format($bt['target'], 2, '.', ''),
-                'achievement' => number_format($bt['achieved'], 2, '.', ''),
-                'remaining' => number_format(max(0, $bt['target'] - $bt['achieved']), 2, '.', ''),
-                'achievement_percent' => $bt['target'] > 0 ? round(($bt['achieved'] / $bt['target']) * 100, 2) : 0
-            ];
-        }
+            $user = Auth::user();
 
-        return response()->json([
-            'period' => $period,
-            'target' => round($totalTarget, 2),
-            'achieved' => round($totalAchieved, 2),
-            'remaining' => max(0, round($totalTarget - $totalAchieved, 2)),
-            'brand_targets' => $formatted_brand_targets,
-            'retailer_order_stats' => $retailerOrderStats,
-            'distributor_order_stats' => $distributorOrderStats,
-            'counts' => $counts,
-            'top_fieldstaff' => $topFieldStaff,
-        ]);
+            if (!$user->hasRole('salesmanager')) {
+                return response()->json(['error' => 'Only Sales Managers can access this dashboard'], 403);
+            }
+
+            $salesManager = $user->salesManager;
+            if (!$salesManager) {
+                return response()->json(['error' => 'Sales Manager profile not found'], 404);
+            }
+
+            $fieldStaffIds = \App\Models\FieldStaff::where(function ($q) use ($salesManager) {
+                $q->where('sales_manager_id', $salesManager->id)
+                    ->orWhere('sales_manager_id', $salesManager->user_id);
+            })->pluck('id');
+
+            // 1. Retailer Order Stats (Orders under this SM's fieldstaff or placed by them)
+            $retailerOrderQuery = RetailerOrder::where(function ($q) use ($fieldStaffIds) {
+                $q->whereHas('retailer', function ($q2) use ($fieldStaffIds) {
+                    $q2->whereIn('field_staff_id', $fieldStaffIds);
+                })->orWhereIn('fieldstaff_id', $fieldStaffIds);
+            })->whereBetween('created_at', [$startDate, $endDate]);
+
+            $retailerOrderStats = [
+                'total' => (clone $retailerOrderQuery)->count(),
+                'pending' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_PENDING)->count(),
+                'processing' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_PROCESSING)->count(),
+                'accepted' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_APPROVED)->count(),
+                'delivered' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_DELIVERED)->count(),
+                'cancelled' => (clone $retailerOrderQuery)->where('status', RetailerOrder::STATUS_CANCELLED)->count(),
+            ];
+
+            // 2. Distributor Order Stats (Orders by distributors assigned to this SM)
+            $distributorOrderQuery = DistributorOrder::whereHas('distributor', function ($q) use ($salesManager) {
+                $q->where('sales_manager_id', $salesManager->id);
+            })->whereBetween('created_at', [$startDate, $endDate]);
+
+            $distributorOrderStats = [
+                'total' => (clone $distributorOrderQuery)->count(),
+                'pending' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_PENDING)->count(),
+                'processing' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_PROCESSING)->count(),
+                'accepted' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_APPROVED)->count(),
+                'delivered' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_DELIVERED)->count(),
+                'cancelled' => (clone $distributorOrderQuery)->where('status', DistributorOrder::STATUS_CANCELLED)->count(),
+            ];
+
+            // 3. Counts
+            $counts = [
+                'distributors' => \App\Models\Distributor::where('sales_manager_id', $salesManager->id)->count(),
+                'field_staff' => $fieldStaffIds->count(),
+                'retailers' => Retailer::whereIn('field_staff_id', $fieldStaffIds)->count(),
+                'pending_retailer_approvals' => Retailer::whereIn('field_staff_id', $fieldStaffIds)
+                    ->whereHas('user', function ($q) {
+                        $q->where('status', 'inactive');
+                    })->count(),
+            ];
+
+            // 4. Top FieldStaff performance
+            $topFieldStaff = RetailerOrder::select('fieldstaff_id', DB::raw('COUNT(id) as total_orders'), DB::raw('SUM(total_amount) as total_revenue'))
+                ->where(function ($q) use ($fieldStaffIds) {
+                    $q->whereIn('fieldstaff_id', $fieldStaffIds)
+                        ->orWhereHas('retailer', function ($qr) use ($fieldStaffIds) {
+                            $qr->whereIn('field_staff_id', $fieldStaffIds);
+                        });
+                })
+                ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED)
+                ->whereBetween('delivered_at', [$startDate, $endDate])
+                ->groupBy('fieldstaff_id')->orderByDesc('total_orders')->take(5)
+                ->with('fieldStaff.user')->get();
+
+            // Aggregate targets and achievements
+            $monthStr = $startDate->format('m');
+            $yearStr = $startDate->format('Y');
+
+            $totalTarget = 0;
+            $totalAchieved = 0;
+            $brand_targets = [];
+            $uniqueBrands = \App\Models\Brand::pluck('name');
+
+            foreach ($uniqueBrands as $brand) {
+                $brand_targets[$brand] = [
+                    'brand' => $brand,
+                    'target' => 0,
+                    'achieved' => 0,
+                ];
+            }
+
+            $fieldStaffs = \App\Models\FieldStaff::whereIn('id', $fieldStaffIds)->get();
+            foreach ($fieldStaffs as $fs) {
+                // Achievement
+                $totalAchieved += $fs->getAchievedAmountForMonth($monthStr, $yearStr);
+
+                // Target
+                $fsTargets = $fs->salesTargets()
+                    ->where('year', $yearStr)
+                    ->where('month', $startDate->format('F'))
+                    ->get();
+                $totalTarget += $fsTargets->sum('amount');
+
+                foreach ($uniqueBrands as $brand) {
+                    $bTarget = $fsTargets->where('brand', $brand)->first();
+                    $bTargetAmount = $bTarget ? $bTarget->amount : 0;
+                    $bAchieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr, $brand);
+
+                    $brand_targets[$brand]['target'] += $bTargetAmount;
+                    $brand_targets[$brand]['achieved'] += $bAchieved;
+                }
+            }
+
+            // Format brand_targets array
+            $formatted_brand_targets = [];
+            foreach ($brand_targets as $bt) {
+                $formatted_brand_targets[] = [
+                    'brand' => $bt['brand'],
+                    'target' => number_format($bt['target'], 2, '.', ''),
+                    'achievement' => number_format($bt['achieved'], 2, '.', ''),
+                    'remaining' => number_format(max(0, $bt['target'] - $bt['achieved']), 2, '.', ''),
+                    'achievement_percent' => $bt['target'] > 0 ? round(($bt['achieved'] / $bt['target']) * 100, 2) : 0
+                ];
+            }
+
+            return response()->json([
+                'period' => $period,
+                'target' => round($totalTarget, 2),
+                'achieved' => round($totalAchieved, 2),
+                'remaining' => max(0, round($totalTarget - $totalAchieved, 2)),
+                'brand_targets' => $formatted_brand_targets,
+                'retailer_order_stats' => $retailerOrderStats,
+                'distributor_order_stats' => $distributorOrderStats,
+                'counts' => $counts,
+                'top_fieldstaff' => $topFieldStaff,
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Exception Caught',
@@ -583,7 +583,7 @@ class SalesManagerDashboardApiController extends Controller
             ->map(function ($staff) {
                 $targetAmount = $staff->getCurrentMonthTargets()->sum('amount');
                 $achievedAmount = $staff->getCurrentMonthAchieved();
-                
+
                 $staff->target = round($targetAmount, 2);
                 $staff->achieved = round($achievedAmount, 2);
                 $staff->remaining = max(0, round($targetAmount - $achievedAmount, 2));
@@ -807,7 +807,7 @@ class SalesManagerDashboardApiController extends Controller
                 'status' => $order->status,
                 'payment_status' => $order->payment_status ?? null,
                 'placed_at' => $order->placed_at ? $order->placed_at->format('Y-m-d H:i:s') : null,
-                'items' => $this->consolidateFreeItems($order->items->groupBy(function($item) {
+                'items' => $this->consolidateFreeItems($order->items->groupBy(function ($item) {
                     $side = $item->side ? trim(strtolower($item->side)) : '';
                     $size = $item->size ? trim(strtolower($item->size)) : '';
                     $isFree = $item->unit_price == 0 ? 'free' : 'paid';
@@ -816,7 +816,7 @@ class SalesManagerDashboardApiController extends Controller
                     $item = $group->first();
                     $isFreeItem = $item->unit_price == 0;
                     $baseName = $item->product_name ?? $item->product->product_name ?? 'N/A';
-                    
+
                     return [
                         'id' => $item->id,
                         'product_id' => $item->product_id,
@@ -1517,8 +1517,8 @@ class SalesManagerDashboardApiController extends Controller
         $retailerOrder = RetailerOrder::findOrFail($id);
 
         $fieldStaffIds = $salesManager->fieldStaffs->pluck('id')->toArray();
-        $isOwner = in_array($retailerOrder->fieldstaff_id, $fieldStaffIds) || 
-                   ($retailerOrder->retailer && in_array($retailerOrder->retailer->field_staff_id, $fieldStaffIds));
+        $isOwner = in_array($retailerOrder->fieldstaff_id, $fieldStaffIds) ||
+            ($retailerOrder->retailer && in_array($retailerOrder->retailer->field_staff_id, $fieldStaffIds));
 
         if (!$isOwner) {
             return response()->json(['error' => 'You are not authorized to edit this order.'], 403);
@@ -1540,8 +1540,8 @@ class SalesManagerDashboardApiController extends Controller
         $metadata['is_edited'] = true;
         $metadata['last_edited_by'] = $user->name . ' (Sales Manager)';
         $metadata['last_edited_at'] = now()->toDateTimeString();
-        
-        $snapshot = $retailerOrder->items->map(function($item) {
+
+        $snapshot = $retailerOrder->items->map(function ($item) {
             return [
                 'id' => $item->id,
                 'product_id' => $item->product_id,
@@ -1610,7 +1610,7 @@ class SalesManagerDashboardApiController extends Controller
                 $unit = $itemData['unit'] ?? 'Nos';
                 $side = $itemData['side'] ?? null;
                 $size = $itemData['size'] ?? null;
-                
+
                 $price = (float)$product->ptr;
                 $gstRate = (float)($product->gst ?? 0);
                 $taxableSubtotal = $qty * $price;
@@ -1672,6 +1672,174 @@ class SalesManagerDashboardApiController extends Controller
             'success' => true,
             'message' => 'Order updated successfully.',
             'order' => $retailerOrder->load(['items', 'retailer.district', 'retailer.area'])
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/sales-manager/targets",
+     *     tags={"Sales Manager Dashboard"},
+     *     summary="Get monthly targets and achievements",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="month", in="query", required=false, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="year", in="query", required=false, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Successful operation")
+     * )
+     */
+    public function getTargetsByMonth(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) {
+            return response()->json(['error' => 'Unauthorized.'], 403);
+        }
+
+        $manager = $user->salesManager;
+        if (!$manager) {
+            return response()->json(['error' => 'Sales Manager profile not found'], 404);
+        }
+
+        $month = $request->get('month', now()->month);
+        $year = $request->get('year', now()->year);
+
+        $monthStr = str_pad($month, 2, '0', STR_PAD_LEFT);
+        $yearStr = (string)$year;
+        $monthName = \Carbon\Carbon::createFromDate($year, $month, 1)->format('F');
+
+        $fieldStaffIds = $manager->fieldStaffs()->pluck('id')->toArray();
+
+        $totalTarget = 0;
+        $totalAchieved = 0;
+        $brand_targets = [];
+        $uniqueBrands = \App\Models\Brand::pluck('name');
+
+        foreach ($uniqueBrands as $brand) {
+            $brand_targets[$brand] = [
+                'brand' => $brand,
+                'target' => 0,
+                'achieved' => 0,
+            ];
+        }
+
+        $fieldStaffs = \App\Models\FieldStaff::whereIn('id', $fieldStaffIds)->get();
+        foreach ($fieldStaffs as $fs) {
+            $totalAchieved += $fs->getAchievedAmountForMonth($monthStr, $yearStr);
+
+            $fsTargets = $fs->salesTargets()
+                ->where('year', $yearStr)
+                ->where('month', $monthName)
+                ->get();
+            $totalTarget += $fsTargets->sum('amount');
+
+            foreach ($uniqueBrands as $brand) {
+                $bTarget = $fsTargets->where('brand', $brand)->first();
+                $bTargetAmount = $bTarget ? $bTarget->amount : 0;
+                $bAchieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr, $brand);
+
+                $brand_targets[$brand]['target'] += $bTargetAmount;
+                $brand_targets[$brand]['achieved'] += $bAchieved;
+            }
+        }
+
+        $formatted_brand_targets = [];
+        foreach ($brand_targets as $bt) {
+            $formatted_brand_targets[] = [
+                'brand' => $bt['brand'],
+                'target' => number_format($bt['target'], 2, '.', ''),
+                'achievement' => number_format($bt['achieved'], 2, '.', ''),
+                'remaining' => number_format(max(0, $bt['target'] - $bt['achieved']), 2, '.', ''),
+                'achievement_percent' => $bt['target'] > 0 ? round(($bt['achieved'] / $bt['target']) * 100, 2) : 0
+            ];
+        }
+
+        return response()->json([
+            'period' => 'monthly',
+            'target' => round($totalTarget, 2),
+            'achieved' => round($totalAchieved, 2),
+            'remaining' => max(0, round($totalTarget - $totalAchieved, 2)),
+            'brand_targets' => $formatted_brand_targets,
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/sales-manager/fieldstaff-targets",
+     *     tags={"Sales Manager Dashboard"},
+     *     summary="Get monthly targets and achievements for all field staff under the manager",
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="month", in="query", required=false, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="year", in="query", required=false, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Successful operation")
+     * )
+     */
+    public function getFieldstaffTargetsByMonth(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) {
+            return response()->json(['error' => 'Unauthorized.'], 403);
+        }
+
+        $manager = $user->salesManager;
+        if (!$manager) {
+            return response()->json(['error' => 'Sales Manager profile not found'], 404);
+        }
+
+        $month = $request->get('month', now()->month);
+        $year = $request->get('year', now()->year);
+
+        $monthStr = str_pad($month, 2, '0', STR_PAD_LEFT);
+        $yearStr = (string)$year;
+        $monthName = \Carbon\Carbon::createFromDate($year, $month, 1)->format('F');
+
+        $fieldStaffs = \App\Models\FieldStaff::with('user')
+            ->where(function ($q) use ($manager) {
+                $q->where('sales_manager_id', $manager->id)
+                    ->orWhere('sales_manager_id', $manager->user_id);
+            })
+            ->get();
+
+        $uniqueBrands = \App\Models\Brand::pluck('name');
+
+        $result = [];
+
+        foreach ($fieldStaffs as $fs) {
+            $totalAchieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr);
+
+            $fsTargets = $fs->salesTargets()
+                ->where('year', $yearStr)
+                ->where('month', $monthName)
+                ->get();
+            $totalTarget = $fsTargets->sum('amount');
+
+            $brand_targets = [];
+            foreach ($uniqueBrands as $brand) {
+                $bTarget = $fsTargets->where('brand', $brand)->first();
+                $bTargetAmount = $bTarget ? $bTarget->amount : 0;
+                $bAchieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr, $brand);
+
+                $brand_targets[] = [
+                    'brand' => $brand,
+                    'target' => number_format($bTargetAmount, 2, '.', ''),
+                    'achievement' => number_format($bAchieved, 2, '.', ''),
+                    'remaining' => number_format(max(0, $bTargetAmount - $bAchieved), 2, '.', ''),
+                    'achievement_percent' => $bTargetAmount > 0 ? round(($bAchieved / $bTargetAmount) * 100, 2) : 0
+                ];
+            }
+
+            $result[] = [
+                'fieldstaff_id' => $fs->id,
+                'name' => $fs->user->name ?? 'Unknown',
+                'target' => round($totalTarget, 2),
+                'achieved' => round($totalAchieved, 2),
+                'remaining' => max(0, round($totalTarget - $totalAchieved, 2)),
+                'brand_targets' => $brand_targets
+            ];
+        }
+
+        return response()->json([
+            'period' => 'monthly',
+            'month' => (int)$month,
+            'year' => (int)$year,
+            'data' => $result
         ]);
     }
 }
