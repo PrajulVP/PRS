@@ -104,7 +104,6 @@ class FieldStaff extends Model
             })
             ->whereIn('retailer_orders.status', [
                 \App\Models\RetailerOrder::STATUS_APPROVED,
-                \App\Models\RetailerOrder::STATUS_PROCESSING,
                 \App\Models\RetailerOrder::STATUS_DELIVERED
             ])
             ->whereMonth('retailer_orders.created_at', $month)
