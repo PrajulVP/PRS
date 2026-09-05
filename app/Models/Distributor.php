@@ -35,6 +35,11 @@ class Distributor extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function fieldStaffs()
+    {
+        return $this->belongsToMany(FieldStaff::class, 'distributor_fieldstaff', 'distributor_id', 'fieldstaff_id');
+    }
+
     public function district()
     {
         return $this->belongsTo(District::class);

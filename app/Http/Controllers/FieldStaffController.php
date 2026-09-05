@@ -18,7 +18,7 @@ class FieldStaffController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = FieldStaff::with('user', 'salesManager.user');
+            $query = FieldStaff::with('user', 'salesManager.user', 'distributors');
 
             if ($request->filled('status') && $request->status !== 'all') {
                 $query->whereHas('user', function($q) use ($request) {
@@ -95,7 +95,9 @@ class FieldStaffController extends Controller
             'inactive' => (clone $statsQuery)->whereHas('user', fn($q) => $q->where('status', 'inactive'))->count(),
         ];
 
-        return view('admin.fieldstaffs.index', compact('salesManagers', 'stats'));
+        $distributors = \App\Models\Distributor::with('user')->get();
+
+        return view('admin.fieldstaffs.index', compact('salesManagers', 'stats', 'distributors'));
     }
 
     public function show(FieldStaff $field_staff)
@@ -111,6 +113,7 @@ class FieldStaffController extends Controller
             },
             'salesManager.user',
             'retailers.user',
+            'distributors.user',
             'salesTargets' => function ($q) {
                 $q->orderBy('year', 'desc')->orderBy('month', 'desc');
             }
@@ -221,6 +224,10 @@ class FieldStaffController extends Controller
             $fieldstaff->sales_manager_id = $currentUser->salesManager->id;
         }
         $fieldstaff->save();
+
+        if ($request->has('distributors')) {
+            $fieldstaff->distributors()->sync($request->distributors);
+        }
 
         /** @var \Illuminate\Database\Eloquent\Collection|\App\Models\User[] $admins */
         $admins = User::role(['admin', 'superadmin'])->get();
@@ -341,6 +348,12 @@ class FieldStaffController extends Controller
         }
 
         $field_staff->update($fieldstaffData);
+
+        if ($request->has('distributors')) {
+            $field_staff->distributors()->sync($request->distributors);
+        } else {
+            $field_staff->distributors()->sync([]);
+        }
 
         if ($request->ajax()) {
             return response()->json([

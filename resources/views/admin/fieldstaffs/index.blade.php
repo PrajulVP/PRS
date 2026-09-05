@@ -189,12 +189,31 @@
 
                         @if(Auth::user()->hasAnyRole(['admin', 'superadmin']))
                         <div class="row">
-                            <div class="col-md-12 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Sales Manager</label>
                                 <select name="sales_manager_id" class="form-select" required>
                                     <option value="">Select Sales Manager</option>
                                     @foreach ($salesManagers as $sm)
                                         <option value="{{ $sm->id }}">{{ $sm->user->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Assigned Distributors</label>
+                                <select name="distributors[]" class="form-select select2-multiple" multiple>
+                                    @foreach ($distributors as $distributor)
+                                        <option value="{{ $distributor->id }}">{{ $distributor->user->name }} ({{ $distributor->pincode ?? 'No Pincode' }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        @else
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-bold">Assigned Distributors</label>
+                                <select name="distributors[]" class="form-select select2-multiple" multiple>
+                                    @foreach ($distributors as $distributor)
+                                        <option value="{{ $distributor->id }}">{{ $distributor->user->name }} ({{ $distributor->pincode ?? 'No Pincode' }})</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -306,6 +325,23 @@
                                     @endforeach
                                 </select>
                             </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-bold">Assigned Distributors</label>
+                                <select name="distributors[]" id="edit_distributors" class="form-select select2-multiple" multiple>
+                                    @foreach ($distributors as $distributor)
+                                        <option value="{{ $distributor->id }}">{{ $distributor->user->name }} ({{ $distributor->pincode ?? 'No Pincode' }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @else
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-bold">Assigned Distributors</label>
+                                <select name="distributors[]" id="edit_distributors" class="form-select select2-multiple" multiple>
+                                    @foreach ($distributors as $distributor)
+                                        <option value="{{ $distributor->id }}">{{ $distributor->user->name }} ({{ $distributor->pincode ?? 'No Pincode' }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
                             @endif
                             <div class="col-md-12 mb-3">
                                 <label class="form-label fw-bold">Device UUID (Bound Device)</label>
@@ -399,6 +435,12 @@
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
+                                <button class="nav-link fw-bold" id="fs-distributor-tab" data-bs-toggle="tab"
+                                    data-bs-target="#fs-distributor-panel" type="button" role="tab">
+                                    <i class="fa fa-truck me-1"></i>Distributors (<span id="fsDistributorCount">0</span>)
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
                                 <button class="nav-link fw-bold" id="fs-activity-tab" data-bs-toggle="tab"
                                     data-bs-target="#fs-activity-panel" type="button" role="tab">
                                     <i class="fa fa-map-marker me-1"></i>Activity
@@ -458,13 +500,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-12">
-                                        <div class="d-flex flex-column gap-2 p-3 rounded" style="background: var(--med-bg-body);">
-                                            <div class="text-muted small fw-bold mb-2"><i class="fa fa-bullseye me-1"></i> Targets (This Month)</div>
-                                            <div id="fs_view_brand_targets" class="row g-2"></div>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
+                                     <div class="col-md-6">
                                         <div class="d-flex align-items-start gap-2 p-3 rounded"
                                             style="background: var(--med-bg-body);">
                                             <i class="fa fa-mobile mt-1 text-warning"></i>
@@ -472,6 +508,12 @@
                                                 <div class="text-muted small">Bound Device ID</div>
                                                 <div class="fw-semibold" id="fs_view_device">Not Bound</div>
                                             </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="d-flex flex-column gap-2 p-3 rounded" style="background: var(--med-bg-body);">
+                                            <div class="text-muted small fw-bold mb-2"><i class="fa fa-bullseye me-1"></i> Targets (This Month)</div>
+                                            <div id="fs_view_brand_targets" class="row g-2"></div>
                                         </div>
                                     </div>
                                     <div class="col-12">
@@ -505,6 +547,23 @@
                                         </thead>
                                         <tbody id="fs_view_retailers_body">
                                             <!-- Retailers injected via JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="fs-distributor-panel" role="tabpanel">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Distributor Name</th>
+                                                <th>Contact</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="fs_view_distributors_body">
+                                            <!-- Distributors injected via JS -->
                                         </tbody>
                                     </table>
                                 </div>
@@ -955,7 +1014,24 @@
 
                         $('#fs_view_device').text(fs.user.device_uuid || 'Not Bound');
 
-
+                        let distHtml = '';
+                        if (fs.distributors && fs.distributors.length > 0) {
+                            distHtml = fs.distributors.map(d => {
+                                let name = d.user ? d.user.name : 'Unknown';
+                                let contact = d.contact_no || 'N/A';
+                                let status = d.user && d.user.status === 'active' ? 'active' : 'inactive';
+                                let statusClass = status === 'active' ? 'status-badge-active' : 'status-badge-inactive';
+                                return `<tr>
+                                    <td><span class="fw-bold text-primary">${name}</span></td>
+                                    <td>${contact}</td>
+                                    <td><span class="status-badge ${statusClass}">${status}</span></td>
+                                </tr>`;
+                            }).join('');
+                        } else {
+                            distHtml = '<tr><td colspan="3">None</td></tr>';
+                        }
+                        $('#fs_view_distributors_body').html(distHtml);
+                        $('#fsDistributorCount').text(fs.distributors?.length || 0);
                         
                         let retHtml = fs.retailers?.map(ret => {
                             let retData = JSON.stringify(ret).replace(/"/g, '&quot;');
@@ -1122,6 +1198,15 @@
                 $('#edit_device_uuid').val(data.user.device_uuid || '');
                 $('#edit_latitude').val(data.latitude);
                 $('#edit_longitude').val(data.longitude);
+                
+                // Populate assigned distributors
+                if (data.distributors && data.distributors.length > 0) {
+                    var distIds = data.distributors.map(function(d) { return d.id; });
+                    $('#edit_distributors').val(distIds).trigger('change');
+                } else {
+                    $('#edit_distributors').val([]).trigger('change');
+                }
+
                 $('#editFieldStaffForm').attr('action', "{{ route('admin.field-staffs.update', ':id') }}".replace(':id', data.id));
                 $('#editFieldStaffModal').modal('show');
             });
@@ -1447,6 +1532,20 @@
                     }
                 });
             });
+            if ($.fn.select2) {
+                $('#createFieldStaffModal .select2-multiple').select2({
+                    placeholder: "Select distributors",
+                    allowClear: true,
+                    width: '100%',
+                    dropdownParent: $('#createFieldStaffModal')
+                });
+                $('#editFieldStaffModal .select2-multiple').select2({
+                    placeholder: "Select distributors",
+                    allowClear: true,
+                    width: '100%',
+                    dropdownParent: $('#editFieldStaffModal')
+                });
+            }
         });
     </script>
     <script

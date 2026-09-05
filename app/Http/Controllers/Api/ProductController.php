@@ -189,6 +189,12 @@ class ProductController extends Controller
             $query->where('district_id', $retailer->district_id);
         }
 
+        // If the logged in user is a Field Staff, filter by assigned distributors
+        if ($user && $user->hasRole('fieldstaff') && $user->fieldStaff) {
+            $assignedDistributorIds = $user->fieldStaff->distributors()->pluck('distributors.id')->toArray();
+            $query->whereIn('id', $assignedDistributorIds);
+        }
+
         $allDistributors = $query->get();
 
         $side = $request->query('side');

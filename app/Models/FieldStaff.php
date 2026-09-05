@@ -43,6 +43,11 @@ class FieldStaff extends Model
         return $this->hasMany(Retailer::class);
     }
 
+    public function distributors()
+    {
+        return $this->belongsToMany(Distributor::class, 'distributor_fieldstaff', 'fieldstaff_id', 'distributor_id');
+    }
+
     public function salesTargets(): HasMany
     {
         return $this->hasMany(SalesTarget::class);
