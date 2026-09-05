@@ -404,6 +404,7 @@
                                                 <th style="color: var(--med-text-main) !important;">Email</th>
                                                 <th style="color: var(--med-text-main) !important;">Contact</th>
                                                 <th style="color: var(--med-text-main) !important;">Target</th>
+                                                <th style="color: var(--med-text-main) !important;">Achieved</th>
                                                 <th style="color: var(--med-text-main) !important;">Status</th>
                                             </tr>
                                         </thead>
@@ -601,9 +602,10 @@
                                 <td class="text-main-theme">${fs.user.email}</td>
                                 <td class="text-main-theme">${fs.contact_no || 'N/A'}</td>
                                 <td class="text-main-theme fw-bold text-success">₹${parseFloat(fs.current_month_target_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td class="text-main-theme fw-bold text-primary">₹${parseFloat(fs.current_month_achieved_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                                 <td><span class="status-badge ${fs.user.status === 'active' ? 'status-badge-active' : 'status-badge-inactive'}">${fs.user.status}</span></td>
                             </tr>`;
-                        }).join('') || '<tr><td colspan="5">None</td></tr>';
+                        }).join('') || '<tr><td colspan="6">None</td></tr>';
                         $('#showFieldStaffBody').html(fsHtml);
                         $('#fieldStaffCount').text(smData.field_staffs?.length || 0);
 

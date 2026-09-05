@@ -15,6 +15,7 @@ class LoyaltyPointsController extends Controller
     {
         if ($type === 'brand') {
             $loyaltyRulesCollection = \App\Models\LoyaltySlab::join('brands', 'loyalty_slabs.brand_id', '=', 'brands.id')
+                ->where('loyalty_slabs.is_active', 1)
                 ->select('loyalty_slabs.*', 'brands.name as type')
                 ->orderBy('brands.name')
                 ->orderBy('min_points')
@@ -83,13 +84,19 @@ class LoyaltyPointsController extends Controller
                     'next_target' => $nextRule ? $nextRule->min_points : null,
                     'next_reward' => $nextRule ? $nextRule->gift_name : null,
                     'next_reward_options' => $nextRule ? (json_decode($nextRule->reward_options, true) ?: [$nextRule->gift_name]) : null,
-                    'achieved_rewards' => collect($achievedRules)->where('is_redeemed', false)->values()->toArray()
+                    'achieved_rewards' => collect($achievedRules)->where('is_redeemed', false)->values()->toArray(),
+                    'all_targets' => collect($rules)->map(function($rule) {
+                        return [
+                            'target' => $rule->min_points,
+                            'options' => json_decode($rule->reward_options, true) ?: [$rule->gift_name]
+                        ];
+                    })->sortBy('target')->values()->toArray()
                 ];
             }
             return $upcomingRewards;
         }
 
-        $loyaltyRules = \App\Models\LoyaltySlab::orderBy('min_points')->get();
+        $loyaltyRules = \App\Models\LoyaltySlab::where('is_active', 1)->orderBy('min_points')->get();
         
         $totalEarned = \App\Models\RetailerOrder::where('retailer_id', $retailer->id)
             ->where('status', \App\Models\RetailerOrder::STATUS_DELIVERED)
@@ -128,6 +135,12 @@ class LoyaltyPointsController extends Controller
                 'next_reward' => $nextRule ? $nextRule->gift_name : null,
                 'next_reward_options' => $nextRule ? (json_decode($nextRule->reward_options, true) ?: [$nextRule->gift_name]) : null,
                 'achieved_rewards' => $achievedRewards,
+                'all_targets' => collect($loyaltyRules)->map(function($rule) {
+                    return [
+                        'target' => $rule->min_points,
+                        'options' => json_decode($rule->reward_options, true) ?: [$rule->gift_name]
+                    ];
+                })->sortBy('target')->values()->toArray()
             ]
         ];
     }

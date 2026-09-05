@@ -73,8 +73,10 @@ class SalesManagerController extends Controller
             $fsTargets = $fs->getCurrentMonthTargets();
             $fsTargetSum = $fsTargets->sum('amount');
             $fs->setAttribute('current_month_target_amount', round($fsTargetSum, 2));
+            $fsAchieved = $fs->getCurrentMonthAchieved();
+            $fs->setAttribute('current_month_achieved_amount', round($fsAchieved, 2));
             $totalTarget += $fsTargetSum;
-            $totalAchieved += $fs->getCurrentMonthAchieved();
+            $totalAchieved += $fsAchieved;
             
             foreach ($uniqueBrands as $brand) {
                 $bTarget = $fsTargets->where('brand', $brand)->first();

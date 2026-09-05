@@ -183,20 +183,47 @@
                                             <div class="row align-items-center">
                                                 <!-- Brand Banner & Progress -->
                                                 <div class="col-lg-4 mb-4 mb-lg-0 border-end-lg" style="border-right: 1px solid #e2e8f0;">
-                                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                                <h6 class="fw-bold mb-0 text-primary text-uppercase">{{ $reward['brand'] }}</h6>
-                                                @if($reward['next_reward'])
-                                                    <span class="badge bg-light text-dark border" style="font-size: 11px;"><i class="fa fa-gift me-1 text-muted"></i>{{ $reward['next_reward'] }}</span>
-                                                @else
-                                                    <span class="badge bg-light text-muted border" style="font-size: 11px;"><i class="fa fa-star me-1"></i>Max Level</span>
-                                                @endif
-                                            </div>
+                                                    @php
+                                                        $brandColors = [
+                                                            'ATOMEDS' => ['bg' => 'rgba(13, 110, 253, 0.08)', 'text' => '#0d6efd', 'border' => 'rgba(13, 110, 253, 0.2)', 'pill_bg' => 'linear-gradient(45deg, #ff416c, #ff4b2b)'],
+                                                            'ATOMSHIELD' => ['bg' => 'rgba(13, 110, 253, 0.12)', 'text' => '#084298', 'border' => 'rgba(13, 110, 253, 0.3)', 'pill_bg' => 'linear-gradient(45deg, #f03e3e, #d9480f)'],
+                                                            'SUDHNEELGIRI' => ['bg' => 'rgba(13, 110, 253, 0.05)', 'text' => '#3d8bfd', 'border' => 'rgba(13, 110, 253, 0.15)', 'pill_bg' => 'linear-gradient(45deg, #e64980, #f76707)'],
+                                                        ];
+                                                        $bColor = $brandColors[strtoupper($reward['brand'])] ?? ['bg' => 'rgba(13, 110, 253, 0.1)', 'text' => '#0d6efd', 'border' => 'rgba(13, 110, 253, 0.2)', 'pill_bg' => 'linear-gradient(45deg, #ff416c, #ff4b2b)'];
+                                                    @endphp
+                                                    <div class="mb-3">
+                                                        <h6 class="fw-bold mb-2 text-uppercase" style="color: {{ $bColor['text'] }};">{{ $reward['brand'] }}</h6>
+                                                        @if(isset($reward['next_reward_options']) && is_array($reward['next_reward_options']) && count($reward['next_reward_options']) > 0)
+                                                            <div class="d-flex flex-wrap gap-1">
+                                                                @php 
+                                                                    $displayOptions = array_slice($reward['next_reward_options'], 0, 2); 
+                                                                    $hiddenCount = count($reward['next_reward_options']) - 2; 
+                                                                @endphp
+                                                                @foreach($displayOptions as $opt)
+                                                                    <span class="badge rounded-pill shadow-sm d-inline-flex align-items-center" style="background: {{ $bColor['text'] }}; color: white; border: 1px solid rgba(255,255,255,0.2); font-size: 10px; padding: 4px 8px; font-weight: 600; line-height: 1;">
+                                                                        <i class="fa fa-gift me-1" style="color: white; opacity: 0.9; font-size: 10px;"></i> <span>{{ $opt }}</span>
+                                                                    </span>
+                                                                @endforeach
+                                                                @if($hiddenCount > 0)
+                                                                    <span class="badge rounded-pill shadow-sm d-inline-flex align-items-center justify-content-center" style="background: {{ $bColor['pill_bg'] }}; border: 1px solid rgba(255,255,255,0.3); color: white; font-size: 10px; cursor: pointer; transition: all 0.2s; padding: 4px 8px; line-height: 1;" data-bs-toggle="modal" data-bs-target="#roadmapModal-{{ Str::slug($reward['brand']) }}">
+                                                                        +{{ $hiddenCount }} more (View Roadmap)
+                                                                    </span>
+                                                                @endif
+                                                            </div>
+                                                        @elseif($reward['next_reward'])
+                                                            <span class="badge rounded-pill shadow-sm d-inline-flex align-items-center" style="background: {{ $bColor['text'] }}; color: white; border: 1px solid rgba(255,255,255,0.2); font-size: 10px; padding: 4px 8px; font-weight: 600; line-height: 1;">
+                                                                <i class="fa fa-gift me-1" style="color: white; opacity: 0.9; font-size: 10px;"></i> <span>{{ $reward['next_reward'] }}</span>
+                                                            </span>
+                                                        @else
+                                                            <span class="badge bg-light text-muted border rounded-pill shadow-sm" style="font-size: 11px;"><i class="fa fa-star me-1"></i>Max Level</span>
+                                                        @endif
+                                                    </div>
                                             
                                             <!-- Points Info -->
                                             <div class="d-flex justify-content-between text-muted mb-1 fw-semibold" style="font-size: 12px;">
                                                 <span>Current Points: <span class="text-dark">{{ number_format($reward['current_total'], 2) }}</span></span>
                                                 @if($reward['next_target'])
-                                                    <span>Target: {{ number_format($reward['next_target'], 2) }}</span>
+                                                    <span>Target: <span class="badge rounded-pill shadow-sm ms-1" style="background: {{ $bColor['pill_bg'] }}; color: white; padding: 3px 8px; font-size: 11px;">{{ number_format($reward['next_target'], 0) }}</span></span>
                                                 @endif
                                             </div>
                                             
@@ -207,24 +234,95 @@
                                                             <div class="progress mb-2" style="height: 6px; border-radius: 3px; background-color: rgba(13, 110, 253, 0.1);">
                                                                 <div class="progress-bar bg-success" role="progressbar" style="width: {{ $progress }}%;"></div>
                                                             </div>
-                                                            <div class="text-end text-muted fw-semibold" style="font-size: 11px;">
-                                                                {{ number_format($reward['next_target'] - $reward['current_total'], 2) }} more for next reward
+                                                            <div class="mt-3 d-flex flex-wrap justify-content-end align-items-center gap-2">
+                                                                <button type="button" class="btn btn-sm shadow-sm text-nowrap d-flex align-items-center justify-content-center" style="background: white; color: {{ $bColor['text'] }}; border: 1px solid {{ $bColor['border'] }}; border-radius: 20px; font-weight: 700; height: 30px; padding: 0 12px;" data-bs-toggle="modal" data-bs-target="#roadmapModal-{{ Str::slug($reward['brand']) }}">
+                                                                    <i class="fa fa-map me-1 d-flex align-items-center" style="font-size: 12px; height: 100%;"></i> <span style="line-height: 1;">View Roadmap</span>
+                                                                </button>
+                                                                <div class="d-inline-flex align-items-center justify-content-center rounded-pill px-3 text-nowrap shadow-sm" style="background: {{ $bColor['pill_bg'] }}; color: white; font-size: 11px; font-weight: 700; border: 1px solid rgba(255,255,255,0.3); height: 30px;">
+                                                                    <i class="fa fa-lock me-1 d-flex align-items-center" style="font-size: 10px; height: 100%;"></i>
+                                                                    <span style="line-height: 1;">{{ number_format($reward['next_target'] - $reward['current_total'], 0) }} points to go!</span>
+                                                                </div>
                                                             </div>
                                                         @else
                                                             <div class="progress mb-2" style="height: 6px; border-radius: 3px; background-color: rgba(13, 110, 253, 0.1);">
-                                                                <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+                                                                <div class="progress-bar bg-success" role="progressbar" style="width: 100%;"></div>
                                                             </div>
-                                                            <div class="text-end text-muted fw-semibold" style="font-size: 11px;">
-                                                                All rewards unlocked
+                                                            <div class="mt-3 d-flex justify-content-end align-items-center gap-2">
+                                                                <button type="button" class="btn btn-sm shadow-sm text-nowrap d-flex align-items-center justify-content-center" style="background: white; color: {{ $bColor['text'] }}; border: 1px solid {{ $bColor['border'] }}; border-radius: 20px; font-weight: 600; height: 32px; padding: 0 12px;" data-bs-toggle="modal" data-bs-target="#roadmapModal-{{ Str::slug($reward['brand']) }}">
+                                                                    <i class="fa fa-list me-1"></i> View All Rewards
+                                                                </button>
+                                                                <div class="d-inline-flex align-items-center justify-content-center rounded-pill px-3 shadow-sm text-nowrap bg-light text-muted border" style="font-size: 11px; font-weight: 700; height: 32px;">
+                                                                    <i class="fa fa-star text-warning me-1" style="font-size: 12px;"></i>
+                                                                    <span>All rewards unlocked</span>
+                                                                </div>
                                                             </div>
                                                         @endif
+                                                        
+                                                        <!-- Roadmap Modal -->
+                                                        <div class="modal fade" id="roadmapModal-{{ Str::slug($reward['brand']) }}" tabindex="-1" aria-hidden="true">
+                                                            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                                                                <div class="modal-content border-0 rounded-4 shadow">
+                                                                    <div class="modal-header border-0 rounded-top-4" style="background: {{ $bColor['bg'] }};">
+                                                                        <h5 class="modal-title fw-bold" style="color: {{ $bColor['text'] }};"><i class="fa fa-map text-muted me-2"></i>{{ $reward['brand'] }} Reward Roadmap</h5>
+                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                    </div>
+                                                                    <div class="modal-body p-4">
+                                                                        <div class="position-relative">
+                                                                            <div class="position-absolute h-100" style="left: 15px; top: 0; width: 2px; background: #e2e8f0; z-index: 0;"></div>
+                                                                            @if(isset($reward['all_targets']) && count($reward['all_targets']) > 0)
+                                                                                @foreach($reward['all_targets'] as $targetIndex => $target)
+                                                                                    @php
+                                                                                        $isAchieved = $reward['current_total'] >= $target['target'];
+                                                                                        $isNext = !$isAchieved && $reward['next_target'] == $target['target'];
+                                                                                    @endphp
+                                                                                    <div class="d-flex align-items-center mb-4 position-relative" style="z-index: 1;">
+                                                                                        <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; flex-shrink: 0; background: {{ $isAchieved ? $bColor['pill_bg'] : ($isNext ? '#fff' : '#f1f5f9') }}; border: 2px solid {{ $isAchieved ? 'transparent' : ($isNext ? $bColor['text'] : '#cbd5e1') }}; color: {{ $isAchieved ? '#fff' : ($isNext ? $bColor['text'] : '#94a3b8') }}; box-shadow: {{ $isNext ? '0 0 0 4px ' . $bColor['bg'] : 'none' }};">
+                                                                                            <i class="fa {{ $isAchieved ? 'fa-check' : ($isNext ? 'fa-unlock' : 'fa-lock') }}" style="font-size: 12px;"></i>
+                                                                                        </div>
+                                                                                        <div class="flex-grow-1 p-3 rounded-3 shadow-sm border" style="background: {{ $isNext ? $bColor['bg'] : '#fff' }}; border-color: {{ $isNext ? $bColor['border'] : '#e2e8f0' }} !important;">
+                                                                                            <div class="d-flex justify-content-between mb-1">
+                                                                                                <span class="fw-bold" style="color: {{ $isAchieved ? $bColor['text'] : '#475569' }};">{{ number_format($target['target'], 0) }} Pts</span>
+                                                                                                @if($isAchieved)
+                                                                                                    <span class="badge bg-success" style="font-size: 9px; padding: 3px 6px;">Unlocked</span>
+                                                                                                @elseif($isNext)
+                                                                                                    <span class="badge" style="background: {{ $bColor['text'] }}; font-size: 9px; padding: 3px 6px;">Next Goal</span>
+                                                                                                @endif
+                                                                                            </div>
+                                                                                            <div class="d-flex flex-wrap gap-2 mt-3">
+                                                                                                @foreach($target['options'] as $opt)
+                                                                                                    @if($isAchieved)
+                                                                                                        <span class="badge rounded-pill shadow-sm d-inline-flex align-items-center" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; font-size: 10px; padding: 5px 10px; font-weight: 600;">
+                                                                                                            <i class="fa fa-check-circle me-1" style="font-size: 11px;"></i>{{ $opt }}
+                                                                                                        </span>
+                                                                                                    @elseif($isNext)
+                                                                                                        <span class="badge rounded-pill shadow-sm d-inline-flex align-items-center" style="background: {{ $bColor['text'] }}; color: white; border: 1px solid rgba(255,255,255,0.2); font-size: 10px; padding: 5px 10px; font-weight: 600;">
+                                                                                                            <i class="fa fa-gift me-1" style="color: white; font-size: 11px;"></i>{{ $opt }}
+                                                                                                        </span>
+                                                                                                    @else
+                                                                                                        <span class="badge rounded-pill shadow-sm d-inline-flex align-items-center" style="background: white; color: #64748b; border: 1px dashed #cbd5e1; font-size: 10px; padding: 5px 10px; font-weight: 500;">
+                                                                                                            <i class="fa fa-gift me-1" style="color: #94a3b8; font-size: 11px;"></i>{{ $opt }}
+                                                                                                        </span>
+                                                                                                    @endif
+                                                                                                @endforeach
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                @endforeach
+                                                                            @else
+                                                                                <div class="text-center text-muted py-3">No targets available.</div>
+                                                                            @endif
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
-
+                                                    
                                                     <!-- Claimable Rewards -->
                                                     <div class="col-lg-8 ps-lg-4">
                                                         @if(count($reward['achieved_rewards']) > 0)
                                                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                                                <h6 class="mb-0 text-dark fw-bold"><i class="fa fa-gift text-primary me-2"></i>Claimable Rewards</h6>
+                                                                <h6 class="mb-0 text-dark fw-bold"><i class="fa fa-gift me-2" style="color: {{ $bColor['text'] }};"></i>Claimable Rewards</h6>
                                                                 <span class="badge bg-success rounded-pill">{{ count($reward['achieved_rewards']) }} Available</span>
                                                             </div>
                                                             <div class="row row-cols-1 row-cols-md-2 g-3">
@@ -497,4 +595,69 @@
             color: #0ea5e9;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        @keyframes pulse-attention {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 65, 108, 0.7); }
+            50% { transform: scale(1.03); box-shadow: 0 0 0 10px rgba(255, 65, 108, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 65, 108, 0); }
+        }
+        @keyframes bounce-icon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session('success'))
+                // Fire confetti
+                var duration = 3000;
+                var animationEnd = Date.now() + duration;
+                var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 10000 };
+
+                function randomInRange(min, max) {
+                    return Math.random() * (max - min) + min;
+                }
+
+                var interval = setInterval(function() {
+                    var timeLeft = animationEnd - Date.now();
+                    if (timeLeft <= 0) {
+                        return clearInterval(interval);
+                    }
+                    var particleCount = 50 * (timeLeft / duration);
+                    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+                }, 250);
+
+                // Premium SweetAlert
+                Swal.fire({
+                    html: `
+                        <div style="padding: 20px;">
+                            <div style="font-size: 60px; margin-bottom: 10px; animation: bounce-icon 2s infinite;">🏆</div>
+                            <h2 style="font-weight: 800; font-size: 28px; background: linear-gradient(135deg, #FFB75E 0%, #ED8F03 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 15px;">Reward Claimed!</h2>
+                            <p style="font-size: 16px; color: #475569; font-weight: 500;">{{ session('success') }}</p>
+                        </div>
+                    `,
+                    background: '#ffffff',
+                    backdrop: `rgba(15, 23, 42, 0.85)`,
+                    showConfirmButton: true,
+                    confirmButtonText: 'Awesome!',
+                    confirmButtonColor: '#0ea5e9',
+                    icon: undefined,
+                    customClass: {
+                        popup: 'rounded-4 shadow-lg border-0',
+                        confirmButton: 'rounded-pill px-4 py-2 fw-bold shadow-sm',
+                        icon: 'd-none border-0'
+                    },
+                    showClass: {
+                        popup: 'animate__animated animate__zoomIn animate__faster'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__zoomOut animate__faster'
+                    }
+                });
+            @endif
+        });
+    </script>
 @endpush

@@ -109,9 +109,13 @@ class FieldStaff extends Model
             ->whereMonth('retailer_orders.created_at', $month)
             ->whereYear('retailer_orders.created_at', $year);
         if ($brand) {
-            $query->join('products', 'retailer_order_items.product_id', '=', 'products.id')
-                ->join('brands', 'products.brand_id', '=', 'brands.id')
-                ->where('brands.name', $brand);
+            $brandModel = \App\Models\Brand::where('name', $brand)->first();
+            if ($brandModel) {
+                $query->join('products', 'retailer_order_items.product_id', '=', 'products.id')
+                    ->where('products.brand_id', $brandModel->id);
+            } else {
+                return 0; // If brand doesn't exist, achievement is 0
+            }
         }
 
         return $query->sum(\Illuminate\Support\Facades\DB::raw('retailer_order_items.unit_price * retailer_order_items.quantity'));
