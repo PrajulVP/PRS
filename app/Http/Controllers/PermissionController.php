@@ -14,7 +14,7 @@ class PermissionController extends Controller
     public function index()
     {
         $roles = Role::all();
-        $customOrder = ['superadmin', 'admin', 'distributor', 'salesmanager', 'fieldstaff', 'retailer'];
+        $customOrder = ['superadmin', 'admin', 'salesmanager', 'fieldstaff', 'distributor', 'retailer'];
 
         $roles = $roles->sortBy(function ($role) use ($customOrder) {
             $index = array_search($role->name, $customOrder);

@@ -383,7 +383,7 @@
                 </a>
               </li>
               @endif
-              @if (Auth::user()->hasPermissionToCategory('field_staff_reports', 'view') || Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
+              @if (Auth::user()->hasPermissionToCategory('staff_monitoring', 'view') || Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
               <li>
                 <a class="{{ (request()->routeIs('admin.field-staff.tracking') || request()->routeIs('admin.field-staff.tracking-map')) ? 'active' : '' }}" href="{{ route('admin.field-staff.tracking') }}">
                    Staff Tracking
@@ -395,19 +395,7 @@
                 </a>
               </li>
               @endif
-              {{-- <li><a href="{{ route('admin.field-staff.expenses') }}">
-                Staff Expenses
-                @if($actionCounts['staff_expenses'] > 0)
-                    <span id="badge-staff-expenses" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $actionCounts['staff_expenses'] }}</span>
-                @endif
-              </a></li>
-              <li><a href="{{ route('admin.field-staff.leaves') }}">
-                Staff Leaves
-                @if($actionCounts['staff_leaves'] > 0)
-                    <span id="badge-staff-leaves" class="sidebar-badge" style="padding: 2px 6px !important; font-size: 10px !important; font-weight: bold !important; color: #1e3a5f !important; background-color: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; line-height: 1 !important; box-shadow: none !important; margin-left: 8px;">{{ $actionCounts['staff_leaves'] }}</span>
-                @endif
-              </a></li> --}}
-              @if (Auth::user()->hasPermissionToCategory('field_staff', 'edit') || Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
+              @if (Auth::user()->hasPermissionToCategory('staff_targets', 'view') || Auth::user()->hasPermissionToCategory('staff_targets', 'edit') || Auth::user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
               <li><a class="{{ request()->routeIs('admin.field-staff.targets') ? 'active' : '' }}" href="{{ route('admin.field-staff.targets') }}">
                 Staff Targets
               </a></li>

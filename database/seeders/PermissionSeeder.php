@@ -3,9 +3,11 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission; // Use Spatie Permission model
+use Spatie\Permission\Models\Permission;
 use App\Models\PermissionCategory;
-use App\Models\PermissionGroup; // Import PermissionGroup model
+use App\Models\PermissionGroup;
+use App\Models\Role;
+use Illuminate\Support\Facades\DB;
 
 class PermissionSeeder extends Seeder
 {
@@ -16,110 +18,184 @@ class PermissionSeeder extends Seeder
      */
     public function run()
     {
-        // Standardize groups (Search by old/new names to prevent duplicates)
-        $ordersGroup = $this->getOrCreateGroup('Orders');
-        $userManagementGroup = $this->getOrCreateGroup('User Management');
-        $regionsAreasGroup = $this->getOrCreateGroup('Regions & Areas', ['Regions & Area']);
-        $productsGroup = $this->getOrCreateGroup('Products');
+        // 1. Create / Update Standard Groups
+        $groups = [
+            'Reports' => $this->getOrCreateGroup('Reports'),
+            'User Management' => $this->getOrCreateGroup('User Management'),
+            'Regions & Areas' => $this->getOrCreateGroup('Regions & Areas', ['Regions & Area']),
+            'Products & Inventory' => $this->getOrCreateGroup('Products & Inventory', ['Products']),
+            'Orders & Returns' => $this->getOrCreateGroup('Orders & Returns', ['Orders']),
+            'Approvals' => $this->getOrCreateGroup('Approvals'),
+            'Staff Monitoring' => $this->getOrCreateGroup('Staff Monitoring'),
+            'Loyalty & Credits' => $this->getOrCreateGroup('Loyalty & Credits'),
+        ];
 
-
-        // Explicitly create all Permission Categories
+        // 2. Define Category Structure matching the prompt & sidebar exact requirements
         $categoriesToCreate = [
-            // User Management Group (Users removed as requested)
+            // --- Reports Group ---
+            [
+                'short_code' => 'distributor_reports',
+                'name' => 'Distributor Reports',
+                'perm_group_id' => $groups['Reports']->id,
+                'enable_view' => true, 'enable_add' => false, 'enable_edit' => false, 'enable_delete' => false,
+            ],
+            [
+                'short_code' => 'retailer_reports',
+                'name' => 'Retailer Reports',
+                'perm_group_id' => $groups['Reports']->id,
+                'enable_view' => true, 'enable_add' => false, 'enable_edit' => false, 'enable_delete' => false,
+            ],
+            [
+                'short_code' => 'performance_reports',
+                'name' => 'Field Staff Performance',
+                'perm_group_id' => $groups['Reports']->id,
+                'enable_view' => true, 'enable_add' => false, 'enable_edit' => false, 'enable_delete' => false,
+            ],
+            [
+                'short_code' => 'product_reports',
+                'name' => 'Product Performance',
+                'perm_group_id' => $groups['Reports']->id,
+                'enable_view' => true, 'enable_add' => false, 'enable_edit' => false, 'enable_delete' => false,
+            ],
+            [
+                'short_code' => 'master_order_reports',
+                'name' => 'Master Order Analytics',
+                'perm_group_id' => $groups['Reports']->id,
+                'enable_view' => true, 'enable_add' => false, 'enable_edit' => false, 'enable_delete' => false,
+            ],
+            [
+                'short_code' => 'executive_reports',
+                'name' => 'Executive Reports',
+                'perm_group_id' => $groups['Reports']->id,
+                'enable_view' => true, 'enable_add' => false, 'enable_edit' => false, 'enable_delete' => false,
+            ],
+
+            // --- User Management Group ---
             [
                 'short_code' => 'distributors',
                 'name' => 'Distributors',
-                'perm_group_id' => $userManagementGroup->id,
-                'enable_view' => true,
-                'enable_add' => true,
-                'enable_edit' => true,
-                'enable_delete' => true,
+                'perm_group_id' => $groups['User Management']->id,
+                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
             ],
             [
                 'short_code' => 'sales_managers',
                 'name' => 'Sales Managers',
-                'perm_group_id' => $userManagementGroup->id,
-                'enable_view' => true,
-                'enable_add' => true,
-                'enable_edit' => true,
-                'enable_delete' => true,
+                'perm_group_id' => $groups['User Management']->id,
+                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
             ],
             [
                 'short_code' => 'field_staff',
                 'name' => 'Field Staff',
-                'perm_group_id' => $userManagementGroup->id,
-                'enable_view' => true,
-                'enable_add' => true,
-                'enable_edit' => true,
-                'enable_delete' => true,
+                'perm_group_id' => $groups['User Management']->id,
+                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
             ],
             [
                 'short_code' => 'retailers',
                 'name' => 'Retailers',
-                'perm_group_id' => $userManagementGroup->id,
-                'enable_view' => true,
-                'enable_add' => true,
-                'enable_edit' => true,
-                'enable_delete' => true,
+                'perm_group_id' => $groups['User Management']->id,
+                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
             ],
-            // Regions & Areas Group
+
+            // --- Regions & Areas Group ---
             [
                 'short_code' => 'districts',
                 'name' => 'Districts',
-                'perm_group_id' => $regionsAreasGroup->id,
-                'enable_view' => true,
-                'enable_add' => true,
-                'enable_edit' => true,
-                'enable_delete' => true,
+                'perm_group_id' => $groups['Regions & Areas']->id,
+                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
             ],
             [
                 'short_code' => 'areas',
                 'name' => 'Areas',
-                'perm_group_id' => $regionsAreasGroup->id,
-                'enable_view' => true,
-                'enable_add' => true,
-                'enable_edit' => true,
-                'enable_delete' => true,
+                'perm_group_id' => $groups['Regions & Areas']->id,
+                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
             ],
-            // Products Group
+
+            // --- Products & Inventory Group ---
             [
                 'short_code' => 'products',
                 'name' => 'Products',
-                'perm_group_id' => $productsGroup->id,
-                'enable_view' => true,
-                'enable_add' => true,
-                'enable_edit' => true,
-                'enable_delete' => true,
+                'perm_group_id' => $groups['Products & Inventory']->id,
+                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
             ],
             [
                 'short_code' => 'inventories',
                 'name' => 'Inventories',
-                'perm_group_id' => $productsGroup->id,
-                'enable_view' => true,
-                'enable_add' => true,
-                'enable_edit' => true,
-                'enable_delete' => true,
+                'perm_group_id' => $groups['Products & Inventory']->id,
+                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
             ],
-            // Orders Group
+
+            // --- Orders & Returns Group ---
             [
                 'short_code' => 'retailer_orders',
                 'name' => 'Retailer Orders',
-                'perm_group_id' => $ordersGroup->id,
-                'enable_view' => true,
-                'enable_add' => true,
-                'enable_edit' => true,
-                'enable_delete' => true,
+                'perm_group_id' => $groups['Orders & Returns']->id,
+                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
+            ],
+            [
+                'short_code' => 'distributor_orders',
+                'name' => 'Distributor Orders',
+                'perm_group_id' => $groups['Orders & Returns']->id,
+                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => true,
+            ],
+            [
+                'short_code' => 'product_returns',
+                'name' => 'Return Products',
+                'perm_group_id' => $groups['Orders & Returns']->id,
+                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => false,
+            ],
+
+            // --- Approvals Group ---
+            [
+                'short_code' => 'retailer_approvals',
+                'name' => 'Retailer Approvals',
+                'perm_group_id' => $groups['Approvals']->id,
+                'enable_view' => true, 'enable_add' => false, 'enable_edit' => true, 'enable_delete' => false,
+            ],
+            [
+                'short_code' => 'distributor_approvals',
+                'name' => 'Distributor Approvals',
+                'perm_group_id' => $groups['Approvals']->id,
+                'enable_view' => true, 'enable_add' => false, 'enable_edit' => true, 'enable_delete' => false,
+            ],
+
+            // --- Staff Monitoring Group ---
+            [
+                'short_code' => 'staff_monitoring',
+                'name' => 'Staff Monitoring & Tracking',
+                'perm_group_id' => $groups['Staff Monitoring']->id,
+                'enable_view' => true, 'enable_add' => false, 'enable_edit' => true, 'enable_delete' => false,
+            ],
+            [
+                'short_code' => 'staff_targets',
+                'name' => 'Staff Targets & Visits',
+                'perm_group_id' => $groups['Staff Monitoring']->id,
+                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => false,
+            ],
+
+            // --- Loyalty & Credits Group ---
+            [
+                'short_code' => 'loyalty_points',
+                'name' => 'Loyalty Points & Rewards',
+                'perm_group_id' => $groups['Loyalty & Credits']->id,
+                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => false,
+            ],
+            [
+                'short_code' => 'wallets_credits',
+                'name' => 'Wallets & Credits',
+                'perm_group_id' => $groups['Loyalty & Credits']->id,
+                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => false,
             ],
         ];
 
+        // 3. Upsert Categories
         foreach ($categoriesToCreate as $categoryData) {
-            PermissionCategory::firstOrCreate(
+            PermissionCategory::updateOrCreate(
                 ['short_code' => $categoryData['short_code']],
                 $categoryData
             );
         }
 
-        // Now retrieve all permission categories after they have been created
+        // 4. Create Spatie Permissions for each enabled action
         $permissionCategories = PermissionCategory::all();
         $actions = ['view', 'add', 'edit', 'delete'];
 
@@ -140,60 +216,34 @@ class PermissionSeeder extends Seeder
             }
         }
 
-        // Assign existing user-related permissions to the "Users" category
-        // These are specific permissions that don't follow the action short_code pattern directly
-        $usersCategory = PermissionCategory::where('short_code', 'users')->first();
-        if ($usersCategory) {
-            $userPermissions = [
-                'add user',
-                'create distributors',
-                'create managers',
-                'create fieldstaff',
-                'create retailers',
-            ];
+        // 5. Ensure Superadmin & Admin Roles have full permissions enabled in custom `roles_permissions`
+        $allRoles = Role::all();
+        $allCategories = PermissionCategory::all();
 
-            foreach ($userPermissions as $permissionName) {
-                Permission::updateOrCreate(
-                    [
-                        'name' => $permissionName,
-                        'guard_name' => 'web',
-                    ],
-                    [
-                        'permission_category_id' => $usersCategory->id,
-                    ]
-                );
+        foreach ($allRoles as $role) {
+            if (in_array($role->name, ['superadmin', 'admin'])) {
+                foreach ($allCategories as $cat) {
+                    DB::table('roles_permissions')->updateOrInsert(
+                        [
+                            'role_id' => $role->id,
+                            'permission_category_id' => $cat->id,
+                        ],
+                        [
+                            'can_view' => true,
+                            'can_add' => (bool) $cat->enable_add,
+                            'can_edit' => (bool) $cat->enable_edit,
+                            'can_delete' => (bool) $cat->enable_delete,
+                            'updated_at' => now(),
+                            'created_at' => now(),
+                        ]
+                    );
+                }
             }
         }
 
-        // Add specific permissions for Retailer Orders
-        $retailerOrdersCategory = PermissionCategory::where('short_code', 'retailer_orders')->first();
-        if ($retailerOrdersCategory) {
-            $specificRetailerOrderPermissions = [
-                'assign_distributor retailer_orders',
-                'assign_fieldstaff retailer_orders',
-                'update_delivery_status retailer_orders',
-                'view my orders',
-            ];
-
-            foreach ($specificRetailerOrderPermissions as $permissionName) {
-                Permission::updateOrCreate(
-                    [
-                        'name' => $permissionName,
-                        'guard_name' => 'web',
-                    ],
-                    [
-                        'permission_category_id' => $retailerOrdersCategory->id,
-                    ]
-                );
-            }
-        }
-
-        // Populate spatie_roles_permissions table based on custom roles_permissions
-        $roles = \App\Models\Role::all();
-        $actions = ['view', 'add', 'edit', 'delete'];
-
-        foreach ($roles as $role) {
-            $customRolePermissions = \Illuminate\Support\Facades\DB::table('roles_permissions')
+        // 6. Sync Spatie role permissions based on custom `roles_permissions`
+        foreach ($allRoles as $role) {
+            $customRolePermissions = DB::table('roles_permissions')
                 ->where('role_id', $role->id)
                 ->get();
 
@@ -205,7 +255,7 @@ class PermissionSeeder extends Seeder
                 if ($permissionCategory) {
                     foreach ($actions as $action) {
                         $canAction = 'can_' . $action;
-                        if ($customPermission->$canAction) {
+                        if (!empty($customPermission->$canAction)) {
                             $permissionName = $action . ' ' . $permissionCategory->short_code;
                             $permission = Permission::where('name', $permissionName)->first();
                             if ($permission) {
@@ -213,31 +263,6 @@ class PermissionSeeder extends Seeder
                             }
                         }
                     }
-                }
-            }
-            // Also handle specific permissions that are not tied to categories directly
-            // For example, 'view my orders'
-            $specificPermissions = [
-                'view my orders',
-                'assign_distributor retailer_orders',
-                'assign_fieldstaff retailer_orders',
-                'update_delivery_status retailer_orders',
-                'add user',
-                'create distributors',
-                'create managers',
-                'create fieldstaff',
-                'create retailers',
-            ];
-
-            foreach ($specificPermissions as $permName) {
-                $permission = Permission::where('name', $permName)->first();
-                if ($permission) {
-                    // Check if the role has this specific permission granted in the custom roles_permissions table
-                    // This part needs careful consideration as specific permissions might not be directly in roles_permissions
-                    // For now, we'll assume if it's in specificPermissions, it should be synced if the role has any related category permission.
-                    // A more robust solution would involve a separate table for specific permissions or a more complex check.
-                    // For simplicity, let's just add them if they exist in the permissions table.
-                    $permissionsToSync[] = $permission->id;
                 }
             }
 
@@ -257,11 +282,11 @@ class PermissionSeeder extends Seeder
                 $group->update(['name' => $name]);
             }
         }
-        
+
         if (!$group) {
             $group = PermissionGroup::firstOrCreate(['name' => $name]);
         }
-        
+
         return $group;
     }
 }

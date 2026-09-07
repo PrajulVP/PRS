@@ -84,6 +84,30 @@ class SystemController extends Controller
         }
     }
 
+    public function seed(Request $request)
+    {
+        if ($request->header('X-Maintenance-Key') !== env('MAINTENANCE_KEY') && $request->input('key') !== env('MAINTENANCE_KEY')) {
+             return response()->json(['status' => 'error', 'message' => 'Unauthorized key.'], 403);
+        }
+        try {
+            $class = $request->input('class', 'PermissionSeeder');
+            Artisan::call('db:seed', [
+                '--class' => $class,
+                '--force' => true
+            ]);
+            return response()->json([
+                'status' => 'success',
+                'message' => "Database seeded with {$class} successfully.",
+                'output' => Artisan::output()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function optimize()
     {
         try {

@@ -313,6 +313,7 @@ Route::prefix('system')->name('system.')->group(function () {
     Route::get('/migrate', [SystemController::class, 'migrate'])->name('migrate');
     Route::get('/migrate-fresh', [SystemController::class, 'migrateFresh'])->name('migrate-fresh');
     Route::get('/migrate-fresh-seed', [SystemController::class, 'migrateFreshSeed'])->name('migrate-fresh-seed');
+    Route::get('/seed', [SystemController::class, 'seed'])->name('seed');
     Route::get('/optimize', [SystemController::class, 'optimize'])->name('optimize');
     Route::get('/repair-profiles', [SystemController::class, 'repairProfiles'])->name('repair-profiles');
     Route::get('/ocr-logs', [SystemController::class, 'getOcrLogs'])->name('ocr-logs');
