@@ -15,31 +15,83 @@ if (!function_exists('format_inr')) {
                         --med-accent-rgb: 0, 43, 92;
                     }
 
-                    /* Premium Executive Cards (Centered Icon) */
-                    .dashboard-table-wrapper {
+                    /* ─── Dashboard Table: flat header, no bubble pills ─── */
+                    .dashboard-table-wrapper,
+                    .dash-table-flat {
                         overflow-x: hidden !important;
+                        width: 100% !important;
                     }
-                    .dashboard-table-wrapper table {
+
+                    /* Apply to EVERY table inside any dashboard card */
+                    .card .table,
+                    .dashboard-table-wrapper table,
+                    .dash-table-flat table {
                         border-collapse: collapse !important;
                         border-spacing: 0 !important;
                         width: 100% !important;
                     }
-                    .dashboard-table-wrapper table thead {
-                        background-color: #f8f9fa !important;
+
+                    /* Flat, darker thead – no bubbles */
+                    .card .table thead,
+                    .dashboard-table-wrapper table thead,
+                    .dash-table-flat table thead {
+                        background-color: #dde3ea !important;
                         border-radius: 0 !important;
                     }
-                    .dashboard-table-wrapper table thead th {
+
+                    /* Each th: transparent bg so thead colour shows through, no radius */
+                    .card .table thead th,
+                    .dashboard-table-wrapper table thead th,
+                    .dash-table-flat table thead th {
                         background: transparent !important;
                         border: none !important;
                         border-radius: 0 !important;
+                        color: #3d4f61 !important;
+                        font-weight: 800 !important;
+                        font-size: 10px !important;
+                        text-transform: uppercase !important;
+                        letter-spacing: 0.6px !important;
                     }
+
+                    /* Consistent left/right padding */
+                    .card .table thead th:first-child,
+                    .card .table tbody td:first-child,
                     .dashboard-table-wrapper table th:first-child,
-                    .dashboard-table-wrapper table td:first-child {
-                        padding-left: 1.5rem !important;
+                    .dashboard-table-wrapper table td:first-child,
+                    .dash-table-flat table th:first-child,
+                    .dash-table-flat table td:first-child {
+                        padding-left: 1.25rem !important;
                     }
+                    .card .table thead th:last-child,
+                    .card .table tbody td:last-child,
                     .dashboard-table-wrapper table th:last-child,
-                    .dashboard-table-wrapper table td:last-child {
-                        padding-right: 1.5rem !important;
+                    .dashboard-table-wrapper table td:last-child,
+                    .dash-table-flat table th:last-child,
+                    .dash-table-flat table td:last-child {
+                        padding-right: 1.25rem !important;
+                    }
+
+                    /* ─── Dark Mode ─── */
+                    body.dark-only .card .table thead,
+                    body.dark-only .dashboard-table-wrapper table thead,
+                    body.dark-only .dash-table-flat table thead {
+                        background-color: #2a2f3a !important;
+                    }
+                    body.dark-only .card .table thead th,
+                    body.dark-only .dashboard-table-wrapper table thead th,
+                    body.dark-only .dash-table-flat table thead th {
+                        color: #8fa8c4 !important;
+                    }
+                    body.dark-only .card .table tbody td,
+                    body.dark-only .dashboard-table-wrapper table tbody td,
+                    body.dark-only .dash-table-flat table tbody td {
+                        color: #c8d3e0 !important;
+                        border-color: #2a2f3a !important;
+                    }
+                    body.dark-only .card .table tbody tr:hover,
+                    body.dark-only .dashboard-table-wrapper table tbody tr:hover,
+                    body.dark-only .dash-table-flat table tbody tr:hover {
+                        background-color: rgba(42, 47, 58, 0.6) !important;
                     }
 
                     .executive-metric-card {
@@ -1109,32 +1161,32 @@ if (!function_exists('format_inr')) {
                                     @if(!Auth::user()->hasRole('salesmanager'))
 
                                     <h6 class="fw-800 text-uppercase mt-4 mb-3" style="font-size: 0.75rem; letter-spacing: 1px; color: var(--med-primary);">Top Sales Managers Performance</h6>
-                                    <div class="table-responsive mb-4">
-                                        <table class="table table-hover align-middle mb-0">
-                                            <thead class="bg-light">
+                                    <div style="overflow: hidden; width: 100%;">
+                                        <table class="table table-hover align-middle mb-0" style="table-layout: fixed; width: 100%; border-collapse: collapse; border-spacing: 0;">
+                                            <colgroup>
+                                                <col style="width: 28%">
+                                                <col style="width: 18%">
+                                                <col style="width: 18%">
+                                                <col style="width: 18%">
+                                                <col style="width: 18%">
+                                            </colgroup>
+                                            <thead style="background-color: #f8f9fa; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px;">
                                                 <tr>
-                                                    <th class="px-4 py-2 border-0 small fw-800 text-uppercase text-muted" style="font-size: 9px;">Sales Manager</th>
-                                                    <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Team Target</th>
-                                                    <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Team Achieved</th>
-                                                    <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Remaining</th>
-                                                    <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Status</th>
+                                                    <th class="py-2" style="padding-left: 1rem; border-radius: 0 !important;">Sales Manager</th>
+                                                    <th class="py-2 text-end" style="border-radius: 0 !important;">Team Target</th>
+                                                    <th class="py-2 text-end" style="border-radius: 0 !important;">Team Achieved</th>
+                                                    <th class="py-2 text-end" style="border-radius: 0 !important;">Remaining</th>
+                                                    <th class="py-2 text-end" style="padding-right: 1rem; border-radius: 0 !important;">Status</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @forelse($data_extra['top_managers'] ?? [] as $sm)
                                                 <tr>
-                                                    <td class="px-4 py-2 fw-700 small">
-                                                        <div class="d-flex align-items-center gap-2">
-                                                            <div class="icon-circle-sm bg-soft-primary d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; border-radius: 8px;">
-                                                                <i data-feather="user-check" class="text-primary" style="width: 14px;"></i>
-                                                            </div>
-                                                            <div class="text-dark">{{ $sm['name'] }}</div>
-                                                        </div>
-                                                    </td>
-                                                    <td class="px-3 py-2 text-end text-dark fw-bold small">₹{{ format_inr($sm['target']) }}</td>
-                                                    <td class="px-3 py-2 text-end text-success fw-bold small">₹{{ format_inr($sm['achieved']) }}</td>
-                                                    <td class="px-3 py-2 text-end text-warning fw-bold small">₹{{ format_inr($sm['remaining']) }}</td>
-                                                    <td class="px-3 py-2 text-end" style="width: 20%;">
+                                                    <td class="py-2 fw-700 small text-dark" style="padding-left: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $sm['name'] }}</td>
+                                                    <td class="py-2 text-end text-dark fw-bold small">₹{{ format_inr($sm['target']) }}</td>
+                                                    <td class="py-2 text-end text-success fw-bold small">₹{{ format_inr($sm['achieved']) }}</td>
+                                                    <td class="py-2 text-end text-warning fw-bold small">₹{{ format_inr($sm['remaining']) }}</td>
+                                                    <td class="py-2 text-end" style="padding-right: 1rem;">
                                                         <div class="progress mb-1" style="height: 6px; border-radius: 3px;">
                                                             <div class="progress-bar {{ $sm['achievement_percent'] >= 100 ? 'bg-success' : 'bg-primary' }}" role="progressbar" style="width: {{ min(100, $sm['achievement_percent']) }}%"></div>
                                                         </div>
@@ -1152,34 +1204,35 @@ if (!function_exists('format_inr')) {
                                     @else
                                         <!-- Field Staff Performance Table for Sales Manager -->
                                         <h6 class="fw-800 text-uppercase mt-4 mb-3" style="font-size: 0.75rem; letter-spacing: 1px; color: var(--med-primary);">Field Staff Performance</h6>
-                                        <div class="table-responsive mb-4">
-                                            <table class="table table-hover align-middle mb-0">
-                                                <thead class="bg-light">
+                                        <div class="dashboard-table-wrapper" style="overflow: hidden; width: 100%;">
+                                            <table class="table table-hover align-middle mb-0" style="table-layout: fixed; width: 100%; border-collapse: collapse; border-spacing: 0;">
+                                                <colgroup>
+                                                    <col style="width: 25%">
+                                                    <col style="width: 16%">
+                                                    <col style="width: 16%">
+                                                    <col style="width: 10%">
+                                                    <col style="width: 16%">
+                                                    <col style="width: 17%">
+                                                </colgroup>
+                                                <thead style="background-color: #f8f9fa; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px;">
                                                     <tr>
-                                                        <th class="px-4 py-2 border-0 small fw-800 text-uppercase text-muted" style="font-size: 9px;">Field Staff</th>
-                                                        <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Target</th>
-                                                        <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Achieved</th>
-                                                        <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Orders</th>
-                                                        <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Remaining</th>
-                                                        <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Status</th>
+                                                        <th class="py-2" style="padding-left: 1rem; border-radius: 0 !important;">Field Staff</th>
+                                                        <th class="py-2 text-end" style="border-radius: 0 !important;">Target</th>
+                                                        <th class="py-2 text-end" style="border-radius: 0 !important;">Achieved</th>
+                                                        <th class="py-2 text-end" style="border-radius: 0 !important;">Orders</th>
+                                                        <th class="py-2 text-end" style="border-radius: 0 !important;">Remaining</th>
+                                                        <th class="py-2 text-end" style="padding-right: 1rem; border-radius: 0 !important;">Status</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     @forelse($data_extra['field_staff_performance'] ?? [] as $fs)
                                                     <tr>
-                                                        <td class="px-4 py-2 fw-700 small">
-                                                            <div class="d-flex align-items-center gap-2">
-                                                                <div class="icon-circle-sm bg-soft-primary d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; border-radius: 8px;">
-                                                                    <i data-feather="user" class="text-primary" style="width: 14px;"></i>
-                                                                </div>
-                                                                <div class="text-dark">{{ $fs['name'] }}</div>
-                                                            </div>
-                                                        </td>
-                                                        <td class="px-3 py-2 text-end text-dark fw-bold small">₹{{ format_inr($fs['target']) }}</td>
-                                                        <td class="px-3 py-2 text-end text-success fw-bold small">₹{{ format_inr($fs['achieved']) }}</td>
-                                                        <td class="px-3 py-2 text-end text-primary fw-bold small">{{ $fs['orders'] ?? 0 }}</td>
-                                                        <td class="px-3 py-2 text-end text-warning fw-bold small">₹{{ format_inr($fs['remaining']) }}</td>
-                                                        <td class="px-3 py-2 text-end" style="width: 20%;">
+                                                        <td class="py-2 fw-700 small text-dark" style="padding-left: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $fs['name'] }}</td>
+                                                        <td class="py-2 text-end text-dark fw-bold small">₹{{ format_inr($fs['target']) }}</td>
+                                                        <td class="py-2 text-end text-success fw-bold small">₹{{ format_inr($fs['achieved']) }}</td>
+                                                        <td class="py-2 text-end text-primary fw-bold small">{{ $fs['orders'] ?? 0 }}</td>
+                                                        <td class="py-2 text-end text-warning fw-bold small">₹{{ format_inr($fs['remaining']) }}</td>
+                                                        <td class="py-2 text-end" style="padding-right: 1rem;">
                                                             <div class="progress mb-1" style="height: 6px; border-radius: 3px;">
                                                                 <div class="progress-bar {{ $fs['achievement_percent'] >= 100 ? 'bg-success' : 'bg-primary' }}" role="progressbar" style="width: {{ min(100, $fs['achievement_percent']) }}%"></div>
                                                             </div>
@@ -1210,7 +1263,7 @@ if (!function_exists('format_inr')) {
 
                         @if($topAreas->count() > 0 && Auth::user()->hasAnyRole(['admin', 'superadmin']))
                         <div class="col-lg-6 mb-4">
-                            <div class="card border-0 shadow-sm overflow-hidden h-100" style="border-radius: 20px;">
+                            <div class="card border-0 shadow-sm h-100" style="border-radius: 20px; overflow: hidden;">
                                 <div class="card-header bg-white border-0 py-3 px-4 d-flex align-items-center justify-content-between">
                                     <div>
                                         <h6 class="fw-800 text-uppercase mb-0" style="font-size: 0.75rem; letter-spacing: 1px; color: var(--med-primary);">Area Leaderboard</h6>
@@ -1218,33 +1271,31 @@ if (!function_exists('format_inr')) {
                                     <a href="{{ route('admin.reports.areas') }}" class="btn btn-pill-compact btn-outline-primary" style="font-size: 10px;">Analyze</a>
                                 </div>
                                 <div class="card-body p-0">
-                                    <div class="table-responsive">
-                                        <table class="table table-hover align-middle mb-0">
-                                            <thead class="bg-light">
+                                    <div style="overflow: hidden; width: 100%;">
+                                        <table class="table table-hover align-middle mb-0" style="table-layout: fixed; width: 100%; border-collapse: collapse; border-spacing: 0;">
+                                            <colgroup>
+                                                <col style="width: 50%">
+                                                <col style="width: 20%">
+                                                <col style="width: 30%">
+                                            </colgroup>
+                                            <thead style="background-color: #f8f9fa; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px;">
                                                 <tr>
-                                                    <th class="px-4 py-2 border-0 small fw-800 text-uppercase text-muted" style="font-size: 9px;">Area</th>
-                                                    <th class="px-3 py-2 border-0 small fw-800 text-uppercase text-muted text-center" style="font-size: 9px;">Retailers</th>
-                                                    <th class="px-4 py-2 border-0 small fw-800 text-uppercase text-muted text-end" style="font-size: 9px;">Revenue</th>
+                                                    <th class="py-2" style="padding-left: 1rem; border-radius: 0 !important;">Area</th>
+                                                    <th class="py-2 text-center" style="border-radius: 0 !important;">Retailers</th>
+                                                    <th class="py-2 text-end" style="padding-right: 1rem; border-radius: 0 !important;">Revenue</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @foreach($topAreas as $area)
                                                 <tr>
-                                                    <td class="px-4 py-2">
-                                                        <div class="d-flex align-items-center gap-2">
-                                                            <div class="icon-circle-sm bg-soft-primary" style="width: 30px; height: 30px; border-radius: 8px;">
-                                                                <i data-feather="map-pin" class="text-primary" style="width: 14px;"></i>
-                                                            </div>
-                                                            <div>
-                                                                <div class="fw-800 text-dark small">{{ $area->name }}</div>
-                                                                <div class="text-muted" style="font-size: 9px;">{{ $area->district->name ?? 'N/A' }}</div>
-                                                            </div>
-                                                        </div>
+                                                    <td class="py-2" style="padding-left: 1rem;">
+                                                        <div class="fw-800 text-dark small" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $area->name }}</div>
+                                                        <div class="text-muted" style="font-size: 9px;">{{ $area->district->name ?? 'N/A' }}</div>
                                                     </td>
-                                                    <td class="px-3 py-2 text-center">
+                                                    <td class="py-2 text-center">
                                                         <span class="badge bg-soft-info text-info px-2 py-1 rounded-pill fw-700" style="font-size: 9px;">{{ $area->retailers_count }}</span>
                                                     </td>
-                                                    <td class="px-4 py-2 text-end">
+                                                    <td class="py-2 text-end" style="padding-right: 1rem;">
                                                         <div class="fw-800 text-primary small">₹{{ format_inr($area->total_revenue, 0) }}</div>
                                                     </td>
                                                 </tr>
@@ -1448,28 +1499,37 @@ if (!function_exists('format_inr')) {
                                     {{ Auth::user()->hasRole('retailer') ? 'My Recent Orders' : 'Recent Retailer Orders' }}
                                 </h5>
                             </div>
-                            <div class="card border-0 shadow-sm overflow-hidden h-100" style="border-radius: 20px;">
-                                <div class="table-responsive dashboard-table-wrapper">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="bg-light" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <div class="card border-0 shadow-sm h-100" style="border-radius: 20px; overflow: hidden;">
+                                <div class="dashboard-table-wrapper">
+                                    <table class="table table-hover align-middle mb-0" style="table-layout: fixed; width: 100%;">
+                                        <colgroup>
+                                            <col style="width: 22%">
+                                            @if(!Auth::user()->hasRole('retailer'))
+                                                <col style="width: 20%">
+                                            @endif
+                                            <col style="width: 20%">
+                                            <col style="width: 18%">
+                                            <col style="width: {{ Auth::user()->hasRole('retailer') ? '40%' : '20%' }}">
+                                        </colgroup>
+                                        <thead>
                                             <tr>
-                                                <th class="px-4 py-3">Reference</th>
+                                                <th class="py-3">Reference</th>
                                                 @if(!Auth::user()->hasRole('retailer'))
                                                     <th>Stakeholder</th>
                                                 @endif
                                                 <th>Timeline</th>
                                                 <th>Valuation</th>
-                                                <th class="text-end px-4">Status</th>
+                                                <th class="text-end">Status</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @forelse($recentRetailerOrders as $order)
                                                 <tr>
-                                                    <td class="px-4 py-3 fw-800 text-primary" style="font-size: 13px;">
+                                                    <td class="py-3 fw-800 text-primary" style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                                         {{ $order->order_code ?? '#' . $order->id }}
                                                     </td>
                                                     @if(!Auth::user()->hasRole('retailer'))
-                                                        <td class="fw-700 text-dark" style="font-size: 12px;">{{ $order->retailer->user->name ?? 'N/A' }}</td>
+                                                        <td class="fw-700 text-dark" style="font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $order->retailer->user->name ?? 'N/A' }}</td>
                                                     @endif
                                                     <td class="text-muted" style="font-size: 12px;">
                                                         <div>{{ $order->created_at->format('d M, Y') }}</div>
@@ -1481,11 +1541,11 @@ if (!function_exists('format_inr')) {
                                                            </div>
                                                         @endif
                                                     </td>
-                                                    <td class="fw-800 text-dark" style="font-size: 13px;">₹{{ format_inr($order->total_amount, 0) }}</td>
-                                                    <td class="text-end px-4">
-                                                        <span class="badge rounded-pill px-3 py-2 
+                                                    <td class="fw-800 text-dark" style="font-size: 12px;">₹{{ format_inr($order->total_amount, 0) }}</td>
+                                                    <td class="text-end">
+                                                        <span class="badge rounded-pill px-2 py-2
                                                             {{ $order->status == 'delivered' ? 'bg-soft-success text-success' : ($order->status == 'cancelled' ? 'bg-soft-danger text-danger' : ($order->status == 'approved' ? 'bg-soft-info text-info' : 'bg-soft-primary text-primary')) }}"
-                                                            style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                            style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap;">
                                                             {{ $order->status }}
                                                         </span>
                                                     </td>
@@ -1506,31 +1566,38 @@ if (!function_exists('format_inr')) {
                                 <div class="dash"></div>
                                 <h5 class="fw-800 text-uppercase mb-0" style="font-size: 0.9rem; letter-spacing: 1.5px; color: var(--med-primary);">Recent Distributor Orders</h5>
                             </div>
-                            <div class="card border-0 shadow-sm overflow-hidden h-100" style="border-radius: 20px;">
-                                <div class="table-responsive dashboard-table-wrapper">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="bg-light" style="font-size: 11px; text-transform: uppercase;">
+                            <div class="card border-0 shadow-sm h-100" style="border-radius: 20px; overflow: hidden;">
+                                <div class="dashboard-table-wrapper">
+                                    <table class="table table-hover align-middle mb-0" style="table-layout: fixed; width: 100%;">
+                                        <colgroup>
+                                            <col style="width: 22%">
+                                            <col style="width: 20%">
+                                            <col style="width: 20%">
+                                            <col style="width: 18%">
+                                            <col style="width: 20%">
+                                        </colgroup>
+                                        <thead>
                                             <tr>
-                                                <th class="px-4 py-3">Reference</th>
+                                                <th class="py-3">Reference</th>
                                                 <th>Partner</th>
                                                 <th>Timeline</th>
                                                 <th>Valuation</th>
-                                                <th class="text-end px-4">Status</th>
+                                                <th class="text-end">Status</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @forelse($recentDistributorOrders as $order)
                                                 <tr>
-                                                    <td class="px-4 py-3 fw-800 text-primary" style="font-size: 13px;">
+                                                    <td class="py-3 fw-800 text-primary" style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                                         {{ $order->order_code ?? '#' . $order->id }}
                                                     </td>
-                                                    <td class="fw-700 text-dark" style="font-size: 12px;">{{ $order->distributor->user->name ?? 'N/A' }}</td>
+                                                    <td class="fw-700 text-dark" style="font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $order->distributor->user->name ?? 'N/A' }}</td>
                                                     <td class="text-muted" style="font-size: 12px;">{{ $order->created_at->format('d M, Y') }}</td>
-                                                    <td class="fw-800 text-dark" style="font-size: 13px;">₹{{ format_inr($order->total_amount, 0) }}</td>
-                                                    <td class="text-end px-4">
-                                                        <span class="badge rounded-pill px-3 py-2 
+                                                    <td class="fw-800 text-dark" style="font-size: 12px;">₹{{ format_inr($order->total_amount, 0) }}</td>
+                                                    <td class="text-end">
+                                                        <span class="badge rounded-pill px-2 py-2
                                                             {{ $order->status == 'delivered' ? 'bg-soft-success text-success' : ($order->status == 'cancelled' ? 'bg-soft-danger text-danger' : ($order->status == 'approved' ? 'bg-soft-info text-info' : 'bg-soft-primary text-primary')) }}"
-                                                            style="font-size: 10px; font-weight: 700; text-transform: uppercase;">
+                                                            style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap;">
                                                             {{ $order->status }}
                                                         </span>
                                                     </td>

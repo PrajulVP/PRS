@@ -6559,3 +6559,27 @@ body.dark-only .page-footer .page-changes-summary {
 /**=====================
      Dark CSS End
 ==========================**/
+
+/**=====================
+     Table th bubble fix
+==========================**/
+/* Remove pill/bubble appearance from table headers globally */
+.table thead th,
+.table > thead > tr > th {
+  border-radius: 0 !important;
+  background-clip: padding-box !important;
+}
+.table thead tr {
+  border-radius: 0 !important;
+}
+/* Ensure tables collapse borders properly to avoid gaps */
+.card .table,
+.card-body .table {
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+}
+/* Fix rounded borders on bg-light thead — force flat */
+table thead.bg-light th,
+table thead th {
+  border-radius: 0 !important;
+}

@@ -5,40 +5,230 @@
 @push('styles')
     <style>
         @media print {
-            body, html { background-color: #fff !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
-            .sidebar, .navbar, .page-header, .page-title, .breadcrumb, .footer-section, .header-wrapper { display: none !important; }
-            .col-xl-8.col-lg-7, #map, .legend, .btn, form, .row.mb-4.g-3, .user-profile-block, .d-print-none { display: none !important; }
-            .col-xl-4.col-lg-5 { width: 100% !important; max-width: 100% !important; flex: 0 0 100% !important; padding: 0 !important; margin: 0 !important; }
-            .tracking-info-card { height: auto !important; overflow: visible !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
-            .container-fluid { padding: 0 !important; margin: 0 !important; width: 100% !important; }
-            .row { margin: 0 !important; padding: 0 !important; width: 100% !important; }
-            .card, .card-body { box-shadow: none !important; border: none !important; margin: 0 !important; padding: 0 !important; }
-            .card-header { display: none !important; }
-            body .page-wrapper, body .page-body-wrapper, body .page-body, 
-            body .page-wrapper.compact-wrapper .page-body-wrapper .page-body { margin: 0 !important; padding: 0 !important; width: 100% !important; max-width: 100% !important; }
-            .timeline-scroll-container { height: auto !important; overflow: visible !important; padding: 0 !important; margin: 0 !important; }
-            @page { margin: 1cm; }
-            
+
+            body,
+            html {
+                background-color: #fff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+
+            .sidebar,
+            .navbar,
+            .page-header,
+            .page-title,
+            .breadcrumb,
+            .footer-section,
+            .header-wrapper {
+                display: none !important;
+            }
+
+            .col-xl-8.col-lg-7,
+            #map,
+            .legend,
+            .btn,
+            form,
+            .row.mb-4.g-3,
+            .user-profile-block,
+            .d-print-none {
+                display: none !important;
+            }
+
+            .col-xl-4.col-lg-5 {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .tracking-info-card {
+                height: auto !important;
+                overflow: visible !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .container-fluid {
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+            }
+
+            .row {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+
+            .card,
+            .card-body {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .card-header {
+                display: none !important;
+            }
+
+            body .page-wrapper,
+            body .page-body-wrapper,
+            body .page-body,
+            body .page-wrapper.compact-wrapper .page-body-wrapper .page-body {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            .timeline-scroll-container {
+                height: auto !important;
+                overflow: visible !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            @page {
+                margin: 1cm;
+            }
+
             /* PDF Export Styles */
-            .pdf-header { border-bottom: 2px solid #7366ff; padding-bottom: 10px; margin-bottom: 20px; }
-            .pdf-logo { font-size: 20pt; font-weight: bold; color: #7366ff; }
-            .pdf-title { text-align: right; font-size: 14pt; font-weight: bold; }
-            .pdf-info-block { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
-            .pdf-stats-grid { display: table; width: 100%; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
-            .pdf-stat-item { display: table-cell; width: 20%; text-align: center; border-right: 1px solid #e2e8f0; padding: 10px; }
-            .pdf-stat-item:last-child { border-right: none; }
-            .pdf-stat-label { font-size: 8pt; color: #64748b; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; display: block; }
-            .pdf-stat-value { font-size: 12pt; font-weight: bold; color: #1e293b; }
-            .pdf-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            .pdf-table th { background: #f1f5f9; color: #475569; font-size: 8pt; text-transform: uppercase; padding: 8px; border: 1px solid #e2e8f0; text-align: left; }
-            .pdf-table td { padding: 8px; border: 1px solid #e2e8f0; vertical-align: top; }
-            .pdf-timeline-type { font-weight: bold; font-size: 9pt; }
-            .pdf-timeline-details { font-size: 8pt; color: #64748b; }
-            .pdf-badge { padding: 2px 6px; border-radius: 4px; font-size: 7pt; font-weight: bold; }
-            .pdf-bg-success { background: #dcfce7 !important; color: #15803d !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .pdf-bg-warning { background: #fef3c7 !important; color: #b45309 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .pdf-bg-danger { background: #fee2e2 !important; color: #b91c1c !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .pdf-footer { width: 100%; text-align: center; font-size: 8pt; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 5px; margin-top: 40px; }
+            .pdf-header {
+                border-bottom: 2px solid #7366ff;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+            }
+
+            .pdf-logo {
+                font-size: 20pt;
+                font-weight: bold;
+                color: #7366ff;
+            }
+
+            .pdf-title {
+                text-align: right;
+                font-size: 14pt;
+                font-weight: bold;
+            }
+
+            .pdf-info-block {
+                background: #f8fafc;
+                padding: 15px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                border: 1px solid #e2e8f0;
+            }
+
+            .pdf-stats-grid {
+                display: table;
+                width: 100%;
+                margin-bottom: 20px;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                background: #f8fafc;
+            }
+
+            .pdf-stat-item {
+                display: table-cell;
+                width: 20%;
+                text-align: center;
+                border-right: 1px solid #e2e8f0;
+                padding: 10px;
+            }
+
+            .pdf-stat-item:last-child {
+                border-right: none;
+            }
+
+            .pdf-stat-label {
+                font-size: 8pt;
+                color: #64748b;
+                text-transform: uppercase;
+                font-weight: bold;
+                margin-bottom: 5px;
+                display: block;
+            }
+
+            .pdf-stat-value {
+                font-size: 12pt;
+                font-weight: bold;
+                color: #1e293b;
+            }
+
+            .pdf-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 20px;
+            }
+
+            .pdf-table th {
+                background: #f1f5f9;
+                color: #475569;
+                font-size: 8pt;
+                text-transform: uppercase;
+                padding: 8px;
+                border: 1px solid #e2e8f0;
+                text-align: left;
+            }
+
+            .pdf-table td {
+                padding: 8px;
+                border: 1px solid #e2e8f0;
+                vertical-align: top;
+            }
+
+            .pdf-timeline-type {
+                font-weight: bold;
+                font-size: 9pt;
+            }
+
+            .pdf-timeline-details {
+                font-size: 8pt;
+                color: #64748b;
+            }
+
+            .pdf-badge {
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-size: 7pt;
+                font-weight: bold;
+            }
+
+            .pdf-bg-success {
+                background: #dcfce7 !important;
+                color: #15803d !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .pdf-bg-warning {
+                background: #fef3c7 !important;
+                color: #b45309 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .pdf-bg-danger {
+                background: #fee2e2 !important;
+                color: #b91c1c !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .pdf-footer {
+                width: 100%;
+                text-align: center;
+                font-size: 8pt;
+                color: #94a3b8;
+                border-top: 1px solid #f1f5f9;
+                padding-top: 5px;
+                margin-top: 40px;
+            }
         }
 
         #map {
@@ -55,21 +245,25 @@
         .timeline-scroll-container {
             height: 640px;
             overflow-y: auto;
-            padding-right: 5px; /* space for scrollbar */
+            padding-right: 5px;
+            /* space for scrollbar */
         }
 
         /* Custom Scrollbar for Timeline */
         .timeline-scroll-container::-webkit-scrollbar {
             width: 6px;
         }
+
         .timeline-scroll-container::-webkit-scrollbar-track {
             background: rgba(0, 0, 0, 0.02);
             border-radius: 8px;
         }
+
         .timeline-scroll-container::-webkit-scrollbar-thumb {
             background: rgba(108, 117, 125, 0.3);
             border-radius: 8px;
         }
+
         .timeline-scroll-container::-webkit-scrollbar-thumb:hover {
             background: rgba(108, 117, 125, 0.5);
         }
@@ -144,11 +338,15 @@
             box-shadow: 0 0 0 4px rgba(115, 102, 255, 0.15);
         }
 
-        .text-orange { color: #ff9800 !important; }
+        .text-orange {
+            color: #ff9800 !important;
+        }
+
         .badge-light-orange {
             background-color: rgba(255, 152, 0, 0.1) !important;
             color: #ff9800 !important;
         }
+
         .bg-orange {
             background-color: #ff9800 !important;
             color: #ffffff !important;
@@ -256,7 +454,8 @@
 
                             <!-- Controls Column -->
                             <div class="col-xl-7 col-lg-12">
-                                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-xl-end gap-3 flex-wrap">
+                                <div
+                                    class="d-flex flex-column flex-md-row align-items-md-center justify-content-xl-end gap-3 flex-wrap">
                                     <!-- Enhanced Date Selector -->
                                     <div class="d-flex gap-2 align-items-center flex-wrap">
                                         <a href="{{ route('admin.field-staff.tracking.export', ['user_id' => $user->id, 'date' => $date, 'format' => 'csv']) }}"
@@ -310,7 +509,8 @@
                         <!-- Stats Summary Row -->
                         <div class="row mb-4 g-3">
                             <div class="col-md col-6">
-                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern h-100 d-flex flex-column justify-content-center">
+                                <div
+                                    class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern h-100 d-flex flex-column justify-content-center">
                                     <h6 class="text-muted small mb-1 text-uppercase fw-bold">Distance</h6>
                                     <h4 class="mb-0 text-primary fw-bold" id="distanceCovered">
                                         {{ number_format($totalDistance ?? 0, 2) }} <span class="small fw-normal">KM</span>
@@ -318,19 +518,22 @@
                                 </div>
                             </div>
                             <div class="col-md col-6">
-                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern h-100 d-flex flex-column justify-content-center">
+                                <div
+                                    class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern h-100 d-flex flex-column justify-content-center">
                                     <h6 class="text-muted small mb-1 text-uppercase fw-bold">Punches</h6>
                                     <h4 class="mb-0 text-success fw-bold">{{ $punches->count() }}</h4>
                                 </div>
                             </div>
                             <div class="col-md col-6">
-                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern h-100 d-flex flex-column justify-content-center">
+                                <div
+                                    class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern h-100 d-flex flex-column justify-content-center">
                                     <h6 class="text-muted small mb-1 text-uppercase fw-bold">Visits</h6>
                                     <h4 class="mb-0 text-warning fw-bold">{{ $visits->count() }}</h4>
                                 </div>
                             </div>
                             <div class="col-md col-6">
-                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern h-100 d-flex flex-column justify-content-center">
+                                <div
+                                    class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern h-100 d-flex flex-column justify-content-center">
                                     <h6 class="text-muted small mb-1 text-uppercase fw-bold">Status</h6>
                                     <h4 class="mb-0 fw-bold">
                                         @if($isOnline)
@@ -342,10 +545,12 @@
                                 </div>
                             </div>
                             <div class="col-md col-6">
-                                <div class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern h-100 d-flex flex-column justify-content-center">
+                                <div
+                                    class="p-3 rounded-4 text-center border shadow-sm bg-white stats-card-modern h-100 d-flex flex-column justify-content-center">
                                     <h6 class="text-muted small mb-1 text-uppercase fw-bold">Alerts</h6>
                                     @if(isset($mockGpsCount) && $mockGpsCount > 0)
-                                        <h4 class="mb-0 text-danger fw-bold" title="{{ $mockGpsCount }} Mock GPS triggers detected!">
+                                        <h4 class="mb-0 text-danger fw-bold"
+                                            title="{{ $mockGpsCount }} Mock GPS triggers detected!">
                                             <i class="fa fa-exclamation-triangle me-1"></i>{{ $mockGpsCount }}
                                         </h4>
                                     @else
@@ -380,23 +585,24 @@
                                         @php
                                             $allEvents = collect();
                                             $punches->each(fn($p) => $allEvents->push(['type' => 'punch', 'time' => $p->timestamp, 'data' => $p]));
-                                            
+
                                             // Ensure visits work for both VisitLog (check_in_at) and FieldVisit (start_at)
-                                            $visits->each(function($v) use ($allEvents) {
+                                            $visits->each(function ($v) use ($allEvents) {
                                                 $time = $v->check_in_at ?? $v->start_at ?? $v->created_at;
-                                                if ($time) $allEvents->push(['type' => 'visit', 'time' => $time, 'data' => $v]);
+                                                if ($time)
+                                                    $allEvents->push(['type' => 'visit', 'time' => $time, 'data' => $v]);
                                             });
-                                            
+
                                             $locations->whereNotNull('remarks')->each(fn($l) => $allEvents->push(['type' => 'alert', 'time' => $l->timestamp, 'data' => $l]));
                                             $offlineLogs->each(fn($o) => $allEvents->push(['type' => 'offline', 'time' => $o->from_time, 'data' => $o]));
-                                            
+
                                             // Include computed stops (> 5 mins) in the timeline
                                             if (isset($stops)) {
-                                                $stops->each(function($s) use ($allEvents) {
+                                                $stops->each(function ($s) use ($allEvents) {
                                                     $allEvents->push(['type' => 'stop', 'time' => $s['start_time'], 'data' => $s]);
                                                 });
                                             }
-                                            
+
                                             $sortedEvents = $allEvents->sortBy('time');
                                         @endphp
 
@@ -417,20 +623,26 @@
                                                             onclick="flyToLocation({{ $event['data']->location_lat }}, {{ $event['data']->location_lng }})"
                                                         @endif>
                                                         <div class="d-flex justify-content-between">
-                                                            <span class="small fw-bold">{{ \Carbon\Carbon::parse($event['time'])->format('h:i A') }}</span>
+                                                            <span
+                                                                class="small fw-bold">{{ \Carbon\Carbon::parse($event['time'])->format('h:i A') }}</span>
                                                             @if($event['type'] == 'punch')
-                                                                <span class="badge {{ $event['data']->type == 'punch_in' ? 'bg-success' : '' }} text-white small timeline-badge" 
-                                                                      @if($event['data']->type != 'punch_in') style="background-color: #e53935 !important;" @endif>
+                                                                <span
+                                                                    class="badge {{ $event['data']->type == 'punch_in' ? 'bg-success' : '' }} text-white small timeline-badge"
+                                                                    @if($event['data']->type != 'punch_in')
+                                                                    style="background-color: #e53935 !important;" @endif>
                                                                     {{ str_replace('_', ' ', $event['data']->type) }}
                                                                 </span>
                                                             @elseif($event['type'] == 'alert')
-                                                                <span class="badge bg-danger text-white small timeline-badge">System Alert</span>
+                                                                <span class="badge bg-danger text-white small timeline-badge">System
+                                                                    Alert</span>
                                                             @elseif($event['type'] == 'offline')
-                                                                <span class="badge text-white small timeline-badge" style="background-color: #6c757d !important;">Offline</span>
+                                                                <span class="badge text-white small timeline-badge"
+                                                                    style="background-color: #6c757d !important;">Offline</span>
                                                             @elseif($event['type'] == 'stop')
                                                                 <span class="badge bg-orange small timeline-badge">Stopped</span>
                                                             @else
-                                                                <span class="badge bg-primary text-white small timeline-badge">Visit</span>
+                                                                <span
+                                                                    class="badge bg-primary text-white small timeline-badge">Visit</span>
                                                             @endif
                                                         </div>
                                                         <div class="mt-1">
@@ -441,13 +653,18 @@
                                                                             class="fa fa-exclamation-triangle me-1"></i>Mock GPS!</div>
                                                                 @endif
                                                             @elseif($event['type'] == 'alert')
-                                                                <p class="mb-0 fw-bold small text-danger"><i class="fa fa-info-circle me-1"></i>{{ $event['data']->remarks }}</p>
+                                                                <p class="mb-0 fw-bold small text-danger"><i
+                                                                        class="fa fa-info-circle me-1"></i>{{ $event['data']->remarks }}
+                                                                </p>
                                                             @elseif($event['type'] == 'offline')
                                                                 <p class="mb-0 fw-bold small text-secondary">
-                                                                    <i class="fa fa-wifi me-1" style="text-decoration: line-through;"></i>Offline Period
+                                                                    <i class="fa fa-wifi me-1"
+                                                                        style="text-decoration: line-through;"></i>Offline Period
                                                                 </p>
                                                                 <p class="mb-0 text-muted small">
-                                                                    {{ \Carbon\Carbon::parse($event['data']->from_time)->format('h:i A') }} - {{ $event['data']->to_time ? \Carbon\Carbon::parse($event['data']->to_time)->format('h:i A') : 'Ongoing' }}
+                                                                    {{ \Carbon\Carbon::parse($event['data']->from_time)->format('h:i A') }}
+                                                                    -
+                                                                    {{ $event['data']->to_time ? \Carbon\Carbon::parse($event['data']->to_time)->format('h:i A') : 'Ongoing' }}
                                                                     @if($event['data']->reason)
                                                                         <br>Reason: {{ $event['data']->reason }}
                                                                     @endif
@@ -457,14 +674,19 @@
                                                                     <i class="fa fa-hand-paper me-1"></i>Stopped
                                                                 </p>
                                                                 <p class="mb-0 text-muted small">
-                                                                    {{ \Carbon\Carbon::parse($event['data']['start_time'])->format('h:i A') }} - {{ \Carbon\Carbon::parse($event['data']['end_time'])->format('h:i A') }}
-                                                                    <br>Duration: {{ \App\Http\Controllers\ReportController::formatDurationHumans($event['data']['start_time'], $event['data']['end_time']) }}
+                                                                    {{ \Carbon\Carbon::parse($event['data']['start_time'])->format('h:i A') }}
+                                                                    -
+                                                                    {{ \Carbon\Carbon::parse($event['data']['end_time'])->format('h:i A') }}
+                                                                    <br>Duration:
+                                                                    {{ \App\Http\Controllers\ReportController::formatDurationHumans($event['data']['start_time'], $event['data']['end_time']) }}
                                                                 </p>
                                                             @else
                                                                 <p class="mb-0 fw-bold small text-primary">
-                                                                    {{ $event['data']->customer_name ?? $event['data']->party?->name ?? 'Customer Visit' }}</p>
+                                                                    {{ $event['data']->customer_name ?? $event['data']->party?->name ?? 'Customer Visit' }}
+                                                                </p>
                                                                 @if(isset($event['data']->customer_category))
-                                                                    <p class="mb-0 text-muted small">{{ ucfirst($event['data']->customer_category) }}</p>
+                                                                    <p class="mb-0 text-muted small">
+                                                                        {{ ucfirst($event['data']->customer_category) }}</p>
                                                                 @endif
                                                             @endif
                                                         </div>
@@ -477,10 +699,13 @@
                                             <div class="pdf-header">
                                                 <table style="border: none; margin-bottom: 0; width: 100%;">
                                                     <tr style="border: none;">
-                                                        <td style="border: none; width: 50%; padding: 0;"><span class="pdf-logo">Atomed Wellness</span></td>
-                                                        <td style="border: none; width: 50%; text-align: right; padding: 0;">
+                                                        <td style="border: none; width: 50%; padding: 0;"><span
+                                                                class="pdf-logo">Atomed Wellness</span></td>
+                                                        <td
+                                                            style="border: none; width: 50%; text-align: right; padding: 0;">
                                                             <div class="pdf-title">Field Staff Tracking Report</div>
-                                                            <div style="font-size: 9pt; color: #64748b;">Report Date: {{ now()->format('M d, Y H:i') }}</div>
+                                                            <div style="font-size: 9pt; color: #64748b;">Report Date:
+                                                                {{ now()->format('M d, Y H:i') }}</div>
                                                         </td>
                                                     </tr>
                                                 </table>
@@ -491,12 +716,16 @@
                                                     <tr style="border: none;">
                                                         <td style="border: none; width: 50%; padding: 0;">
                                                             <span class="pdf-stat-label">Field Personnel:</span><br>
-                                                            <span style="font-size: 12pt; font-weight: bold;">{{ $user->name }}</span><br>
-                                                            <span style="font-size: 9pt; color: #64748b;">SM: {{ $user->fieldStaff->salesManager->user->name ?? 'N/A' }}</span>
+                                                            <span
+                                                                style="font-size: 12pt; font-weight: bold;">{{ $user->name }}</span><br>
+                                                            <span style="font-size: 9pt; color: #64748b;">SM:
+                                                                {{ $user->fieldStaff->salesManager->user->name ?? 'N/A' }}</span>
                                                         </td>
-                                                        <td style="border: none; width: 50%; text-align: right; padding: 0;">
+                                                        <td
+                                                            style="border: none; width: 50%; text-align: right; padding: 0;">
                                                             <span class="pdf-stat-label">Tracking Date:</span><br>
-                                                            <span style="font-size: 12pt; font-weight: bold;">{{ \Carbon\Carbon::parse($date)->format('F d, Y') }}</span>
+                                                            <span
+                                                                style="font-size: 12pt; font-weight: bold;">{{ \Carbon\Carbon::parse($date)->format('F d, Y') }}</span>
                                                         </td>
                                                     </tr>
                                                 </table>
@@ -505,7 +734,8 @@
                                             <div class="pdf-stats-grid">
                                                 <div class="pdf-stat-item">
                                                     <div class="pdf-stat-label">Total Distance</div>
-                                                    <div class="pdf-stat-value">{{ number_format($totalDistance ?? 0, 2) }} KM</div>
+                                                    <div class="pdf-stat-value">{{ number_format($totalDistance ?? 0, 2) }}
+                                                        KM</div>
                                                 </div>
                                                 <div class="pdf-stat-item">
                                                     <div class="pdf-stat-label">Visits Completed</div>
@@ -519,7 +749,10 @@
                                                     <div class="pdf-stat-label">Offline Periods</div>
                                                     <div class="pdf-stat-value">
                                                         @if(isset($offlineLogs) && $offlineLogs->count() > 0)
-                                                            {{ $offlineLogs->count() }} <span style="font-size: 8pt; color: #64748b;">({{ $offlineLogs->sum(function($o) { return \Carbon\Carbon::parse($o->from_time)->diffInMinutes($o->to_time ?? now()); }) }} mins)</span>
+                                                                                                        {{ $offlineLogs->count() }} <span
+                                                                                                            style="font-size: 8pt; color: #64748b;">({{ $offlineLogs->sum(function ($o) {
+                                                            return \Carbon\Carbon::parse($o->from_time)->diffInMinutes($o->to_time ?? now()); }) }}
+                                                                                                            mins)</span>
                                                         @else
                                                             0 <span style="font-size: 8pt; color: #64748b;">(0 mins)</span>
                                                         @endif
@@ -534,7 +767,9 @@
                                                 </div>
                                             </div>
 
-                                            <h4 style="border-left: 4px solid #7366ff; padding-left: 10px; color: #1e293b; margin-top: 30px; margin-bottom: 15px;">Activity Timeline</h4>
+                                            <h4
+                                                style="border-left: 4px solid #7366ff; padding-left: 10px; color: #1e293b; margin-top: 30px; margin-bottom: 15px;">
+                                                Activity Timeline</h4>
                                             <table class="pdf-table">
                                                 <thead>
                                                     <tr>
@@ -546,20 +781,27 @@
                                                 </thead>
                                                 <tbody>
                                                     @if($sortedEvents->isEmpty())
-                                                        <tr><td colspan="4" style="text-align: center; color: #64748b;">No activity recorded yet.</td></tr>
+                                                        <tr>
+                                                            <td colspan="4" style="text-align: center; color: #64748b;">No
+                                                                activity recorded yet.</td>
+                                                        </tr>
                                                     @else
                                                         @foreach($sortedEvents as $event)
                                                             <tr>
-                                                                <td style="font-weight: bold;">{{ \Carbon\Carbon::parse($event['time'])->format('h:i A') }}</td>
+                                                                <td style="font-weight: bold;">
+                                                                    {{ \Carbon\Carbon::parse($event['time'])->format('h:i A') }}
+                                                                </td>
                                                                 <td>
                                                                     @if($event['type'] == 'punch')
-                                                                        <span class="pdf-badge {{ $event['data']->type == 'punch_in' ? 'pdf-bg-success' : 'pdf-bg-danger' }}">
+                                                                        <span
+                                                                            class="pdf-badge {{ $event['data']->type == 'punch_in' ? 'pdf-bg-success' : 'pdf-bg-danger' }}">
                                                                             {{ strtoupper(str_replace('_', ' ', $event['data']->type)) }}
                                                                         </span>
                                                                     @elseif($event['type'] == 'alert')
                                                                         <span class="pdf-badge pdf-bg-danger">ALERT</span>
                                                                     @elseif($event['type'] == 'offline')
-                                                                        <span class="pdf-badge" style="background: #64748b !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">OFFLINE</span>
+                                                                        <span class="pdf-badge"
+                                                                            style="background: #64748b !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">OFFLINE</span>
                                                                     @elseif($event['type'] == 'stop')
                                                                         <span class="pdf-badge pdf-bg-warning">STOP</span>
                                                                     @else
@@ -569,34 +811,48 @@
                                                                 <td>
                                                                     @if($event['type'] == 'punch')
                                                                         <span class="pdf-timeline-type">Attendance Log</span><br>
-                                                                        <span class="pdf-timeline-details">Location verified via registered device.</span>
+                                                                        <span class="pdf-timeline-details">Location verified via
+                                                                            registered device.</span>
                                                                         @if(isset($event['data']->is_mock_location) && $event['data']->is_mock_location)
-                                                                            <br><span style="color: #b91c1c; font-size: 8pt;">Mock GPS detected!</span>
+                                                                            <br><span style="color: #b91c1c; font-size: 8pt;">Mock GPS
+                                                                                detected!</span>
                                                                         @endif
                                                                     @elseif($event['type'] == 'alert')
                                                                         <span class="pdf-timeline-type">System Alert</span><br>
-                                                                        <span class="pdf-timeline-details">{{ $event['data']->remarks }}</span>
+                                                                        <span
+                                                                            class="pdf-timeline-details">{{ $event['data']->remarks }}</span>
                                                                     @elseif($event['type'] == 'offline')
                                                                         <span class="pdf-timeline-type">Offline Period</span><br>
                                                                         <span class="pdf-timeline-details">
                                                                             @if(isset($event['data']->reason) && $event['data']->reason)
                                                                                 Disconnected: {{ $event['data']->reason }}<br>
                                                                             @endif
-                                                                            Duration: {{ $event['data']->to_time ? \Carbon\Carbon::parse($event['data']->from_time)->diffInMinutes($event['data']->to_time) . ' mins' : 'Ongoing' }}<br>
-                                                                            Resumed: {{ $event['data']->to_time ? \Carbon\Carbon::parse($event['data']->to_time)->format('h:i A') : 'N/A' }}
+                                                                            Duration:
+                                                                            {{ $event['data']->to_time ? \Carbon\Carbon::parse($event['data']->from_time)->diffInMinutes($event['data']->to_time) . ' mins' : 'Ongoing' }}<br>
+                                                                            Resumed:
+                                                                            {{ $event['data']->to_time ? \Carbon\Carbon::parse($event['data']->to_time)->format('h:i A') : 'N/A' }}
                                                                         </span>
                                                                     @elseif($event['type'] == 'stop')
                                                                         <span class="pdf-timeline-type">Stationary Stop</span><br>
                                                                         <span class="pdf-timeline-details">
-                                                                            Duration: {{ \App\Http\Controllers\ReportController::formatDurationHumans($event['data']['start_time'], $event['data']['end_time']) }}<br>
-                                                                            {{ \Carbon\Carbon::parse($event['data']['start_time'])->format('h:i A') }} - {{ \Carbon\Carbon::parse($event['data']['end_time'])->format('h:i A') }}
+                                                                            Duration:
+                                                                            {{ \App\Http\Controllers\ReportController::formatDurationHumans($event['data']['start_time'], $event['data']['end_time']) }}<br>
+                                                                            {{ \Carbon\Carbon::parse($event['data']['start_time'])->format('h:i A') }}
+                                                                            -
+                                                                            {{ \Carbon\Carbon::parse($event['data']['end_time'])->format('h:i A') }}
                                                                         </span>
                                                                     @else
-                                                                        <span class="pdf-timeline-type">{{ $event['data']->customer_name ?? $event['data']->party?->name ?? 'Customer Visit' }}</span><br>
-                                                                        <span class="pdf-timeline-details">{{ ucfirst($event['data']->customer_category ?? 'Retailer') }} visit logged.</span><br>
+                                                                        <span
+                                                                            class="pdf-timeline-type">{{ $event['data']->customer_name ?? $event['data']->party?->name ?? 'Customer Visit' }}</span><br>
+                                                                        <span
+                                                                            class="pdf-timeline-details">{{ ucfirst($event['data']->customer_category ?? 'Retailer') }}
+                                                                            visit logged.</span><br>
                                                                         <span class="pdf-timeline-details">
-                                                                            <strong>Start:</strong> {{ isset($event['data']->check_in_at) ? \Carbon\Carbon::parse($event['data']->check_in_at)->format('h:i A') : (isset($event['data']->start_at) ? \Carbon\Carbon::parse($event['data']->start_at)->format('h:i A') : 'N/A') }} | 
-                                                                            <strong>End:</strong> {{ isset($event['data']->check_out_at) ? \Carbon\Carbon::parse($event['data']->check_out_at)->format('h:i A') : 'Ongoing' }}
+                                                                            <strong>Start:</strong>
+                                                                            {{ isset($event['data']->check_in_at) ? \Carbon\Carbon::parse($event['data']->check_in_at)->format('h:i A') : (isset($event['data']->start_at) ? \Carbon\Carbon::parse($event['data']->start_at)->format('h:i A') : 'N/A') }}
+                                                                            |
+                                                                            <strong>End:</strong>
+                                                                            {{ isset($event['data']->check_out_at) ? \Carbon\Carbon::parse($event['data']->check_out_at)->format('h:i A') : 'Ongoing' }}
                                                                         </span>
                                                                     @endif
                                                                 </td>
@@ -616,53 +872,76 @@
                                                     @endif
                                                 </tbody>
                                             </table>
-                                            
+
                                             <div style="page-break-before: always;"></div>
-                                            
+
                                             @if($locations->count() > 0)
-                                            <h4 style="border-left: 4px solid #7366ff; padding-left: 10px; color: #1e293b; margin-top: 30px; margin-bottom: 15px;">Route Data Samples</h4>
-                                            <p style="font-size: 8pt; color: #64748b; margin-bottom: 10px;">Displaying high-frequency location pings used for route reconstruction.</p>
-                                            <table class="pdf-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Ping Time</th>
-                                                        <th>Latitude</th>
-                                                        <th>Longitude</th>
-                                                        <th>Security Check</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach($locations->take(15) as $loc)
+                                                <h4
+                                                    style="border-left: 4px solid #7366ff; padding-left: 10px; color: #1e293b; margin-top: 30px; margin-bottom: 15px;">
+                                                    Route Data Samples</h4>
+                                                <p style="font-size: 8pt; color: #64748b; margin-bottom: 10px;">Displaying
+                                                    high-frequency location pings used for route reconstruction.</p>
+                                                <table class="pdf-table">
+                                                    <thead>
                                                         <tr>
-                                                            <td>{{ $loc->timestamp->format('H:i:s') }}</td>
-                                                            <td style="font-family: monospace;">{{ number_format($loc->latitude, 8) }}</td>
-                                                            <td style="font-family: monospace;">{{ number_format($loc->longitude, 8) }}</td>
-                                                            <td>
-                                                                @if($loc->is_mock_location)
-                                                                    <span class="pdf-badge pdf-bg-danger">MOCK GPS DETECTED</span>
-                                                                @else
-                                                                    <span style="color: #10b981; font-size: 8pt;">✓ Valid GPS</span>
-                                                                @endif
-                                                            </td>
+                                                            <th>Ping Time</th>
+                                                            <th>Latitude</th>
+                                                            <th>Longitude</th>
+                                                            <th>Security Check</th>
                                                         </tr>
-                                                    @endforeach
-                                                    @if($locations->count() > 15)
-                                                        <tr>
-                                                            <td colspan="4" style="text-align: center; font-size: 8pt; color: #94a3b8; font-style: italic;">... {{ $locations->count() - 15 }} additional pings omitted for brevity ...</td>
-                                                        </tr>
-                                                    @endif
-                                                </tbody>
-                                            </table>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach($locations->take(15) as $loc)
+                                                            <tr>
+                                                                <td>{{ $loc->timestamp->format('H:i:s') }}</td>
+                                                                <td style="font-family: monospace;">
+                                                                    {{ number_format($loc->latitude, 8) }}</td>
+                                                                <td style="font-family: monospace;">
+                                                                    {{ number_format($loc->longitude, 8) }}</td>
+                                                                <td>
+                                                                    @if($loc->is_mock_location)
+                                                                        <span class="pdf-badge pdf-bg-danger">MOCK GPS DETECTED</span>
+                                                                    @else
+                                                                        <span style="color: #10b981; font-size: 8pt;">✓ Valid GPS</span>
+                                                                    @endif
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                        @if($locations->count() > 15)
+                                                            <tr>
+                                                                <td colspan="4"
+                                                                    style="text-align: center; font-size: 8pt; color: #94a3b8; font-style: italic;">
+                                                                    ... {{ $locations->count() - 15 }} additional pings omitted for
+                                                                    brevity ...</td>
+                                                            </tr>
+                                                        @endif
+                                                    </tbody>
+                                                </table>
                                             @else
-                                            <h4 style="border-left: 4px solid #7366ff; padding-left: 10px; color: #1e293b; margin-top: 30px; margin-bottom: 15px;">Route Data Samples</h4>
-                                            <table class="pdf-table">
-                                                <thead><tr><th>Ping Time</th><th>Latitude</th><th>Longitude</th><th>Security Check</th></tr></thead>
-                                                <tbody><tr><td colspan="4" style="text-align: center; color: #64748b;">No telemetry data available.</td></tr></tbody>
-                                            </table>
+                                                <h4
+                                                    style="border-left: 4px solid #7366ff; padding-left: 10px; color: #1e293b; margin-top: 30px; margin-bottom: 15px;">
+                                                    Route Data Samples</h4>
+                                                <table class="pdf-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Ping Time</th>
+                                                            <th>Latitude</th>
+                                                            <th>Longitude</th>
+                                                            <th>Security Check</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td colspan="4" style="text-align: center; color: #64748b;">No
+                                                                telemetry data available.</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
                                             @endif
 
                                             <div class="pdf-footer">
-                                                Confidentially generated for Atomed Wellness Admin | This document contains verified GPS telemetry data.
+                                                Confidentially generated for Atomed Wellness Admin | This document contains
+                                                verified GPS telemetry data.
                                             </div>
                                         </div>
                                     </div>
@@ -761,10 +1040,10 @@
             let currentSegment = [];
 
             @foreach($locations as $loc)
-                (function() {
+                (function () {
                     let currentTimestamp = new Date("{{ str_replace('-', '/', $loc->timestamp) }}").getTime();
                     let point = { lat: {{ $loc->latitude }}, lng: {{ $loc->longitude }} };
-                    
+
                     if (lastTimestamp) {
                         let diffMins = (currentTimestamp - lastTimestamp) / (1000 * 60);
                         if (diffMins > 15) {
@@ -776,12 +1055,12 @@
                     }
                     currentSegment.push(point);
                     lastTimestamp = currentTimestamp;
-                    
+
                     pathPoints.push(point);
                 })();
             @endforeach
 
-            if (currentSegment.length > 0) {
+                if (currentSegment.length > 0) {
                 pathSegments.push(currentSegment);
             }
 
@@ -790,10 +1069,10 @@
                     if (segment.length > 0) {
                         let snappedSegment = await snapPathToRoads(segment);
                         snappedPoints = snappedPoints.concat(snappedSegment);
-                        
+
                         currentRoutePath = createNewPolyline();
                         currentRoutePath.setPath(snappedSegment);
-                        
+
                         snappedSegment.forEach(p => bounds.extend(p));
                     }
                 }
@@ -837,11 +1116,11 @@
                 bounds.extend({ lat: {{ $stop['lat'] }}, lng: {{ $stop['lng'] }} });
             @endforeach
 
-                if (!bounds.isEmpty()) {
+                    if (!bounds.isEmpty()) {
                 map.fitBounds(bounds);
-                
+
                 // Prevent extreme zoom level when there is only one point or points are very close
-                google.maps.event.addListenerOnce(map, "idle", function() { 
+                google.maps.event.addListenerOnce(map, "idle", function () {
                     if (map.getZoom() > 15) {
                         map.setZoom(15);
                     }
@@ -880,15 +1159,15 @@
                 },
                 title: `Stop`
             });
-            
+
             const infoWindow = new google.maps.InfoWindow({
                 content: `<div class="custom-info-window">
-                            <h6 class="text-warning fw-bold mb-1"><i class="fa fa-hand-paper text-warning me-2"></i>Stopped</h6>
-                            <div class="small"><b>Duration:</b> ${duration}</div>
-                            <div class="small text-muted">${startTime} to ${endTime}</div>
-                          </div>`
+                                <h6 class="text-warning fw-bold mb-1"><i class="fa fa-hand-paper text-warning me-2"></i>Stopped</h6>
+                                <div class="small"><b>Duration:</b> ${duration}</div>
+                                <div class="small text-muted">${startTime} to ${endTime}</div>
+                              </div>`
             });
-            
+
             marker.addListener('click', () => {
                 infoWindow.open(map, marker);
             });
@@ -938,7 +1217,7 @@
         async function updateLiveMap(lat, lng) {
             const newPos = { lat: parseFloat(lat), lng: parseFloat(lng) };
             const currentTimestamp = new Date().getTime();
-            
+
             if (lastTimestamp) {
                 let diffMins = (currentTimestamp - lastTimestamp) / (1000 * 60);
                 if (diffMins > 15) {
@@ -963,7 +1242,7 @@
                     latestSnappedPoint = snapped[snapped.length - 1];
                 }
             }
-            
+
             snappedPoints.push(latestSnappedPoint);
 
             let currentPath = currentRoutePath.getPath();
