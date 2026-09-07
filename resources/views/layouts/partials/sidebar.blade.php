@@ -93,7 +93,7 @@
             </svg><span>Dashboard</span>
           </a>
         </li>
-        @if (Auth::user()->hasPermissionToCategory('loyalty_points', 'view') || Auth::user()->hasAnyRole(['retailer', 'distributor']))
+        @if (Auth::user()->hasPermissionToCategory('retailer_loyalty', 'view') || Auth::user()->hasAnyRole(['retailer', 'distributor']))
           @if (Auth::user()->hasRole('retailer'))
             <li class="sidebar-list">
               <a class="sidebar-link sidebar-title link-nav" href="{{ route('retailer.loyalty-points.index') }}">
@@ -174,13 +174,7 @@
         @endif
 
         {{-- 6. Reports Section --}}
-        @if (Auth::user()->hasPermissionToCategory('executive_reports', 'view') || 
-             Auth::user()->hasPermissionToCategory('distributor_reports', 'view') || 
-             Auth::user()->hasPermissionToCategory('retailer_reports', 'view') || 
-             Auth::user()->hasPermissionToCategory('performance_reports', 'view') ||
-             Auth::user()->hasPermissionToCategory('product_reports', 'view') ||
-             Auth::user()->hasPermissionToCategory('master_order_reports', 'view') ||
-             Auth::user()->hasRole('salesmanager'))
+        @if (Auth::user()->hasPermissionToCategory('executive_reports', 'view') || Auth::user()->hasRole('salesmanager'))
         <li class="sidebar-main-title">
           <div>
             <h6>Reports</h6>

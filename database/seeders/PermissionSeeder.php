@@ -27,42 +27,12 @@ class PermissionSeeder extends Seeder
             'Orders & Returns' => $this->getOrCreateGroup('Orders & Returns', ['Orders']),
             'Approvals' => $this->getOrCreateGroup('Approvals'),
             'Staff Monitoring' => $this->getOrCreateGroup('Staff Monitoring'),
-            'Loyalty & Credits' => $this->getOrCreateGroup('Loyalty & Credits'),
+            'Loyalty Management' => $this->getOrCreateGroup('Loyalty Management', ['Loyalty & Credits']),
         ];
 
         // 2. Define Category Structure matching the prompt & sidebar exact requirements
         $categoriesToCreate = [
             // --- Reports Group ---
-            [
-                'short_code' => 'distributor_reports',
-                'name' => 'Distributor Reports',
-                'perm_group_id' => $groups['Reports']->id,
-                'enable_view' => true, 'enable_add' => false, 'enable_edit' => false, 'enable_delete' => false,
-            ],
-            [
-                'short_code' => 'retailer_reports',
-                'name' => 'Retailer Reports',
-                'perm_group_id' => $groups['Reports']->id,
-                'enable_view' => true, 'enable_add' => false, 'enable_edit' => false, 'enable_delete' => false,
-            ],
-            [
-                'short_code' => 'performance_reports',
-                'name' => 'Field Staff Performance',
-                'perm_group_id' => $groups['Reports']->id,
-                'enable_view' => true, 'enable_add' => false, 'enable_edit' => false, 'enable_delete' => false,
-            ],
-            [
-                'short_code' => 'product_reports',
-                'name' => 'Product Performance',
-                'perm_group_id' => $groups['Reports']->id,
-                'enable_view' => true, 'enable_add' => false, 'enable_edit' => false, 'enable_delete' => false,
-            ],
-            [
-                'short_code' => 'master_order_reports',
-                'name' => 'Master Order Analytics',
-                'perm_group_id' => $groups['Reports']->id,
-                'enable_view' => true, 'enable_add' => false, 'enable_edit' => false, 'enable_delete' => false,
-            ],
             [
                 'short_code' => 'executive_reports',
                 'name' => 'Executive Reports',
@@ -172,17 +142,23 @@ class PermissionSeeder extends Seeder
                 'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => false,
             ],
 
-            // --- Loyalty & Credits Group ---
+            // --- Loyalty Management Group ---
             [
-                'short_code' => 'loyalty_points',
-                'name' => 'Loyalty Points & Rewards',
-                'perm_group_id' => $groups['Loyalty & Credits']->id,
+                'short_code' => 'retailer_loyalty',
+                'name' => 'Retailer Loyalty Points',
+                'perm_group_id' => $groups['Loyalty Management']->id,
+                'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => false,
+            ],
+            [
+                'short_code' => 'distributor_loyalty',
+                'name' => 'Distributor Loyalty Points',
+                'perm_group_id' => $groups['Loyalty Management']->id,
                 'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => false,
             ],
             [
                 'short_code' => 'wallets_credits',
                 'name' => 'Wallets & Credits',
-                'perm_group_id' => $groups['Loyalty & Credits']->id,
+                'perm_group_id' => $groups['Loyalty Management']->id,
                 'enable_view' => true, 'enable_add' => true, 'enable_edit' => true, 'enable_delete' => false,
             ],
         ];
