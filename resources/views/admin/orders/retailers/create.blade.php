@@ -183,7 +183,12 @@
                     <div class="card shadow-sm border-0 mb-4 overflow-hidden rounded-3 mt-4">
                         <div
                             class="card-header bg-white dark-bg-transparent py-3 border-bottom border-light-dark d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0 fw-bold text-dark label-font">Current Order Bundle</h5>
+                            <div class="d-flex align-items-center gap-3">
+                                <h5 class="card-title mb-0 fw-bold text-dark label-font">Current Order Bundle</h5>
+                                <div id="lockedDistributorBadge" class="d-none badge bg-soft-success text-success px-3 py-2 rounded-pill small border border-success border-opacity-25 shadow-sm">
+                                    <i class="fa fa-lock me-1"></i> Distributor: <strong id="lockedDistributorName"></strong>
+                                </div>
+                            </div>
                             <span
                                 class="badge bg-soft-primary text-primary px-3 py-2 rounded-pill small border border-primary border-opacity-25 shadow-sm">
                                 <i class="fa fa-shopping-basket me-2"></i><span id="itemCount">0</span> Items
@@ -536,7 +541,21 @@
                         let lastValidId = null;
                         let optionsHtml = '';
 
+                        // Check if an item has already been added to the bundle to get locked distributor
+                        let lockedDistId = null;
+                        let lockedDistName = '';
+                        let firstKey = Object.keys(addedItems)[0];
+                        if (firstKey && addedItems[firstKey]) {
+                            lockedDistId = addedItems[firstKey].distId;
+                            lockedDistName = addedItems[firstKey].distName;
+                        }
+
                         distributors.forEach(d => {
+                            // If order is locked to a distributor, skip all other distributors
+                            if (lockedDistId && d.id != lockedDistId) {
+                                return;
+                            }
+
                             let stock = d.pivot ? parseFloat(d.pivot.stock) : 0;
                             
                             // Deduct quantity already in the bundle (cart)
@@ -558,7 +577,7 @@
                             }
                             
                             if (stock > 0 && stock >= requiredStock) {
-                                optionsHtml += `<option value="${d.id}" data-stock-raw="${stock}" ${currentVal == d.id ? 'selected' : ''}>${d.shop_name || d.name}</option>`;
+                                optionsHtml += `<option value="${d.id}" data-stock-raw="${stock}" ${currentVal == d.id || lockedDistId == d.id ? 'selected' : ''}>${d.shop_name || d.name}</option>`;
                                 addedAny = true;
                                 validCount++;
                                 lastValidId = d.id;
@@ -566,7 +585,16 @@
                         });
                         
                         if (!addedAny) {
-                            $distSelect.append('<option value="empty" disabled selected>⚠️ Out of stock for this quantity</option>');
+                            if (lockedDistId) {
+                                $distSelect.append(`<option value="empty" disabled selected>Out of stock with distributor -  ${lockedDistName}</option>`);
+                            } else {
+                                $distSelect.append('<option value="empty" disabled selected>Out of stock for this quantity</option>');
+                            }
+                        } else if (lockedDistId) {
+                            // Order is locked to this distributor -> Auto-select & Lock dropdown
+                            $distSelect.append(optionsHtml);
+                            $distSelect.val(lockedDistId);
+                            $distSelect.prop('disabled', true); // Lock distributor dropdown for subsequent items
                         } else if (validCount === 1 && !currentVal) {
                             $distSelect.append('<option value="empty" disabled>Pick Distributor (1 Available)...</option>');
                             $distSelect.append(optionsHtml);
@@ -579,7 +607,10 @@
                         $distSelect.append('<option value="empty" disabled selected>🚫 No distributor available for this product</option>');
                     }
                     
-                    $distSelect.prop('disabled', false).trigger('change.select2');
+                    if (!Object.keys(addedItems).length) {
+                        $distSelect.prop('disabled', false);
+                    }
+                    $distSelect.trigger('change.select2');
                     
                     // Auto-open dropdown if there are multiple options, but ONLY if the container is currently visible 
                     // (prevents JS errors when variants hide the container)
@@ -1443,7 +1474,16 @@
                                             `);
                 });
 
-                if (!hasItems) tbody.append($('#emptyRow').clone().show());
+                if (!hasItems) {
+                    tbody.append($('#emptyRow').clone().show());
+                    $('#lockedDistributorBadge').addClass('d-none');
+                    $('#distributorSelect').prop('disabled', false);
+                } else {
+                    let firstKey = Object.keys(addedItems)[0];
+                    let lockedDistName = addedItems[firstKey].distName;
+                    $('#lockedDistributorName').text(lockedDistName);
+                    $('#lockedDistributorBadge').removeClass('d-none');
+                }
                 $('#btnSubmitOrder').prop('disabled', !hasItems);
                 $('#grandTotal').text('₹' + total.toFixed(2));
                 $('#itemCount').text(Object.keys(addedItems).length);
