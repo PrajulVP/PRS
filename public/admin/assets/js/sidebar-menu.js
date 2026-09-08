@@ -448,19 +448,15 @@
     $(this).parent().children("ul").toggleClass("d-block").slideToggle();
   }
 
-  // active link
+  // active link (instant scroll without 1000ms jQuery lag)
   if (
     $(".simplebar-wrapper .simplebar-content-wrapper") &&
     $("#pageWrapper").hasClass("compact-wrapper")
   ) {
     var activeLink = $(".simplebar-wrapper .simplebar-content-wrapper a.active");
     if (activeLink.length > 0 && activeLink.offset()) {
-      $(".simplebar-wrapper .simplebar-content-wrapper").animate(
-        {
-          scrollTop: activeLink.offset().top - 400,
-        },
-        1000
-      );
+      var contentWrapper = $(".simplebar-wrapper .simplebar-content-wrapper");
+      contentWrapper.scrollTop(activeLink.offset().top - 400);
     }
   }
 })($);

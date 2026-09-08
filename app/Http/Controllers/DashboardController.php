@@ -275,21 +275,32 @@ class DashboardController extends Controller
             $data_extra['top_5_fieldstaff'] = $top5FieldStaffs;
             $data_extra['bottom_5_fieldstaff'] = $bottom5FieldStaffs;
 
+            $areaRevenues = DB::table('retailer_orders')
+                ->join('retailers', 'retailer_orders.retailer_id', '=', 'retailers.id')
+                ->where('retailer_orders.status', 'delivered')
+                ->whereBetween('retailer_orders.created_at', [$startDate, $endDate])
+                ->when($fieldStaffIds, function($q) use ($fieldStaffIds) {
+                    $q->whereIn('retailers.field_staff_id', $fieldStaffIds);
+                })
+                ->whereNotNull('retailers.area_id')
+                ->select('retailers.area_id', DB::raw('SUM(retailer_orders.total_amount) as total_revenue'))
+                ->groupBy('retailers.area_id')
+                ->orderByDesc('total_revenue')
+                ->take(5)
+                ->get();
+
+            $topAreaIds = $areaRevenues->pluck('area_id')->toArray();
+            $areaRevMap = $areaRevenues->pluck('total_revenue', 'area_id')->toArray();
+
             $topAreas = \App\Models\Area::withCount('retailers')
                 ->with(['district'])
+                ->whereIn('id', $topAreaIds)
                 ->get()
-                ->map(function($area) use ($startDate, $endDate, $fieldStaffIds) {
-                    $area->total_revenue = RetailerOrder::whereHas('retailer', function($q) use ($area, $fieldStaffIds) {
-                        $q->where('area_id', $area->id);
-                        if ($fieldStaffIds) {
-                            $q->whereIn('field_staff_id', $fieldStaffIds);
-                        }
-                    })->where('status', 'delivered')
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->sum('total_amount');
+                ->map(function($area) use ($areaRevMap) {
+                    $area->total_revenue = (float)($areaRevMap[$area->id] ?? 0);
                     return $area;
-                })->filter(fn($a) => $a->total_revenue > 0)
-                ->sortByDesc('total_revenue')->take(5);
+                })
+                ->sortByDesc('total_revenue');
         } elseif ($user->hasRole('salesmanager')) {
             // See distributor order and retailer order statistics, and the performance of fieldstaffs under them.
             $salesManager = $user->salesManager;
@@ -439,22 +450,30 @@ class DashboardController extends Controller
                 $data_extra['field_staff_performance'] = $fieldStaffPerformance;
 
                 // Top Areas for Sales Manager
+                $smAreaRevenues = DB::table('retailer_orders')
+                    ->join('retailers', 'retailer_orders.retailer_id', '=', 'retailers.id')
+                    ->where('retailer_orders.status', 'delivered')
+                    ->whereBetween('retailer_orders.created_at', [$startDate, $endDate])
+                    ->whereIn('retailers.field_staff_id', $fieldStaffIds)
+                    ->whereNotNull('retailers.area_id')
+                    ->select('retailers.area_id', DB::raw('SUM(retailer_orders.total_amount) as total_revenue'))
+                    ->groupBy('retailers.area_id')
+                    ->orderByDesc('total_revenue')
+                    ->take(5)
+                    ->get();
+
+                $smTopAreaIds = $smAreaRevenues->pluck('area_id')->toArray();
+                $smAreaRevMap = $smAreaRevenues->pluck('total_revenue', 'area_id')->toArray();
+
                 $topAreas = \App\Models\Area::withCount('retailers')
                     ->with(['district'])
-                    ->whereHas('retailers', function($q) use ($fieldStaffIds) {
-                        $q->whereIn('field_staff_id', $fieldStaffIds);
-                    })
+                    ->whereIn('id', $smTopAreaIds)
                     ->get()
-                    ->map(function($area) use ($startDate, $endDate, $fieldStaffIds) {
-                        $area->total_revenue = RetailerOrder::whereHas('retailer', function($q) use ($area, $fieldStaffIds) {
-                            $q->where('area_id', $area->id)
-                              ->whereIn('field_staff_id', $fieldStaffIds);
-                        })->where('status', 'delivered')
-                        ->whereBetween('created_at', [$startDate, $endDate])
-                        ->sum('total_amount');
+                    ->map(function($area) use ($smAreaRevMap) {
+                        $area->total_revenue = (float)($smAreaRevMap[$area->id] ?? 0);
                         return $area;
-                    })->filter(fn($a) => $a->total_revenue > 0)
-                    ->sortByDesc('total_revenue')->take(5);
+                    })
+                    ->sortByDesc('total_revenue');
             }
         } elseif ($user->hasRole('distributor')) {
             // See all orders and their mostly ordered retailers

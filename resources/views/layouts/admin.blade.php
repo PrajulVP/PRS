@@ -1261,9 +1261,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.75);
             z-index: 999999;
             display: flex;
             align-items: center;
@@ -1783,14 +1781,6 @@
                 requestAnimationFrame(function() {
                     loader.classList.add('loaded');
                 });
-            }
-        });
-
-        // Show preloader during page unload / browser refresh / tab navigation
-        window.addEventListener('beforeunload', function() {
-            const loader = document.getElementById('globalPageLoader');
-            if (loader) {
-                loader.classList.remove('loaded');
             }
         });
 
