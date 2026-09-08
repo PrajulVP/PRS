@@ -3624,6 +3624,325 @@
                 ]
             }
         },
+        "/api/retailer/points-history": {
+            "get": {
+                "tags": [
+                    "Retailer Loyalty"
+                ],
+                "summary": "Get detailed earned points and claimed rewards history",
+                "operationId": "a7d022e9f8018d13e8577610e2c26e43",
+                "responses": {
+                    "200": {
+                        "description": "Earned points and claimed rewards history",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "earned_history": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "type": {
+                                                        "type": "string",
+                                                        "example": "EARNED"
+                                                    },
+                                                    "order_code": {
+                                                        "type": "string",
+                                                        "example": "ORD-2026-001"
+                                                    },
+                                                    "points": {
+                                                        "type": "number",
+                                                        "example": 5220
+                                                    },
+                                                    "date": {
+                                                        "type": "string",
+                                                        "example": "2026-09-01 14:30:00"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "claimed_history": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "type": {
+                                                        "type": "string",
+                                                        "example": "CLAIMED"
+                                                    },
+                                                    "redemption_id": {
+                                                        "type": "integer",
+                                                        "example": 12
+                                                    },
+                                                    "brand": {
+                                                        "type": "string",
+                                                        "example": "ATOMSHIELD"
+                                                    },
+                                                    "reward_name": {
+                                                        "type": "string",
+                                                        "example": "Smart Watch"
+                                                    },
+                                                    "points_deducted": {
+                                                        "type": "number",
+                                                        "example": 1000
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "approved"
+                                                    },
+                                                    "claimed_at": {
+                                                        "type": "string",
+                                                        "example": "2026-09-03 10:15:00"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/retailer/loyalty-roadmap": {
+            "get": {
+                "tags": [
+                    "Retailer Loyalty"
+                ],
+                "summary": "Get brand milestone roadmap with claimed/unlocked status and reward options",
+                "operationId": "d1a2c8b63158b1e404773dbd8761ef04",
+                "responses": {
+                    "200": {
+                        "description": "Brand milestone roadmaps",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "brand": {
+                                                        "type": "string",
+                                                        "example": "ATOMSHIELD"
+                                                    },
+                                                    "current_earned_points": {
+                                                        "type": "number",
+                                                        "example": 5220
+                                                    },
+                                                    "next_target": {
+                                                        "type": "number",
+                                                        "example": 10000
+                                                    },
+                                                    "next_reward": {
+                                                        "type": "string",
+                                                        "example": "Gold Coin 5g"
+                                                    },
+                                                    "next_reward_options": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string",
+                                                            "example": "24K Gold Coin"
+                                                        }
+                                                    },
+                                                    "milestone_roadmap": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "slab_id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "threshold": {
+                                                                    "type": "number",
+                                                                    "example": 5000
+                                                                },
+                                                                "default_reward": {
+                                                                    "type": "string",
+                                                                    "example": "Smart Watch"
+                                                                },
+                                                                "available_options": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "string",
+                                                                        "example": "Black Color"
+                                                                    }
+                                                                },
+                                                                "is_unlocked": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                },
+                                                                "is_claimed": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                },
+                                                                "claim_details": {
+                                                                    "properties": {
+                                                                        "redemption_id": {
+                                                                            "type": "integer",
+                                                                            "example": 12
+                                                                        },
+                                                                        "selected_option": {
+                                                                            "type": "string",
+                                                                            "example": "Black Color"
+                                                                        },
+                                                                        "status": {
+                                                                            "type": "string",
+                                                                            "example": "approved"
+                                                                        },
+                                                                        "claimed_at": {
+                                                                            "type": "string",
+                                                                            "example": "2026-09-03 10:15:00"
+                                                                        }
+                                                                    },
+                                                                    "type": "object",
+                                                                    "nullable": true
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/loyalty/retailer-details/{retailer_id}": {
+            "get": {
+                "tags": [
+                    "Loyalty"
+                ],
+                "summary": "Get loyalty rewards, claims, and points history for a specific retailer (for Field Staff and Sales Managers)",
+                "operationId": "2a6704bfea999819e8d052b54ade9df9",
+                "parameters": [
+                    {
+                        "name": "retailer_id",
+                        "in": "path",
+                        "description": "Retailer ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Retailer loyalty details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "retailer": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 45
+                                                },
+                                                "shop_name": {
+                                                    "type": "string",
+                                                    "example": "Apollo Pharmacy"
+                                                },
+                                                "contact_no": {
+                                                    "type": "string",
+                                                    "example": "9876543210"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "summary": {
+                                            "properties": {
+                                                "earned_points": {
+                                                    "type": "string",
+                                                    "example": "5220.00"
+                                                },
+                                                "claimed_points": {
+                                                    "type": "string",
+                                                    "example": "1500.00"
+                                                },
+                                                "remaining_points": {
+                                                    "type": "string",
+                                                    "example": "3720.00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "earned_history": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "claimed_history": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "roadmap": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Retailer not found"
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/manager/punch": {
             "get": {
                 "tags": [
@@ -4657,13 +4976,34 @@
                 ],
                 "summary": "Get retailer dashboard statistics",
                 "operationId": "6dd43fa903582f92d9f2a4d8d93bd2c7",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Statistics period: weekly, monthly, yearly",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "monthly",
+                            "enum": [
+                                "weekly",
+                                "monthly",
+                                "yearly"
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Dashboard statistics",
+                        "description": "Dashboard statistics with overall summary and brand breakdown",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "period": {
+                                            "type": "string",
+                                            "example": "monthly"
+                                        },
                                         "total_orders": {
                                             "type": "integer",
                                             "example": 150
@@ -4699,6 +5039,47 @@
                                         "credit_limit": {
                                             "type": "string",
                                             "example": "5000.00"
+                                        },
+                                        "overall_summary": {
+                                            "properties": {
+                                                "earned_points": {
+                                                    "type": "string",
+                                                    "example": "5220.00"
+                                                },
+                                                "claimed_points": {
+                                                    "type": "string",
+                                                    "example": "1500.00"
+                                                },
+                                                "remaining_points": {
+                                                    "type": "string",
+                                                    "example": "3720.00"
+                                                },
+                                                "brand_breakdown": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "brand": {
+                                                                "type": "string",
+                                                                "example": "ATOMSHIELD"
+                                                            },
+                                                            "earned_points": {
+                                                                "type": "string",
+                                                                "example": "5220.00"
+                                                            },
+                                                            "claimed_points": {
+                                                                "type": "string",
+                                                                "example": "1000.00"
+                                                            },
+                                                            "remaining_points": {
+                                                                "type": "string",
+                                                                "example": "4220.00"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -4720,20 +5101,20 @@
         "/api/retailer/loyalty-points": {
             "get": {
                 "tags": [
-                    "Retailer Loyalty"
+                    "Retailer Dashboard"
                 ],
-                "summary": "Get retailer loyalty points and history",
+                "summary": "Get retailer total loyalty points and credit balances",
                 "operationId": "357a19309cff2e715c35d5315a47842e",
                 "responses": {
                     "200": {
-                        "description": "Loyalty points details",
+                        "description": "Retailer loyalty points summary",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "total_points": {
                                             "type": "string",
-                                            "example": "500"
+                                            "example": "3720.00"
                                         },
                                         "credit_balance": {
                                             "type": "string",
@@ -4749,15 +5130,15 @@
                                                 "properties": {
                                                     "order_code": {
                                                         "type": "string",
-                                                        "example": "RO-ABC123"
+                                                        "example": "ORD-2026-001"
                                                     },
                                                     "points_earned": {
-                                                        "type": "integer",
-                                                        "example": 50
+                                                        "type": "number",
+                                                        "example": 5220
                                                     },
                                                     "date": {
                                                         "type": "string",
-                                                        "format": "date-time"
+                                                        "example": "2026-09-01 14:30:00"
                                                     }
                                                 },
                                                 "type": "object"
@@ -6679,6 +7060,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Loyalty",
+            "description": "API Endpoints for Loyalty Programme"
+        },
         {
             "name": "Auth",
             "description": "Auth"

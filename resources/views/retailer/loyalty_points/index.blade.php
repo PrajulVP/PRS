@@ -192,40 +192,18 @@
                                                         $bColor = $brandColors[strtoupper($reward['brand'])] ?? ['bg' => 'rgba(13, 110, 253, 0.1)', 'text' => '#0d6efd', 'border' => 'rgba(13, 110, 253, 0.2)', 'pill_bg' => 'linear-gradient(45deg, #ff416c, #ff4b2b)'];
                                                     @endphp
                                                     <div class="mb-3">
-                                                        <h6 class="fw-bold mb-2 text-uppercase" style="color: {{ $bColor['text'] }};">{{ $reward['brand'] }}</h6>
-                                                        @if(isset($reward['next_reward_options']) && is_array($reward['next_reward_options']) && count($reward['next_reward_options']) > 0)
-                                                            <div class="d-flex flex-wrap gap-1">
-                                                                @php 
-                                                                    $displayOptions = array_slice($reward['next_reward_options'], 0, 2); 
-                                                                    $hiddenCount = count($reward['next_reward_options']) - 2; 
-                                                                @endphp
-                                                                @foreach($displayOptions as $opt)
-                                                                    <span class="badge rounded-pill shadow-sm d-inline-flex align-items-center" style="background: {{ $bColor['text'] }}; color: white; border: 1px solid rgba(255,255,255,0.2); font-size: 10px; padding: 4px 8px; font-weight: 600; line-height: 1;">
-                                                                        <i class="fa fa-gift me-1" style="color: white; opacity: 0.9; font-size: 10px;"></i> <span>{{ $opt }}</span>
-                                                                    </span>
-                                                                @endforeach
-                                                                @if($hiddenCount > 0)
-                                                                    <span class="badge rounded-pill shadow-sm d-inline-flex align-items-center justify-content-center" style="background: {{ $bColor['pill_bg'] }}; border: 1px solid rgba(255,255,255,0.3); color: white; font-size: 10px; cursor: pointer; transition: all 0.2s; padding: 4px 8px; line-height: 1;" data-bs-toggle="modal" data-bs-target="#roadmapModal-{{ Str::slug($reward['brand']) }}">
-                                                                        +{{ $hiddenCount }} more (View Roadmap)
-                                                                    </span>
-                                                                @endif
-                                                            </div>
-                                                        @elseif($reward['next_reward'])
-                                                            <span class="badge rounded-pill shadow-sm d-inline-flex align-items-center" style="background: {{ $bColor['text'] }}; color: white; border: 1px solid rgba(255,255,255,0.2); font-size: 10px; padding: 4px 8px; font-weight: 600; line-height: 1;">
-                                                                <i class="fa fa-gift me-1" style="color: white; opacity: 0.9; font-size: 10px;"></i> <span>{{ $reward['next_reward'] }}</span>
-                                                            </span>
-                                                        @else
-                                                            <span class="badge bg-light text-muted border rounded-pill shadow-sm" style="font-size: 11px;"><i class="fa fa-star me-1"></i>Max Level</span>
-                                                        @endif
+                                                        <h6 class="fw-bold mb-0 text-uppercase" style="color: {{ $bColor['text'] }}; letter-spacing: 0.5px; font-size: 1.1rem;">{{ $reward['brand'] }}</h6>
                                                     </div>
                                             
-                                            <!-- Points Info -->
-                                            <div class="d-flex justify-content-between text-muted mb-1 fw-semibold" style="font-size: 12px;">
-                                                <span>Current Points: <span class="text-dark">{{ number_format($reward['current_total'], 2) }}</span></span>
-                                                @if($reward['next_target'])
-                                                    <span>Target: <span class="badge rounded-pill shadow-sm ms-1" style="background: {{ $bColor['pill_bg'] }}; color: white; padding: 3px 8px; font-size: 11px;">{{ number_format($reward['next_target'], 0) }}</span></span>
-                                                @endif
-                                            </div>
+                                                    <!-- Clean Formatted Points Info UI -->
+                                                    <div class="d-flex justify-content-between align-items-center mb-2" style="font-size: 0.85rem;">
+                                                        <span class="text-muted" style="font-weight: 500;">Current Points: <strong class="text-main-theme ms-1" style="font-weight: 800; font-size: 0.95rem;">{{ number_format($reward['current_total'], 2) }}</strong></span>
+                                                        @if($reward['next_target'])
+                                                            <span class="text-muted" style="font-weight: 500;">Target: <strong class="ms-1" style="color: {{ $bColor['text'] }}; font-weight: 800; font-size: 0.95rem;">{{ number_format($reward['next_target'], 0) }}</strong></span>
+                                                        @else
+                                                            <span class="text-success fw-bold" style="font-size: 0.8rem;"><i class="fa fa-check-circle me-1"></i>Max Level</span>
+                                                        @endif
+                                                    </div>
                                             
                                                         @if($reward['next_target'])
                                                             @php
@@ -235,10 +213,10 @@
                                                                 <div class="progress-bar bg-success" role="progressbar" style="width: {{ $progress }}%;"></div>
                                                             </div>
                                                             <div class="mt-3 d-flex flex-wrap justify-content-end align-items-center gap-2">
-                                                                <button type="button" class="btn btn-sm shadow-sm text-nowrap d-flex align-items-center justify-content-center" style="background: white; color: {{ $bColor['text'] }}; border: 1px solid {{ $bColor['border'] }}; border-radius: 20px; font-weight: 700; height: 30px; padding: 0 12px;" data-bs-toggle="modal" data-bs-target="#roadmapModal-{{ Str::slug($reward['brand']) }}">
-                                                                    <i class="fa fa-map me-1 d-flex align-items-center" style="font-size: 12px; height: 100%;"></i> <span style="line-height: 1;">View Roadmap</span>
+                                                                <button type="button" class="btn btn-sm shadow-sm text-nowrap d-flex align-items-center justify-content-center" style="background-color: var(--med-bg-card, #ffffff) !important; color: {{ $bColor['text'] }} !important; border: 1.5px solid {{ $bColor['border'] }} !important; border-radius: 20px; font-weight: 700; height: 32px; padding: 0 14px;" data-bs-toggle="modal" data-bs-target="#roadmapModal-{{ Str::slug($reward['brand']) }}">
+                                                                    <i class="fa fa-map me-1.5 d-flex align-items-center" style="font-size: 12px;"></i>&nbsp; <span style="line-height: 1;">View Roadmap</span>
                                                                 </button>
-                                                                <div class="d-inline-flex align-items-center justify-content-center rounded-pill px-3 text-nowrap shadow-sm" style="background: {{ $bColor['pill_bg'] }}; color: white; font-size: 11px; font-weight: 700; border: 1px solid rgba(255,255,255,0.3); height: 30px;">
+                                                                <div class="d-inline-flex align-items-center justify-content-center rounded-pill px-3 text-nowrap shadow-sm" style="background: {{ $bColor['pill_bg'] }}; color: white; font-size: 11px; font-weight: 700; border: 1px solid rgba(255,255,255,0.3); height: 32px;">
                                                                     <i class="fa fa-lock me-1 d-flex align-items-center" style="font-size: 10px; height: 100%;"></i>
                                                                     <span style="line-height: 1;">{{ number_format($reward['next_target'] - $reward['current_total'], 0) }} points to go!</span>
                                                                 </div>
@@ -248,8 +226,8 @@
                                                                 <div class="progress-bar bg-success" role="progressbar" style="width: 100%;"></div>
                                                             </div>
                                                             <div class="mt-3 d-flex justify-content-end align-items-center gap-2">
-                                                                <button type="button" class="btn btn-sm shadow-sm text-nowrap d-flex align-items-center justify-content-center" style="background: white; color: {{ $bColor['text'] }}; border: 1px solid {{ $bColor['border'] }}; border-radius: 20px; font-weight: 600; height: 32px; padding: 0 12px;" data-bs-toggle="modal" data-bs-target="#roadmapModal-{{ Str::slug($reward['brand']) }}">
-                                                                    <i class="fa fa-list me-1"></i> View All Rewards
+                                                                <button type="button" class="btn btn-sm shadow-sm text-nowrap d-flex align-items-center justify-content-center" style="background-color: var(--med-bg-card, #ffffff) !important; color: {{ $bColor['text'] }} !important; border: 1.5px solid {{ $bColor['border'] }} !important; border-radius: 20px; font-weight: 700; height: 32px; padding: 0 14px;" data-bs-toggle="modal" data-bs-target="#roadmapModal-{{ Str::slug($reward['brand']) }}">
+                                                                    <i class="fa fa-list me-1.5"></i> View All Rewards
                                                                 </button>
                                                                 <div class="d-inline-flex align-items-center justify-content-center rounded-pill px-3 shadow-sm text-nowrap bg-light text-muted border" style="font-size: 11px; font-weight: 700; height: 32px;">
                                                                     <i class="fa fa-star text-warning me-1" style="font-size: 12px;"></i>
@@ -260,8 +238,8 @@
                                                         
                                                         <!-- Roadmap Modal -->
                                                         <div class="modal fade" id="roadmapModal-{{ Str::slug($reward['brand']) }}" tabindex="-1" aria-hidden="true">
-                                                            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-                                                                <div class="modal-content border-0 rounded-4 shadow">
+                                                            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" style="max-width: 760px;">
+                                                                <div class="modal-content border-0 rounded-4 shadow" style="background-color: #ffffff !important;">
                                                                     <div class="modal-header border-0 rounded-top-4" style="background: {{ $bColor['bg'] }};">
                                                                         <h5 class="modal-title fw-bold" style="color: {{ $bColor['text'] }};"><i class="fa fa-map text-muted me-2"></i>{{ $reward['brand'] }} Reward Roadmap</h5>
                                                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -442,23 +420,16 @@
                                 <thead class="bg-light">
                                     <tr>
                                         <th class="text-muted small text-uppercase">Finalized Date</th>
-                                        <th class="text-muted small text-uppercase">Type</th>
                                         <th class="text-muted small text-uppercase">Reference #</th>
                                         <th class="text-muted small text-uppercase">Items Summary</th>
                                         <th class="text-center text-muted small text-uppercase">Status</th>
+                                        <th class="text-center text-muted small text-uppercase">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody style="color: var(--med-text-main);">
                                     @foreach($unifiedHistory as $item)
                                         <tr>
                                             <td>{{ \Carbon\Carbon::parse($item->date)->format('d M Y, h:i A') }}</td>
-                                            <td>
-                                                @if($item->type === 'CR')
-                                                    <span class="badge bg-info text-dark px-3 py-2 fs-6 shadow-sm"><i class="fa fa-undo me-1"></i>Return / Credit</span>
-                                                @elseif($item->type === 'REWARD')
-                                                    <span class="badge bg-warning text-dark px-3 py-2 fs-6 shadow-sm"><i class="fa fa-gift me-1"></i>Reward Claim</span>
-                                                @endif
-                                            </td>
                                             <td><span class="fw-bold {{ $item->type === 'CR' ? 'text-info' : 'text-primary' }}">{{ $item->reference }}</span></td>
                                             <td class="small">
                                                 {!! $item->details !!}
@@ -472,14 +443,14 @@
                                                 <span class="badge {{ $badgeClass }} text-uppercase" style="font-size: 10px;">
                                                     {{ str_replace('_', ' ', $item->status) }}
                                                 </span>
-                                                @if($item->type === 'REWARD' && $item->status === 'pending' && auth()->user()->hasAnyRole(['admin', 'superadmin', 'salesmanager']))
-                                                    <form action="{{ route('admin.loyalty-points.mark-reward-given', $retailer->id) }}" method="POST" class="mt-1">
-                                                        @csrf
-                                                        <input type="hidden" name="redemption_id" value="{{ $item->id }}">
-                                                        <button type="submit" class="btn btn-xs btn-success rounded-pill px-2" style="font-size: 10px;" onclick="return confirm('Mark this reward as fulfilled?');">
-                                                            <i class="fa fa-check me-1"></i> Fulfill
-                                                        </button>
-                                                    </form>
+                                            </td>
+                                            <td class="text-center">
+                                                @if($item->type === 'REWARD')
+                                                    <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm btn-view-redemption-modal" data-id="{{ $item->id }}">
+                                                        <i class="fa fa-eye me-1"></i> View
+                                                    </button>
+                                                @else
+                                                    <span class="text-muted small">-</span>
                                                 @endif
                                             </td>
                                         </tr>
@@ -492,12 +463,161 @@
             </div>
         </div>
     </div>
+    <!-- REWARD CLAIM DETAILS MODAL -->
+    <div class="modal fade" id="redemptionDetailModal" tabindex="-1" aria-labelledby="redemptionDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header bg-dark text-white px-4 py-3 border-0">
+                    <h5 class="modal-title fw-bold text-white mb-0" id="redemptionDetailModalLabel">
+                        <i class="fa fa-gift text-warning me-2"></i><span class="text-white">Reward Claim Details</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4" id="modal-loading-state">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary me-2" role="status"></div>
+                        <span class="text-muted fw-semibold">Loading claim details...</span>
+                    </div>
+                </div>
+                <div class="modal-body p-4 d-none" id="modal-content-state">
+                    <!-- Retailer Info Card & Status Badge -->
+                    <div class="card border-0 bg-light rounded-3 p-3 mb-4">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-5">
+                                <span class="text-muted small text-uppercase fw-bold d-block">Retailer Shop</span>
+                                <h6 class="fw-bold mb-0 text-dark" id="modal_shop_name">-</h6>
+                                <span class="text-muted small d-block" id="modal_owner_name">-</span>
+                            </div>
+                            <div class="col-md-3">
+                                <span class="text-muted small text-uppercase fw-bold d-block">Contact</span>
+                                <span class="fw-semibold small text-dark d-block" id="modal_contact">-</span>
+                                <span class="text-muted small d-block text-truncate" id="modal_email">-</span>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="text-muted small text-uppercase fw-bold d-block">Location</span>
+                                <span class="fw-semibold small text-dark d-block" id="modal_location">-</span>
+                            </div>
+                            <div class="col-md-2 text-md-end">
+                                <span class="text-muted small text-uppercase fw-bold d-block mb-1">Status</span>
+                                <div id="modal_action_container"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reward Claim Info -->
+                    <div class="card border-0 rounded-3 p-3 mb-2 bg-soft-primary" style="border: 1px solid rgba(0, 73, 122, 0.15) !important;">
+                        <h6 class="fw-bold text-primary mb-3">
+                            <i class="fa fa-star me-1"></i> Claimed Reward Information
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <span class="text-muted small d-block fw-bold">Brand</span>
+                                <span class="badge bg-primary text-white fs-6 mt-1" id="modal_brand">-</span>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="text-muted small d-block fw-bold">Target Threshold</span>
+                                <span class="fw-bold fs-6 text-dark" id="modal_threshold">- Points</span>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="text-muted small d-block fw-bold">Selected Reward</span>
+                                <span class="fw-bold fs-6 text-success" id="modal_selected_reward">-</span>
+                            </div>
+                            <div class="col-12 pt-2">
+                                <span class="text-muted small d-block fw-bold mb-1">Available Slab Reward Options:</span>
+                                <div id="modal_options_list" class="d-flex flex-wrap gap-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light px-4 py-3 border-0 justify-content-end">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
-
-
 
 @push('scripts')
     <script>
+        $(document).on('click', '.btn-view-redemption-modal', function(e) {
+            e.preventDefault();
+            let redemptionId = $(this).data('id');
+            let modal = $('#redemptionDetailModal');
+            
+            $('#modal-loading-state').removeClass('d-none');
+            $('#modal-content-state').addClass('d-none');
+            modal.modal('show');
+
+            $.get("{{ route('admin.loyalty-points.redemption-details', ':id') }}".replace(':id', redemptionId), function(response) {
+                let r = response.redemption;
+                let ret = response.retailer;
+                let brandRewards = response.brand_rewards;
+
+                $('#modal_shop_name').text(ret.shop_name);
+                $('#modal_owner_name').text(ret.owner_name);
+                $('#modal_contact').text(ret.contact_no);
+                $('#modal_email').text(ret.email);
+                $('#modal_location').text(ret.location);
+
+                $('#modal_brand').text(r.brand);
+                $('#modal_threshold').text(r.threshold + ' Pts');
+                $('#modal_selected_reward').text(r.selected_reward);
+
+                let optionsHtml = '';
+                if (r.options && r.options.length > 0) {
+                    r.options.forEach(opt => {
+                        let isSelected = opt.trim().toLowerCase() === r.selected_reward.trim().toLowerCase();
+                        let badgeClass = isSelected ? 'bg-success text-white' : 'bg-light text-dark border';
+                        optionsHtml += `<span class="badge ${badgeClass} px-3 py-2 fs-6"><i class="fa ${isSelected ? 'fa-check-circle' : 'fa-circle-o'} me-1"></i>${opt}</span>`;
+                    });
+                }
+                $('#modal_options_list').html(optionsHtml);
+
+                let brandRows = '';
+                if (brandRewards && brandRewards.length > 0) {
+                    brandRewards.forEach(b => {
+                        let achievedText = '';
+                        if (b.achieved_rewards && b.achieved_rewards.length > 0) {
+                            b.achieved_rewards.forEach(ar => {
+                                achievedText += `<span class="badge bg-soft-success text-success border border-success me-1 mb-1">${ar.reward} (${ar.threshold} pts)</span>`;
+                            });
+                        } else {
+                            achievedText = '<span class="text-muted small">No pending unclaimed slabs</span>';
+                        }
+
+                        let targetStatus = b.next_target 
+                            ? `<span class="small text-dark fw-bold">Next: ${b.next_reward} (${b.next_target} pts)</span>` 
+                            : '<span class="badge bg-light text-success"><i class="fa fa-star me-1"></i>Max Level</span>';
+
+                        brandRows += `<tr>
+                            <td class="fw-bold text-primary">${b.brand}</td>
+                            <td class="fw-bold">${parseFloat(b.current_total).toFixed(2)} pts</td>
+                            <td>${targetStatus}</td>
+                            <td>${achievedText}</td>
+                        </tr>`;
+                    });
+                }
+                $('#modal_brand_summary_body').html(brandRows);
+
+                let actionHtml = '';
+                if (r.status === 'pending') {
+                    actionHtml = `<span class="fw-bold" style="color: #d97706;"><i class="fa fa-clock-o me-1"></i>Pending</span><div class="small text-muted" style="font-size:0.7rem;">Waiting for approval</div>`;
+                } else if (r.status === 'approved') {
+                    actionHtml = `<span class="fw-bold text-success"><i class="fa fa-check-circle me-1"></i>Approved</span><div class="small text-muted" style="font-size:0.75rem;"><i class="fa fa-truck me-1"></i>Waiting for delivery</div>`;
+                } else if (r.status === 'delivered') {
+                    actionHtml = `<span class="fw-bold text-success"><i class="fa fa-check-circle me-1"></i>Delivered</span><div class="small text-muted" style="font-size:0.75rem;">Fulfillment completed</div>`;
+                } else {
+                    actionHtml = `<span class="fw-bold text-secondary">${r.status.toUpperCase()}</span>`;
+                }
+                $('#modal_action_container').html(actionHtml);
+
+                $('#modal-loading-state').addClass('d-none');
+                $('#modal-content-state').removeClass('d-none');
+            }).fail(function() {
+                alert('Failed to fetch claim details.');
+                modal.modal('hide');
+            });
+        });
         $(document).ready(function () {
             // Fix Bootstrap modal rendering when inside containers with overflow/relative position
             $('.modal').appendTo('body');

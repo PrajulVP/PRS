@@ -1724,6 +1724,7 @@
             feather.replace();
         }
     </script>
+    @stack('modals')
 </body>
 
 </html>

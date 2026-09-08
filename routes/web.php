@@ -197,7 +197,9 @@ Route::middleware(['auth'])->group(function () {
 
         // Loyalty Points Dashboard
         Route::get('loyalty-points', [LoyaltyPointsController::class, 'index'])->name('loyalty-points.index');
+        Route::get('loyalty-points/activity-data', [LoyaltyPointsController::class, 'getActivityData'])->name('loyalty-points.activity-data');
         Route::post('loyalty-points/claim', [LoyaltyPointsController::class, 'claimReward'])->name('loyalty-points.claim');
+        Route::get('loyalty-points/redemptions/{id}/details', [LoyaltyPointsController::class, 'getRedemptionDetails'])->name('loyalty-points.redemption-details');
         Route::get('loyalty-points/{retailer}', [LoyaltyPointsController::class, 'index'])->name('loyalty-points.detail');
         
         // Retailer Wallet Dashboard

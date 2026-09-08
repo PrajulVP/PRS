@@ -161,10 +161,17 @@ Route::middleware('auth:api')->group(function () {
         Route::post('leaves', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'requestLeave']);
     });
 
+    // General Loyalty APIs (Field Staff / Sales Manager / Admin inspection)
+    Route::prefix('loyalty')->group(function () {
+        Route::get('retailer-details/{retailer_id}', [\App\Http\Controllers\Api\LoyaltyApiController::class, 'getRetailerLoyaltyDetailsForStaff']);
+    });
+
     // Retailer Dashboard & Loyalty
     Route::prefix('retailer')->group(function () {
         Route::get('dashboard/statistics', [\App\Http\Controllers\Api\RetailerDashboardApiController::class, 'getStatistics']);
         Route::get('loyalty-points', [\App\Http\Controllers\Api\RetailerDashboardApiController::class, 'getLoyaltyPoints']);
+        Route::get('points-history', [\App\Http\Controllers\Api\LoyaltyApiController::class, 'getPointsHistory']);
+        Route::get('loyalty-roadmap', [\App\Http\Controllers\Api\LoyaltyApiController::class, 'getLoyaltyRoadmap']);
         Route::get('loyalty-rewards', [\App\Http\Controllers\Api\LoyaltyApiController::class, 'getRetailerRewards']);
         Route::post('loyalty-rewards/claim', [\App\Http\Controllers\Api\LoyaltyApiController::class, 'claimRetailerReward']);
         Route::post('rate-staff', [\App\Http\Controllers\Api\RatingApiController::class, 'rateStaff']);
