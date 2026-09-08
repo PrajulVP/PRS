@@ -168,21 +168,50 @@ class DashboardController extends Controller
             // Target Calculations for Admin/Superadmin
             $monthStr = $startDate->format('m');
             $yearStr = $startDate->format('Y');
+            $monthName = $startDate->format('F');
             
             $globalTotalTarget = 0;
             $globalTotalAchieved = 0;
             
             $fieldStaffs = FieldStaff::with(['user', 'salesManager.user'])->get();
+            $fieldStaffIds = $fieldStaffs->pluck('id')->toArray();
+
+            // Single query for all fieldstaff achievements
+            $achievedMap = DB::table('retailer_orders')
+                ->join('retailer_order_items', 'retailer_orders.id', '=', 'retailer_order_items.retailer_order_id')
+                ->leftJoin('retailers', 'retailer_orders.retailer_id', '=', 'retailers.id')
+                ->whereIn('retailer_orders.status', [
+                    RetailerOrder::STATUS_APPROVED,
+                    RetailerOrder::STATUS_DELIVERED
+                ])
+                ->whereMonth('retailer_orders.created_at', $monthStr)
+                ->whereYear('retailer_orders.created_at', $yearStr)
+                ->select(
+                    DB::raw('COALESCE(retailer_orders.fieldstaff_id, retailers.field_staff_id) as fs_id'),
+                    DB::raw('SUM(retailer_order_items.unit_price * retailer_order_items.quantity) as total_achieved')
+                )
+                ->where(function($q) use ($fieldStaffIds) {
+                    $q->whereIn('retailer_orders.fieldstaff_id', $fieldStaffIds)
+                      ->orWhereIn('retailers.field_staff_id', $fieldStaffIds);
+                })
+                ->groupBy(DB::raw('COALESCE(retailer_orders.fieldstaff_id, retailers.field_staff_id)'))
+                ->pluck('total_achieved', 'fs_id')
+                ->toArray();
+
+            // Single query for all sales targets
+            $targetsGrouped = \App\Models\SalesTarget::whereIn('field_staff_id', $fieldStaffIds)
+                ->where('year', $yearStr)
+                ->where('month', $monthName)
+                ->get()
+                ->groupBy('field_staff_id');
+
             $fsPerformance = [];
             $managerPerformanceData = [];
 
             foreach ($fieldStaffs as $fs) {
-                $fsAchieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr);
-                $fsTargets = $fs->salesTargets()
-                    ->where('year', $yearStr)
-                    ->where('month', $startDate->format('F'))
-                    ->get();
-                $fsTargetSum = $fsTargets->sum('amount');
+                $fsAchieved = (float)($achievedMap[$fs->id] ?? 0);
+                $fsTargets = $targetsGrouped->get($fs->id, collect());
+                $fsTargetSum = (float)$fsTargets->sum('amount');
                 
                 $globalTotalTarget += $fsTargetSum;
                 $globalTotalAchieved += $fsAchieved;
@@ -266,7 +295,7 @@ class DashboardController extends Controller
             $salesManager = $user->salesManager;
             if ($salesManager) {
                 // Fieldstaff performance
-                $fieldStaffIds = $salesManager->fieldStaffs->pluck('id');
+                $fieldStaffIds = $salesManager->fieldStaffs->pluck('id')->toArray();
                 $retailerQuery->whereIn('field_staff_id', $fieldStaffIds);
 
                 $retailerOrderQuery->whereHas('retailer', function ($q) use ($fieldStaffIds) {
@@ -287,39 +316,97 @@ class DashboardController extends Controller
                 // Targets Logic
                 $monthStr = $startDate->format('m');
                 $yearStr = $startDate->format('Y');
+                $monthName = $startDate->format('F');
 
                 $totalTarget = 0;
                 $totalAchieved = 0;
                 $brand_targets = [];
-                $uniqueBrands = \App\Models\Brand::pluck('name');
+                $brands = \App\Models\Brand::all();
                 
-                foreach ($uniqueBrands as $brand) {
-                    $brand_targets[$brand] = [
-                        'brand' => $brand,
+                foreach ($brands as $brandModel) {
+                    $brand_targets[$brandModel->name] = [
+                        'brand' => $brandModel->name,
                         'target' => 0,
                         'achieved' => 0,
                     ];
                 }
+
+                // Batch overall achievements for these fieldstaff
+                $achievedMap = DB::table('retailer_orders')
+                    ->join('retailer_order_items', 'retailer_orders.id', '=', 'retailer_order_items.retailer_order_id')
+                    ->leftJoin('retailers', 'retailer_orders.retailer_id', '=', 'retailers.id')
+                    ->whereIn('retailer_orders.status', [
+                        RetailerOrder::STATUS_APPROVED,
+                        RetailerOrder::STATUS_DELIVERED
+                    ])
+                    ->whereMonth('retailer_orders.created_at', $monthStr)
+                    ->whereYear('retailer_orders.created_at', $yearStr)
+                    ->select(
+                        DB::raw('COALESCE(retailer_orders.fieldstaff_id, retailers.field_staff_id) as fs_id'),
+                        DB::raw('SUM(retailer_order_items.unit_price * retailer_order_items.quantity) as total_achieved')
+                    )
+                    ->where(function($q) use ($fieldStaffIds) {
+                        $q->whereIn('retailer_orders.fieldstaff_id', $fieldStaffIds)
+                          ->orWhereIn('retailers.field_staff_id', $fieldStaffIds);
+                    })
+                    ->groupBy(DB::raw('COALESCE(retailer_orders.fieldstaff_id, retailers.field_staff_id)'))
+                    ->pluck('total_achieved', 'fs_id')
+                    ->toArray();
+
+                // Batch brand achievements for these fieldstaff
+                $brandAchievedRows = DB::table('retailer_orders')
+                    ->join('retailer_order_items', 'retailer_orders.id', '=', 'retailer_order_items.retailer_order_id')
+                    ->join('products', 'retailer_order_items.product_id', '=', 'products.id')
+                    ->join('brands', 'products.brand_id', '=', 'brands.id')
+                    ->leftJoin('retailers', 'retailer_orders.retailer_id', '=', 'retailers.id')
+                    ->whereIn('retailer_orders.status', [
+                        RetailerOrder::STATUS_APPROVED,
+                        RetailerOrder::STATUS_DELIVERED
+                    ])
+                    ->whereMonth('retailer_orders.created_at', $monthStr)
+                    ->whereYear('retailer_orders.created_at', $yearStr)
+                    ->where(function($q) use ($fieldStaffIds) {
+                        $q->whereIn('retailer_orders.fieldstaff_id', $fieldStaffIds)
+                          ->orWhereIn('retailers.field_staff_id', $fieldStaffIds);
+                    })
+                    ->select('brands.name as brand_name', DB::raw('SUM(retailer_order_items.unit_price * retailer_order_items.quantity) as total_achieved'))
+                    ->groupBy('brands.name')
+                    ->pluck('total_achieved', 'brand_name')
+                    ->toArray();
+
+                foreach ($brandAchievedRows as $bName => $bAchievedVal) {
+                    if (isset($brand_targets[$bName])) {
+                        $brand_targets[$bName]['achieved'] = (float)$bAchievedVal;
+                    }
+                }
+
+                // Batch sales targets
+                $targetsGrouped = \App\Models\SalesTarget::whereIn('field_staff_id', $fieldStaffIds)
+                    ->where('year', $yearStr)
+                    ->where('month', $monthName)
+                    ->get()
+                    ->groupBy('field_staff_id');
+
+                // Batch order counts per fieldstaff
+                $orderCounts = RetailerOrder::select('fieldstaff_id', DB::raw('COUNT(id) as total_orders'))
+                    ->whereIn('fieldstaff_id', $fieldStaffIds)
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->groupBy('fieldstaff_id')
+                    ->pluck('total_orders', 'fieldstaff_id')
+                    ->toArray();
                 
-                $fieldStaffs = FieldStaff::whereIn('id', $fieldStaffIds)->get();
+                $fieldStaffs = FieldStaff::whereIn('id', $fieldStaffIds)->with('user')->get();
                 $fieldStaffPerformance = [];
                 
                 foreach ($fieldStaffs as $fs) {
-                    // Achievement
-                    $fsAchieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr);
+                    $fsAchieved = (float)($achievedMap[$fs->id] ?? 0);
                     $totalAchieved += $fsAchieved;
                     
-                    // Target
-                    $fsTargets = $fs->salesTargets()
-                        ->where('year', $yearStr)
-                        ->where('month', $startDate->format('F'))
-                        ->get();
-                    $fsTargetSum = $fsTargets->sum('amount');
+                    $fsTargets = $targetsGrouped->get($fs->id, collect());
+                    $fsTargetSum = (float)$fsTargets->sum('amount');
                     $totalTarget += $fsTargetSum;
                     
-                    $fsOrders = \App\Models\RetailerOrder::where('fieldstaff_id', $fs->id)
-                        ->whereBetween('created_at', [$startDate, $endDate])
-                        ->count();
+                    $fsOrders = (int)($orderCounts[$fs->id] ?? 0);
                         
                     $fieldStaffPerformance[] = [
                         'id' => $fs->id,
@@ -331,13 +418,11 @@ class DashboardController extends Controller
                         'achievement_percent' => $fsTargetSum > 0 ? round(($fsAchieved / $fsTargetSum) * 100, 1) : 0
                     ];
                     
-                    foreach ($uniqueBrands as $brand) {
-                        $bTarget = $fsTargets->where('brand', $brand)->first();
-                        $bTargetAmount = $bTarget ? $bTarget->amount : 0;
-                        $bAchieved = $fs->getAchievedAmountForMonth($monthStr, $yearStr, $brand);
-                        
-                        $brand_targets[$brand]['target'] += $bTargetAmount;
-                        $brand_targets[$brand]['achieved'] += $bAchieved;
+                    foreach ($brands as $brandModel) {
+                        $bTarget = $fsTargets->where('brand', $brandModel->name)->first();
+                        if ($bTarget && isset($brand_targets[$brandModel->name])) {
+                            $brand_targets[$brandModel->name]['target'] += (float)$bTarget->amount;
+                        }
                     }
                 }
                 

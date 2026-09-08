@@ -15,6 +15,14 @@ if (!function_exists('format_inr')) {
                         --med-accent-rgb: 0, 43, 92;
                     }
 
+                    /* Darker, high-contrast yellow/amber for text-warning in light theme */
+                    .text-warning {
+                        color: #d97706 !important;
+                    }
+                    body.dark-only .text-warning {
+                        color: #f59e0b !important;
+                    }
+
                     /* ─── Dashboard Table: flat header, no bubble pills ─── */
                     .dashboard-table-wrapper,
                     .dash-table-flat {

@@ -1139,6 +1139,7 @@
             .sidebar-wrapper.close_icon {
                 transform: translateX(-100%);
             }
+        }
 
         /* === High Visibility Utility Classes (Theme Aware) === */
         .text-main-theme { 
@@ -1252,6 +1253,56 @@
             cursor: pointer;
         }
         @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* ─── Global Spinning Logo Page Loader ─── */
+        .global-page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: all;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+        }
+        .global-page-loader.loaded {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        body.dark-only .global-page-loader {
+            background: rgba(0, 0, 0, 0.82);
+        }
+        .loader-logo-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1000px;
+        }
+        .loader-logo-spin {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            animation: logoSpin 1.4s linear infinite;
+            filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5));
+            will-change: transform;
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        @keyframes logoSpin {
+            0% { transform: rotateZ(0deg); }
+            100% { transform: rotateZ(360deg); }
+        }
     </style>
 </head>
 
@@ -1265,10 +1316,16 @@
             }
         })();
     </script>
+
+    <!-- Global Rotating Logo Page Loader -->
+    <div id="globalPageLoader" class="global-page-loader">
+        <div class="loader-logo-wrapper">
+            <img src="{{ asset('admin/assets/images/logo/loader.png') }}" class="loader-logo-spin" alt="">
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;" id="toastContainer"></div>
-
-    {{-- Removed Global Loader to prevent visual glitches --}}
 
     {{-- If authenticated as any role → show full dashboard layout --}}
     @if(Auth::guard('web')->check())
@@ -1718,6 +1775,50 @@
                 setTimeout(() => toast.remove(), 500);
             }, 5000);
         };
+
+        // Smoothly hide loader after initial page parse and render
+        window.addEventListener('DOMContentLoaded', function() {
+            const loader = document.getElementById('globalPageLoader');
+            if (loader) {
+                requestAnimationFrame(function() {
+                    loader.classList.add('loaded');
+                });
+            }
+        });
+
+        // Show preloader during page unload / browser refresh / tab navigation
+        window.addEventListener('beforeunload', function() {
+            const loader = document.getElementById('globalPageLoader');
+            if (loader) {
+                loader.classList.remove('loaded');
+            }
+        });
+
+        // Show preloader immediately on click of any valid page navigation link
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a');
+            if (link) {
+                const href = link.getAttribute('href');
+                const target = link.getAttribute('target');
+                if (href && !href.startsWith('#') && !href.startsWith('javascript:') && target !== '_blank' && !e.ctrlKey && !e.metaKey) {
+                    const loader = document.getElementById('globalPageLoader');
+                    if (loader) {
+                        loader.classList.remove('loaded');
+                    }
+                }
+            }
+        });
+
+        // Show preloader on form submissions
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (form && !form.hasAttribute('data-no-loader') && !form.classList.contains('no-loader')) {
+                const loader = document.getElementById('globalPageLoader');
+                if (loader) {
+                    loader.classList.remove('loaded');
+                }
+            }
+        });
 
         // Ensure icons are initialized for dynamic content
         if (typeof feather !== 'undefined') {
