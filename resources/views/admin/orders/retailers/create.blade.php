@@ -1317,6 +1317,9 @@
                     total += lineTotal;
                     let rowClass = (key === lastAddedKey) ? 'new-row' : '';
 
+                    let tabPerStr = parseInt(item.units_per_strip || 0);
+                    let strPerBox = parseInt(item.strips_per_box || 0);
+
                     tbody.append(`
                                                 <tr class="${rowClass}">
                                                     <td class="ps-4 text-muted fw-bold small">${index++}</td>
