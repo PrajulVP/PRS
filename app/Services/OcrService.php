@@ -22,7 +22,8 @@ class OcrService
         Log::info('OCR API Request', ['url' => $apiUrl, 'type' => $type]);
 
         try {
-            $response = Http::timeout(60)
+            $response = Http::withoutVerifying()
+                ->timeout(60)
                 ->attach(
                     'file',
                     file_get_contents($file->getRealPath()),

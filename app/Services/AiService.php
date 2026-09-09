@@ -26,7 +26,8 @@ class AiService
         
 
         try {
-            $response = Http::timeout(60)
+            $response = Http::withoutVerifying()
+                ->timeout(60)
                 ->attach(
                     'file',
                     file_get_contents($file->getRealPath()),
@@ -113,12 +114,23 @@ class AiService
                 continue;
             }
 
+            // Pick top matching product, prioritizing stock availability and brand priority
+            $bestProductMatch = null;
+            $bestDistributors = [];
+            
             foreach ($matchingProducts as $product) {
                 $distributors = $this->getAvailableDistributors($product, $retailer);
-                $isAtomed = str_starts_with(strtolower($product->product_name), 'atom');
+                if (is_null($bestProductMatch) || (!empty($distributors) && empty($bestDistributors))) {
+                    $bestProductMatch = $product;
+                    $bestDistributors = $distributors;
+                    if (!empty($bestDistributors)) break; // Found product with available stock
+                }
+            }
 
+            if ($bestProductMatch) {
+                $isAtomed = str_starts_with(strtolower($bestProductMatch->product_name), 'atom');
                 $distList = [];
-                foreach ($distributors as $distributor) {
+                foreach ($bestDistributors as $distributor) {
                     $distList[] = [
                         'id' => $distributor->id,
                         'name' => $distributor->user->name ?? 'N/A',
@@ -129,11 +141,11 @@ class AiService
                 }
 
                 $matchedOptions[] = [
-                    'product' => $product,
+                    'product' => $bestProductMatch,
                     'distributors' => $distList,
                     'has_stock' => !empty($distList),
                     'quantity' => (int)$quantity,
-                    'unit' => $this->determineDefaultUnit($product),
+                    'unit' => $this->determineDefaultUnit($bestProductMatch),
                     'original_name' => $name,
                     'is_chronic' => $isChronic,
                     'is_atomed' => $isAtomed,
@@ -141,6 +153,7 @@ class AiService
                 ];
             }
         }
+
 
         return [
             'success' => true,
@@ -218,7 +231,8 @@ class AiService
         Log::info('Invoice AI API Request', ['url' => $apiUrl]);
 
         try {
-            $response = Http::timeout(60)
+            $response = Http::withoutVerifying()
+                ->timeout(60)
                 ->attach(
                     'file',
                     file_get_contents($file->getRealPath()),

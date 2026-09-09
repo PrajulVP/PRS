@@ -1783,32 +1783,45 @@
                 });
             }
         });
-
-        // Show preloader immediately on click of any valid page navigation link
+        // Show preloader immediately on click of valid external page navigation links
         document.addEventListener('click', function(e) {
             const link = e.target.closest('a');
             if (link) {
                 const href = link.getAttribute('href');
                 const target = link.getAttribute('target');
-                if (href && !href.startsWith('#') && !href.startsWith('javascript:') && target !== '_blank' && !e.ctrlKey && !e.metaKey) {
-                    const loader = document.getElementById('globalPageLoader');
-                    if (loader) {
-                        loader.classList.remove('loaded');
+                const hasToggle = link.hasAttribute('data-bs-toggle') || link.hasAttribute('data-toggle');
+                
+                if (href && 
+                    !href.startsWith('#') && 
+                    !href.startsWith('javascript:') && 
+                    !hasToggle && 
+                    target !== '_blank' && 
+                    !e.ctrlKey && 
+                    !e.metaKey
+                ) {
+                    try {
+                        const currentUrl = new URL(window.location.href);
+                        const targetUrl = new URL(href, window.location.origin);
+                        
+                        // Only trigger loader if navigating to a different page or query string
+                        if (currentUrl.pathname !== targetUrl.pathname || currentUrl.search !== targetUrl.search) {
+                            const loader = document.getElementById('globalPageLoader');
+                            if (loader) {
+                                loader.classList.remove('loaded');
+                            }
+                        }
+                    } catch(err) {
+                        // Fallback for relative or special URLs
+                        const loader = document.getElementById('globalPageLoader');
+                        if (loader) {
+                            loader.classList.remove('loaded');
+                        }
                     }
                 }
             }
         });
 
-        // Show preloader on form submissions
-        document.addEventListener('submit', function(e) {
-            const form = e.target;
-            if (form && !form.hasAttribute('data-no-loader') && !form.classList.contains('no-loader')) {
-                const loader = document.getElementById('globalPageLoader');
-                if (loader) {
-                    loader.classList.remove('loaded');
-                }
-            }
-        });
+
 
         // Ensure icons are initialized for dynamic content
         if (typeof feather !== 'undefined') {

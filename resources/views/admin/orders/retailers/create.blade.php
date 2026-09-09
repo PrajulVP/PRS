@@ -594,7 +594,7 @@
                             // Order is locked to this distributor -> Auto-select & Lock dropdown
                             $distSelect.append(optionsHtml);
                             $distSelect.val(lockedDistId);
-                            $distSelect.prop('disabled', true); // Lock distributor dropdown for subsequent items
+                            $distSelect.prop('disabled', true); // Lock distributor dropdown visually
                         } else if (validCount === 1 && !currentVal) {
                             $distSelect.append('<option value="empty" disabled>Pick Distributor (1 Available)...</option>');
                             $distSelect.append(optionsHtml);
@@ -610,7 +610,8 @@
                     if (!Object.keys(addedItems).length) {
                         $distSelect.prop('disabled', false);
                     }
-                    $distSelect.trigger('change.select2');
+                    $distSelect.trigger('change').trigger('change.select2');
+
                     
                     // Auto-open dropdown if there are multiple options, but ONLY if the container is currently visible 
                     // (prevents JS errors when variants hide the container)
@@ -1965,9 +1966,12 @@
                 let existingStrips = addedItems[key] ? (addedItems[key].qty * addedItems[key].multiplier) : 0;
                 
                 if ((existingStrips + requestedStrips) > maxStockRaw) {
-                    showToast('error', `Insufficient stock for ${p.product_name}. Max available is ${maxStockRaw}.`);
+                    let unitLabel = unit || 'Units';
+                    let cleanName = p.product_name.replace(/\s+\d+.*$/, ''); // clean out mg/pack numbers for clarity
+                    showToast('error', `Stock limit reached for "${p.product_name}". Only ${maxStockRaw} ${unitLabel} available with this distributor.`);
                     return;
                 }
+
 
                 if (addedItems[key]) {
                     addedItems[key].qty += qty;
