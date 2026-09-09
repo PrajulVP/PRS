@@ -1940,8 +1940,15 @@
                 let boxesPerCarton = parseInt(p.boxes_per_carton || 1);
                 
                 let mul = 1;
+                let unitsPerStrip = parseInt(p.units_per_strip || 1);
                 if (unit === 'Box') mul = stripsPerBox;
-                if (unit === 'Carton') mul = stripsPerBox * boxesPerCarton;
+                else if (unit === 'Carton') mul = stripsPerBox * boxesPerCarton;
+                else if (unit === 'Nos') mul = 1 / (unitsPerStrip > 0 ? unitsPerStrip : 1);
+
+                let pPack = (p.pack || '').toLowerCase();
+                let hasCode = p.product_code && p.product_code !== '---' && p.product_code.trim() !== '';
+                let isCount = hasCode || pPack.includes('nos') || pPack.includes('count') || unit === 'Nos';
+
 
                 // Capture Variants from buttons
                 let variants = [];
@@ -1973,42 +1980,25 @@
                 }
 
 
-                if (addedItems[key]) {
-                    addedItems[key].qty += qty;
-                } else {
-                    // Try to split variantStr if it contains ' - ' (common pattern in this UI)
-                    let side = null;
-                    let size = null;
-                    
-                    if (variantStr) {
-                        if (variantStr.includes(' - ')) {
-                            let parts = variantStr.split(' - ');
-                            // Heuristic: if first part is Left/Right, it's side
-                            if (['LEFT', 'RIGHT'].includes(parts[0].toUpperCase())) {
-                                side = parts[0];
-                                size = parts[1];
-                            } else {
-                                size = parts[0];
-                                side = parts[1];
-                            }
-                        } else {
-                            // If only one part, check if it's side
-                            if (['LEFT', 'RIGHT'].includes(variantStr.toUpperCase())) {
-                                side = variantStr;
-                            } else {
-                                size = variantStr;
-                            }
-                        }
-                    }
+                // Ensure key is formatted consistently as prodId-distId
+                let itemKey = p.id + '-' + distId;
 
-                    addedItems[key] = {
+                if (addedItems[itemKey]) {
+                    let existingVarIndex = addedItems[itemKey].variants.findIndex(v => v.side === side && v.size === size && v.variant === variantStr);
+                    if (existingVarIndex !== -1) {
+                        addedItems[itemKey].variants[existingVarIndex].qty += qty;
+                    } else {
+                        addedItems[itemKey].variants.push({ side: side, size: size, variant: variantStr, qty: qty });
+                    }
+                    addedItems[itemKey].qty += qty;
+                    addedItems[itemKey].unit = unit;
+                } else {
+                    addedItems[itemKey] = {
                         id: p.id,
                         distId: distId,
                         distName: distName,
                         name: p.product_name,
-                        variant: variantStr,
-                        side: side,
-                        size: size,
+                        variants: [{ side: side, size: size, variant: variantStr, qty: qty }],
                         price: parseFloat(p.ptr),
                         qty: qty,
                         unit: unit,
@@ -2020,15 +2010,17 @@
                         units_per_strip: p.units_per_strip,
                         pack: p.pack,
                         has_variants: p.has_variants,
-                        is_count: unit === 'Nos',
+                        is_count: isCount,
                         maxStock: maxStockRaw
                     };
                 }
 
-                renderTable(key);
+
+                renderTable(itemKey);
                 btn.removeClass('btn-primary').addClass('btn-success').html('<i class="fa fa-check"></i> Added').prop('disabled', true);
-                showToast('success', `${p.product_name} added to order.`);
+                showToast('success', `${p.product_name} added to order bundle.`);
             });
+
 
             $(document).on('click', '.size-btn', function () {
                 $('.size-btn').removeClass('btn-primary text-white').addClass('btn-outline-primary');
