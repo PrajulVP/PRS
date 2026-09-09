@@ -19,61 +19,75 @@
                             <div class="row g-4">
                                 {{-- Row 1: Product and Distributor (for Admin) --}}
                                 @if(!Auth::user()->distributor)
-                                <div class="col-md-6">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <label class="form-label fw-bold text-muted small text-uppercase mb-0">Find Product</label>
-                                        <div class="d-flex align-items-center gap-1">
-                                            <span class="small text-muted font-outfit" style="font-size: 0.8rem;">Filter Brand:</span>
-                                            <select id="brandSelect" class="form-select form-select-sm border-0 bg-transparent text-primary fw-bold py-0 ps-1 pe-4" style="width: auto; height: auto !important; min-height: unset; font-size: 0.8rem !important; box-shadow: none !important; cursor: pointer; display: inline-block;">
-                                                <option value="">All Brands</option>
-                                                @foreach($brands as $brand)
-                                                    <option value="{{ $brand }}">{{ $brand }}</option>
-                                                @endforeach
-                                            </select>
+                                    <div class="col-md-6">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="form-label fw-bold text-muted small text-uppercase mb-0">Find
+                                                Product</label>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <span class="small text-muted font-outfit" style="font-size: 0.8rem;">Filter
+                                                    Brand:</span>
+                                                <select id="brandSelect"
+                                                    class="form-select form-select-sm border-0 bg-transparent text-primary fw-bold py-0 ps-1 pe-4"
+                                                    style="width: auto; height: auto !important; min-height: unset; font-size: 0.8rem !important; box-shadow: none !important; cursor: pointer; display: inline-block;">
+                                                    <option value="">All Brands</option>
+                                                    @foreach($brands as $brand)
+                                                        <option value="{{ $brand }}">{{ $brand }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
                                         </div>
+                                        <select id="productSelect" class="form-select select2">
+                                            <option value="">Search Product</option>
+                                            @foreach($products as $p)
+                                                <option value="{{ $p->id }}" data-brand="{{ $p->brand }}">
+                                                    {{ $p->product_name }}{{ trim($p->pack) && $p->pack != '' ? " ($p->pack)" : "" }}
+                                                    - ₹{{ number_format($p->pts, 2) }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
-                                    <select id="productSelect" class="form-select select2">
-                                        <option value="">Search Product</option>
-                                        @foreach($products as $p)
-                                            <option value="{{ $p->id }}" data-brand="{{ $p->brand }}">{{ $p->product_name }}{{ trim($p->pack) && $p->pack != '' ? " ($p->pack)" : "" }} - ₹{{ number_format($p->pts, 2) }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select Distributor</label>
-                                    <select name="distributor_id" id="distributor_id" class="form-select select2">
-                                        <option value="">Pick Distributor...</option>
-                                        @foreach($distributors as $d)
-                                            <option value="{{ $d->id }}">{{ $d->name ?? $d->user->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select
+                                            Distributor</label>
+                                        <select name="distributor_id" id="distributor_id" class="form-select select2">
+                                            <option value="">Pick Distributor...</option>
+                                            @foreach($distributors as $d)
+                                                <option value="{{ $d->id }}">{{ $d->name ?? $d->user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 @else
-                                <div class="col-md-12">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <label class="form-label fw-bold text-muted small text-uppercase mb-0">Find Product</label>
-                                        <div class="d-flex align-items-center gap-1">
-                                            <span class="small text-muted font-outfit" style="font-size: 0.8rem;">Filter Brand:</span>
-                                            <select id="brandSelect" class="form-select form-select-sm border-0 bg-transparent text-primary fw-bold py-0 ps-1 pe-4" style="width: auto; height: auto !important; min-height: unset; font-size: 0.8rem !important; box-shadow: none !important; cursor: pointer; display: inline-block;">
-                                                <option value="">All Brands</option>
-                                                @foreach($brands as $brand)
-                                                    <option value="{{ $brand }}">{{ $brand }}</option>
-                                                @endforeach
-                                            </select>
+                                    <div class="col-md-12">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="form-label fw-bold text-muted small text-uppercase mb-0">Find
+                                                Product</label>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <span class="small text-muted font-outfit" style="font-size: 0.8rem;">Filter
+                                                    Brand:</span>
+                                                <select id="brandSelect"
+                                                    class="form-select form-select-sm border-0 bg-transparent text-primary fw-bold py-0 ps-1 pe-4"
+                                                    style="width: auto; height: auto !important; min-height: unset; font-size: 0.8rem !important; box-shadow: none !important; cursor: pointer; display: inline-block;">
+                                                    <option value="">All Brands</option>
+                                                    @foreach($brands as $brand)
+                                                        <option value="{{ $brand }}">{{ $brand }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
                                         </div>
+                                        <select id="productSelect" class="form-select select2">
+                                            <option value="">Search Product</option>
+                                            @foreach($products as $p)
+                                                <option value="{{ $p->id }}" data-brand="{{ $p->brand }}">
+                                                    {{ $p->product_name }}{{ trim($p->pack) && $p->pack != '' ? " ($p->pack)" : "" }}
+                                                    - ₹{{ number_format($p->pts, 2) }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
-                                    <select id="productSelect" class="form-select select2">
-                                        <option value="">Search Product</option>
-                                        @foreach($products as $p)
-                                            <option value="{{ $p->id }}" data-brand="{{ $p->brand }}">{{ $p->product_name }}{{ trim($p->pack) && $p->pack != '' ? " ($p->pack)" : "" }} - ₹{{ number_format($p->pts, 2) }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
                                 @endif
 
                                 {{-- Variant Wrapper --}}
                                 <div class="col-md-12 my-2" id="variantWrapper" style="display: none;">
-                                    <div id="variantLevelsContainer" class="d-flex flex-wrap gap-4 p-3 border rounded-4 bg-white shadow-sm border-primary border-opacity-10">
+                                    <div id="variantLevelsContainer"
+                                        class="d-flex flex-wrap gap-4 p-3 border rounded-4 bg-white shadow-sm border-primary border-opacity-10">
                                         {{-- Dynamic variant levels will be injected here --}}
                                     </div>
                                     <input type="hidden" id="variantValue" value="">
@@ -83,10 +97,12 @@
                                 <div class="col-md-12" id="selectionDetails" style="display: none;">
                                     <div class="row g-3 align-items-end">
                                         <div class="col-md-8">
-                                            <label class="form-label fw-bold text-muted small text-uppercase mb-2">Quantity & Type</label>
+                                            <label class="form-label fw-bold text-muted small text-uppercase mb-2">Quantity
+                                                & Type</label>
                                             <div class="input-group">
-                                                <input type="number" id="qtyInput" class="form-control fw-bold rounded-start"
-                                                    value="1" min="1" style="height: 38px;">
+                                                <input type="number" id="qtyInput"
+                                                    class="form-control fw-bold rounded-start" value="1" min="1"
+                                                    style="height: 38px;">
                                                 <select
                                                     class="form-select input-group-text bg-light-soft border-start-0 font-outfit rounded-end"
                                                     id="unitSelect" style="max-width: 120px; height: 38px;">
@@ -100,8 +116,7 @@
                                         <div class="col-md-4">
                                             <button type="button"
                                                 class="btn btn-primary w-100 fw-bold py-2 shadow-sm font-outfit rounded-3"
-                                                style="height: 38px;"
-                                                id="btnAddItem">
+                                                style="height: 38px;" id="btnAddItem">
                                                 <i class="fa fa-plus me-1"></i> ADD
                                             </button>
                                         </div>
@@ -117,11 +132,15 @@
                         <div class="card-body p-4">
                             <div class="row align-items-center">
                                 <div class="col-md-12">
-                                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+                                    <div
+                                        class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
                                         <div class="mb-3 mb-md-0">
-                                            <h2 id="previewName" class="fw-extrabold mb-1 text-dark label-font tracking-tight" style="font-size: 1.75rem;">Product Name</h2>
-                                            <p class="text-primary fw-bold small mb-3 text-uppercase font-outfit letter-spacing-wider" id="previewGeneric">Generic Name</p>
-                                            
+                                            <h2 id="previewName"
+                                                class="fw-extrabold mb-1 text-dark label-font tracking-tight"
+                                                style="font-size: 1.75rem;">Product Name</h2>
+                                            <p class="text-primary fw-bold small mb-3 text-uppercase font-outfit letter-spacing-wider"
+                                                id="previewGeneric">Generic Name</p>
+
                                             <div class="d-flex flex-wrap gap-3 mt-4" id="previewBadges">
                                                 <div class="meta-capsule" id="previewCodeCapsule">
                                                     <i class="fa fa-tag text-primary"></i>
@@ -135,15 +154,19 @@
                                                     <i class="fa fa-box text-warning"></i>
                                                     <span id="previewPackSpan">-</span>
                                                 </div>
-                                                <div class="meta-capsule bg-primary text-white border-0 shadow-sm" id="previewBoxCapsule" style="display:none;">
+                                                <div class="meta-capsule bg-primary text-white border-0 shadow-sm"
+                                                    id="previewBoxCapsule" style="display:none;">
                                                     <i class="fa fa-layer-group text-white-50"></i>
                                                     <span id="previewBoxSpan">-</span>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="text-end py-0 px-0" style="min-width: 150px;">
-                                            <span class="text-primary fw-extrabold small text-uppercase d-block mb-2 font-outfit letter-spacing-wider" id="ptsLabel" style="opacity: 0.8;">PTS (Per Unit)</span>
-                                            <span class="text-success mb-0 font-outfit fw-extrabold display-6" style="letter-spacing: -1px;">₹<span id="previewMrp">0.00</span></span>
+                                            <span
+                                                class="text-primary fw-extrabold small text-uppercase d-block mb-2 font-outfit letter-spacing-wider"
+                                                id="ptsLabel" style="opacity: 0.8;">PTS (Per Unit)</span>
+                                            <span class="text-success mb-0 font-outfit fw-extrabold display-6"
+                                                style="letter-spacing: -1px;">₹<span id="previewMrp">0.00</span></span>
                                         </div>
                                     </div>
                                 </div>
@@ -210,22 +233,26 @@
                             </div>
                             <div class="card-body p-4">
                                 <div class="mb-4 text-center">
-                                    <label class="text-muted small fw-bold text-uppercase d-block mb-2">Total Order Value (PTS)</label>
+                                    <label class="text-muted small fw-bold text-uppercase d-block mb-2">Total Order Value
+                                        (PTS)</label>
                                     <div class="d-flex align-items-center justify-content-center gap-3">
-                                        <span id="grandTotal" class="h1 fw-bold text-primary mb-0 font-outfit" style="letter-spacing: -1px;">₹0.00</span>
+                                        <span id="grandTotal" class="h1 fw-bold text-primary mb-0 font-outfit"
+                                            style="letter-spacing: -1px;">₹0.00</span>
                                     </div>
                                 </div>
-                                
+
                                 <div class="p-3 bg-light-soft rounded-3 border border-light-dark mb-4 text-center">
                                     <small class="text-muted d-block line-height-sm">
-                                        <i class="fa fa-info-circle text-warning me-1"></i> 
+                                        <i class="fa fa-info-circle text-warning me-1"></i>
                                         GST & other charges will be calculated on the final invoice.
                                     </small>
                                 </div>
 
                                 <div class="mb-4">
-                                    <label class="text-muted small fw-bold text-uppercase d-block mb-2">Delivery Notes (Optional)</label>
-                                    <textarea name="delivery_notes" class="form-control" rows="2" placeholder="Any special instructions for delivery..."></textarea>
+                                    <label class="text-muted small fw-bold text-uppercase d-block mb-2">Delivery Notes
+                                        (Optional)</label>
+                                    <textarea name="delivery_notes" class="form-control" rows="2"
+                                        placeholder="Any special instructions for delivery..."></textarea>
                                 </div>
 
                                 <button type="submit"
@@ -247,14 +274,16 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
                 <div class="modal-header bg-light border-bottom-0">
-                    <h5 class="modal-title fw-bold text-dark font-outfit"><i class="fa fa-gift text-primary me-2"></i>Select Free Variants</h5>
+                    <h5 class="modal-title fw-bold text-dark font-outfit"><i class="fa fa-gift text-primary me-2"></i>Select
+                        Free Variants</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4 bg-white" id="freeVariantModalBody">
                     <!-- Dynamic variants builder will be injected here -->
                 </div>
                 <div class="modal-footer border-top-0 bg-light">
-                    <button type="button" class="btn btn-primary fw-bold px-4 rounded-pill" data-bs-dismiss="modal">Done</button>
+                    <button type="button" class="btn btn-primary fw-bold px-4 rounded-pill"
+                        data-bs-dismiss="modal">Done</button>
                 </div>
             </div>
         </div>
@@ -315,6 +344,7 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
             transform: translateY(-2px);
         }
+
         .meta-capsule {
             background: rgba(255, 255, 255, 0.9);
             border: 1px solid rgba(0, 0, 0, 0.1);
@@ -326,27 +356,30 @@
             font-size: 0.9rem;
             font-weight: 700;
             color: #111827;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             transition: all 0.2s ease;
         }
+
         .meta-capsule:hover {
             background: #fff;
             border-color: var(--bs-primary);
             color: var(--bs-primary);
             transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        body.dark-only .meta-capsule, .dark-only .meta-capsule {
+        body.dark-only .meta-capsule,
+        .dark-only .meta-capsule {
             background: rgba(30, 41, 59, 0.7) !important;
             border-color: rgba(255, 255, 255, 0.1) !important;
             color: #f1f5f9 !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
         }
 
         body.dark-only .meta-capsule i {
             color: var(--med-primary) !important;
         }
+
         .meta-capsule i {
             font-size: 1rem;
             opacity: 1;
@@ -358,6 +391,7 @@
             -webkit-appearance: none;
             margin: 0;
         }
+
         .free-variant-input {
             -moz-appearance: textfield;
         }
@@ -480,27 +514,27 @@
 
             $('.select2').select2({ placeholder: "Search...", allowClear: true });
 
-            $('#brandSelect').on('change', function() {
+            $('#brandSelect').on('change', function () {
                 let brand = $(this).val();
                 $('#productDetailsCard').fadeOut(200);
                 $('#variantWrapper').hide();
                 $('#variantLevelsContainer').empty();
                 $('#selectionDetails').hide();
-                
+
                 $.ajax({
                     url: "{{ route('admin.distributor-orders.get-products') }}",
                     method: 'GET',
                     data: { brand: brand },
-                    success: function(res) {
+                    success: function (res) {
                         let options = '<option value="">Search Product</option>';
-                        res.forEach(function(p) {
+                        res.forEach(function (p) {
                             let packSuffix = (p.pack && p.pack.trim() !== '') ? ' (' + p.pack + ')' : '';
                             let price = parseFloat(p.pts).toFixed(2);
                             options += `<option value="${p.id}" data-brand="${p.brand || ''}">${p.product_name}${packSuffix} - ₹${price}</option>`;
                         });
                         $('#productSelect').html(options).val(null).trigger('change');
                     },
-                    error: function(xhr) {
+                    error: function (xhr) {
                         console.error(xhr);
                         if (typeof showToast === 'function') {
                             showToast('error', 'Failed to fetch products for the selected brand');
@@ -550,12 +584,12 @@
                                 Object.keys(p.variant_options).forEach(attrName => {
                                     let vals = p.variant_options[attrName];
                                     let levelHtml = `
-                                        <div class="variant-level mb-3" id="levelContainer_${levelIdx}" style="${levelIdx > 0 ? 'display:none;' : ''}">
-                                            <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select ${attrName}</label>
-                                            <div class="d-flex flex-wrap gap-2">
-                                                ${vals.map(v => `<button type="button" class="btn btn-outline-primary variant-btn px-3 py-2 fw-bold" data-level="${levelIdx}" data-value="${v}">${v}</button>`).join('')}
-                                            </div>
-                                        </div>`;
+                                            <div class="variant-level mb-3" id="levelContainer_${levelIdx}" style="${levelIdx > 0 ? 'display:none;' : ''}">
+                                                <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select ${attrName}</label>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    ${vals.map(v => `<button type="button" class="btn btn-outline-primary variant-btn px-3 py-2 fw-bold" data-level="${levelIdx}" data-value="${v}">${v}</button>`).join('')}
+                                                </div>
+                                            </div>`;
                                     $container.append(levelHtml);
                                     levelIdx++;
                                 });
@@ -563,12 +597,12 @@
                                 // Fallback to name-based parsing
                                 let variantsToUse = dynamicVariants.length > 0 ? dynamicVariants : ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
                                 let levelHtml = `
-                                    <div class="variant-level mb-3">
-                                        <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select Size / Variant</label>
-                                        <div class="d-flex flex-wrap gap-2">
-                                            ${variantsToUse.map(v => `<button type="button" class="btn btn-outline-primary variant-btn px-3 py-2 fw-bold" data-level="0" data-value="${v}">${v}</button>`).join('')}
-                                        </div>
-                                    </div>`;
+                                        <div class="variant-level mb-3">
+                                            <label class="form-label fw-bold text-muted small text-uppercase mb-2">Select Size / Variant</label>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                ${variantsToUse.map(v => `<button type="button" class="btn btn-outline-primary variant-btn px-3 py-2 fw-bold" data-level="0" data-value="${v}">${v}</button>`).join('')}
+                                            </div>
+                                        </div>`;
                                 $container.append(levelHtml);
                             }
                         } else {
@@ -580,27 +614,27 @@
                         let hasCode = p.product_code && p.product_code !== '---' && p.product_code.trim() !== '';
                         let pPack = (p.pack || '').toLowerCase();
                         let isCount = hasCode || pPack.includes('nos') || pPack.includes('count');
-                        
+
                         // Fallback patterns: If not already No., check keywords
                         if (!isCount) {
                             let pName = (p.product_name || '').toLowerCase();
-                            isCount = pPack.includes('pair') || pPack.includes('bottle') || 
-                                     pPack.includes('ml') || pPack.includes('gm') || 
-                                     pPack.includes('syp') || pName.includes('syp') || 
-                                     pName.includes('syrup') || pName.includes('drop') || 
-                                     pName.includes('ointment') || pName.includes('belt') ||
-                                     pName.includes('cap') || pName.includes('binder') ||
-                                     pName.includes('splint') || pName.includes('brace') ||
-                                     pName.includes('cuff') || pName.includes('walker');
+                            isCount = pPack.includes('pair') || pPack.includes('bottle') ||
+                                pPack.includes('ml') || pPack.includes('gm') ||
+                                pPack.includes('syp') || pName.includes('syp') ||
+                                pName.includes('syrup') || pName.includes('drop') ||
+                                pName.includes('ointment') || pName.includes('belt') ||
+                                pName.includes('cap') || pName.includes('binder') ||
+                                pName.includes('splint') || pName.includes('brace') ||
+                                pName.includes('cuff') || pName.includes('walker');
                         }
-                        
+
                         currentProductDetails = p;
                         currentProductDetails.is_count = isCount;
 
                         let $unitSelect = $('#unitSelect');
                         $unitSelect.empty();
                         let stripsPerBox = parseInt(p.strips_per_box);
-                        
+
                         if (isCount) {
                             $unitSelect.append('<option value="Nos">No.</option>');
                             $('#ptsLabel').text("PTS (Per No.)");
@@ -623,9 +657,9 @@
                         } else {
                             $('#previewPackCapsule').hide();
                         }
-                        
+
                         $('#previewMrp').text(parseFloat(p.pts || 0).toFixed(2));
-                        
+
                         if (isValid(p.generic_name, 'generic')) {
                             $('#previewGeneric').text(p.generic_name).show();
                         } else {
@@ -663,7 +697,7 @@
             });
 
             $('#productSelect').on('select2:clear', () => {
-                $('#productDetailsCard').fadeOut(200); 
+                $('#productDetailsCard').fadeOut(200);
                 $('#variantWrapper').hide();
                 $('#variantLevelsContainer').empty();
                 $('#variantValue').val('');
@@ -671,17 +705,17 @@
                 currentProductDetails = null;
             });
 
-            $(document).on('click', '.variant-btn', function() {
+            $(document).on('click', '.variant-btn', function () {
                 let $btn = $(this);
                 let levelIdx = parseInt($btn.data('level'));
-                
+
                 // Toggle active class in current level
                 $btn.closest('.variant-level').find('.variant-btn').removeClass('active');
                 $btn.addClass('active');
 
                 // Hide and reset subsequent levels
                 let $allLevels = $('.variant-level');
-                $allLevels.each(function(idx) {
+                $allLevels.each(function (idx) {
                     if (idx > levelIdx) {
                         $(this).hide().find('.variant-btn').removeClass('active');
                     }
@@ -695,9 +729,9 @@
                     $('#selectionDetails').hide();
                 } else {
                     // Final level reached - Assemble full variant string from all active buttons
-                    let finalVariant = $('.variant-level:visible .variant-btn.active').map(function() {
+                    let finalVariant = $('.variant-level:visible .variant-btn.active').map(function () {
                         return $(this).data('value');
-                    }).get().join(' - '); 
+                    }).get().join(' - ');
 
                     $('#variantValue').val(finalVariant);
                     $('#selectionDetails').fadeIn(200);
@@ -713,7 +747,7 @@
                 let side = null;
                 let size = null;
                 if ($('#variantWrapper').is(':visible')) {
-                    $('.variant-level:visible').each(function() {
+                    $('.variant-level:visible').each(function () {
                         let label = $(this).find('label').text().toLowerCase();
                         let activeVal = $(this).find('.variant-btn.active').data('value');
                         if (label.includes('side')) side = activeVal;
@@ -782,154 +816,154 @@
                     let rowClass = (key === lastAddedKey) ? 'new-row' : '';
 
                     tbody.append(`
-                        <tr class="${rowClass}">
-                            <td class="ps-4 text-muted fw-bold small">${index++}</td>
-                            <td>
-                                <div class="fw-bold text-dark font-outfit" style="max-width:250px; white-space:normal; line-height:1.2;">
-                                    ${item.name} 
-                                </div>
-                                <div class="mt-2">
-                                    ${item.variants.map((v, vIdx) => {
-                                        let parts = [];
-                                        if (v.side) parts.push(v.side);
-                                        if (v.size) parts.push(v.size);
-                                        if (v.variant && !v.side && !v.size) parts.push(v.variant);
-                                        let vLabel = parts.length > 0 ? parts.join('/') : (item.unit || 'Reg');
-                                        return `
-                                        <div class="d-inline-flex align-items-center gap-1 bg-light border rounded-pill px-2 py-1 shadow-sm mb-1 me-2" style="border-color: rgba(0,0,0,0.08) !important;">
-                                            <span class="text-primary fw-bold" style="font-size: 0.7rem;">${vLabel}</span>
-                                            <div class="bg-secondary opacity-25 mx-1" style="width: 1px; height: 10px;"></div>
-                                            <span class="text-dark fw-bold me-1" style="font-size: 0.7rem;">${v.qty}</span>
-                                            <div class="remove-variant-btn d-flex align-items-center justify-content-center bg-danger rounded-circle shadow-sm" data-key="${key}" data-vidx="${vIdx}" style="width: 14px; height: 14px; cursor: pointer; opacity: 0.85; transition: opacity 0.2s;">
-                                                <i class="fa fa-times text-white" style="font-size: 0.45rem;"></i>
-                                            </div>
-                                        </div>`;
-                                    }).join('')}
-                                </div>
-                                <div class="small text-muted mt-1 font-outfit">
-                                    ${item.brand ? `<span class="me-2"><i class="fa fa-tag me-1 text-secondary"></i>${item.brand}</span>` : ''}
-                                    ${item.pack ? `<span class="me-2"><i class="fa fa-box me-1 text-warning"></i>${item.pack}</span>` : ''}
-                                    ${!item.is_count && parseInt(item.units_per_strip) > 0 ? `<span class="me-2"><i class="fa fa-pills me-1 text-primary"></i>${parseInt(item.units_per_strip)} Tab/Str</span>` : ''}
-                                    ${!item.is_count && parseInt(item.strips_per_box) > 0 ? `<span class="me-2"><i class="fa fa-layer-group me-1 text-info"></i>${parseInt(item.strips_per_box)} Str/Box</span>` : ''}
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <div class="py-2">
-                                    <span class="fw-extrabold text-dark font-outfit h6 mb-0">${item.qty}</span>
-                                    <span class="text-muted small ms-1">${item.unit}</span>
-                                    ${(item.brand === 'Atomeds' || item.brand === 'Atomets' || item.brand === 'Sudhneelgiri') ? 
-                                        `<div class="text-success small fw-bold mt-1"><i class="fa fa-gift"></i> + Auto Free</div>` 
-                                    : ''}
-                                    ${(() => {
-                                        if (!(item.free_qty_buy > 0 && item.qty >= item.free_qty_buy)) return '';
-                                        
-                                        let getQty = 1;
-                                        let fpInfo = eligibleFreeProducts.find(p => p.id == item.id);
-                                        if (fpInfo && fpInfo.free_qty_get) getQty = fpInfo.free_qty_get;
-                                        let freeAmt = Math.floor(item.qty / item.free_qty_buy) * getQty;
-                                        if (freeAmt <= 0) return '';
-                                        
-                                        let totalSelected = 0;
-                                        let summaries = [];
-                                        if (item.free_selections) {
-                                            Object.keys(item.free_selections).forEach(attr => {
-                                                let attrGroup = [];
-                                                Object.entries(item.free_selections[attr]).forEach(([v, q]) => {
-                                                    if (q > 0) {
-                                                        totalSelected += q;
-                                                        attrGroup.push(`${q} ${v}`);
-                                                    }
-                                                });
-                                                if (attrGroup.length > 0) {
-                                                    summaries.push(attr.toUpperCase() + ': ' + attrGroup.join(', '));
-                                                }
-                                            });
-                                        }
-                                        
-                                        let pName = (fpInfo ? fpInfo.product_name || '' : '').toLowerCase();
-                                        let dynamicVariants = [];
-                                        let match = pName.match(/\(([^)]+)\)/g);
-                                        if (match) {
-                                            let lastMatch = match[match.length - 1].replace('(', '').replace(')', '');
-                                            if (lastMatch.includes('/')) {
-                                                dynamicVariants = lastMatch.split('/').map(s => s.trim().toUpperCase());
-                                            }
-                                        }
-                                        let hasV = fpInfo && (fpInfo.has_variants || dynamicVariants.length > 0 || (fpInfo.variant_options && Object.keys(fpInfo.variant_options).length > 0));
-                                        
-                                        let isComplete = totalSelected >= freeAmt;
-                                        let btnClass = isComplete ? 'btn-outline-success' : 'btn-outline-primary';
-                                        let iconHtml = isComplete ? '<i class="fa fa-check-circle me-1"></i>' : '<i class="fa fa-gift me-1"></i>';
-                                        
-                                        return `
-                                            <div class="mt-2 text-center">
-                                                <span class="badge bg-success text-white px-2 py-1 shadow-sm mb-2 d-inline-block" style="font-size: 0.75rem; letter-spacing: 0.3px; border-radius: 6px;">
-                                                    <i class="fa fa-gift me-1"></i>+ ${freeAmt} FREE
-                                                </span><br>
-                                                ${hasV ? `
-                                                <button type="button" class="btn btn-sm ${btnClass} fw-bold open-free-variant-modal mb-1 px-3 shadow-sm font-outfit" data-key="${key}" style="border-radius: 8px;">
-                                                    ${iconHtml} Click to Select
-                                                </button>
-                                                ${summaries.length > 0 ? `<div class="small fw-bold mt-1" style="color: #6c757d; font-size: 0.7rem; line-height: 1.2;">${summaries.join('<br>')}</div>` : ''}
-                                                ` : ''}
-                                            </div>
-                                        `;
-                                    })()}
-                                </div>
-                                ${(() => {
-                                    let inputsHtml = '';
-                                    let freeAttached = false;
-                                    let getQty = 1;
-                                    let fpInfo = eligibleFreeProducts.find(p => p.id == item.id);
-                                    if (fpInfo && fpInfo.free_qty_get) getQty = fpInfo.free_qty_get;
-                                    let freeAmt = (item.free_qty_buy > 0 && item.qty >= item.free_qty_buy) ? Math.floor(item.qty / item.free_qty_buy) * getQty : 0;
-                                    
-                                    item.variants.forEach((v, vIdx) => {
-                                        let subKey = key + '_' + vIdx;
-                                        inputsHtml += `
-                                            <input type="hidden" name="items[${subKey}][product_id]" value="${item.id}">
-                                            ${v.side ? `<input type="hidden" name="items[${subKey}][side]" value="${v.side}">` : ''}
-                                            ${v.size ? `<input type="hidden" name="items[${subKey}][size]" value="${v.size}">` : ''}
-                                            ${v.variant ? `<input type="hidden" name="items[${subKey}][variant]" value="${v.variant}">` : ''}
-                                            <input type="hidden" name="items[${subKey}][quantity]" value="${v.qty}">
-                                            <input type="hidden" name="items[${subKey}][unit]" value="${item.unit}">
-                                        `;
-                                        if (!freeAttached && freeAmt > 0) {
-                                            inputsHtml += `<input type="hidden" name="items[${subKey}][free_product_id]" value="${item.id}">`;
-                                            inputsHtml += `<input type="hidden" name="items[${subKey}][free_quantity]" value="${freeAmt}">`;
-                                            let fSideStr = [];
-                                            if (item.free_selections && item.free_selections['side']) {
-                                                Object.entries(item.free_selections['side']).forEach(([v, q]) => {
-                                                    if (q > 0) fSideStr.push(`${q} ${v}`);
-                                                });
-                                            }
-                                            let fSizeStr = [];
-                                            if (item.free_selections && item.free_selections['size']) {
-                                                Object.entries(item.free_selections['size']).forEach(([v, q]) => {
-                                                    if (q > 0) fSizeStr.push(`${q} ${v}`);
-                                                });
-                                            }
-                                            let finalSide = fSideStr.join(', ');
-                                            let finalSize = fSizeStr.join(', ');
-                                            
-                                            if (finalSide) inputsHtml += `<input type="hidden" name="items[${subKey}][free_side]" value="${finalSide}">`;
-                                            if (finalSize) inputsHtml += `<input type="hidden" name="items[${subKey}][free_size]" value="${finalSize}">`;
-                                            freeAttached = true;
+                            <tr class="${rowClass}">
+                                <td class="ps-4 text-muted fw-bold small">${index++}</td>
+                                <td>
+                                    <div class="fw-bold text-dark font-outfit" style="max-width:250px; white-space:normal; line-height:1.2;">
+                                        ${item.name} 
+                                    </div>
+                                    <div class="mt-2">
+                                        ${item.variants.map((v, vIdx) => {
+                        let parts = [];
+                        if (v.side) parts.push(v.side);
+                        if (v.size) parts.push(v.size);
+                        if (v.variant && !v.side && !v.size) parts.push(v.variant);
+                        let vLabel = parts.length > 0 ? parts.join('/') : (item.unit || 'Reg');
+                        return `
+                                            <div class="d-inline-flex align-items-center gap-1 bg-light border rounded-pill px-2 py-1 shadow-sm mb-1 me-2" style="border-color: rgba(0,0,0,0.08) !important;">
+                                                <span class="text-primary fw-bold" style="font-size: 0.7rem;">${vLabel}</span>
+                                                <div class="bg-secondary opacity-25 mx-1" style="width: 1px; height: 10px;"></div>
+                                                <span class="text-dark fw-bold me-1" style="font-size: 0.7rem;">${v.qty}</span>
+                                                <div class="remove-variant-btn d-flex align-items-center justify-content-center bg-danger rounded-circle shadow-sm" data-key="${key}" data-vidx="${vIdx}" style="width: 14px; height: 14px; cursor: pointer; opacity: 0.85; transition: opacity 0.2s;">
+                                                    <i class="fa fa-times text-white" style="font-size: 0.45rem;"></i>
+                                                </div>
+                                            </div>`;
+                    }).join('')}
+                                    </div>
+                                    <div class="small text-muted mt-1 font-outfit">
+                                        ${item.brand ? `<span class="me-2"><i class="fa fa-tag me-1 text-secondary"></i>${item.brand}</span>` : ''}
+                                        ${item.pack ? `<span class="me-2"><i class="fa fa-box me-1 text-warning"></i>${item.pack}</span>` : ''}
+                                        ${!item.is_count && parseInt(item.units_per_strip) > 0 ? `<span class="me-2"><i class="fa fa-pills me-1 text-primary"></i>${parseInt(item.units_per_strip)} Tab/Str</span>` : ''}
+                                        ${!item.is_count && parseInt(item.strips_per_box) > 0 ? `<span class="me-2"><i class="fa fa-layer-group me-1 text-info"></i>${parseInt(item.strips_per_box)} Str/Box</span>` : ''}
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="py-2">
+                                        <span class="fw-extrabold text-dark font-outfit h6 mb-0">${item.qty}</span>
+                                        <span class="text-muted small ms-1">${item.unit}</span>
+                                        ${(item.brand === 'Atomeds' || item.brand === 'Atomets' || item.brand === 'Sudhneelgiri') ?
+                            `<div class="text-success small fw-bold mt-1"><i class="fa fa-gift"></i> + Auto Free</div>`
+                            : ''}
+                                        ${(() => {
+                            if (!(item.free_qty_buy > 0 && item.qty >= item.free_qty_buy)) return '';
+
+                            let getQty = 1;
+                            let fpInfo = eligibleFreeProducts.find(p => p.id == item.id);
+                            if (fpInfo && fpInfo.free_qty_get) getQty = fpInfo.free_qty_get;
+                            let freeAmt = Math.floor(item.qty / item.free_qty_buy) * getQty;
+                            if (freeAmt <= 0) return '';
+
+                            let totalSelected = 0;
+                            let summaries = [];
+                            if (item.free_selections) {
+                                Object.keys(item.free_selections).forEach(attr => {
+                                    let attrGroup = [];
+                                    Object.entries(item.free_selections[attr]).forEach(([v, q]) => {
+                                        if (q > 0) {
+                                            totalSelected += q;
+                                            attrGroup.push(`${q} ${v}`);
                                         }
                                     });
-                                    return inputsHtml;
-                                })()}
-                            </td>
-                            <td class="fw-medium">₹${item.price.toFixed(2)}</td>
-                            <td class="fw-bold text-primary">₹${lineTotal.toFixed(2)}</td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-danger btn-sm remove-btn mx-auto" 
-                                    data-key="${key}" style="width: 38px; height: 32px;">X
-                                    <i class="fa fa-trash-alt" style="font-size: 13px;"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `);
+                                    if (attrGroup.length > 0) {
+                                        summaries.push(attr.toUpperCase() + ': ' + attrGroup.join(', '));
+                                    }
+                                });
+                            }
+
+                            let pName = (fpInfo ? fpInfo.product_name || '' : '').toLowerCase();
+                            let dynamicVariants = [];
+                            let match = pName.match(/\(([^)]+)\)/g);
+                            if (match) {
+                                let lastMatch = match[match.length - 1].replace('(', '').replace(')', '');
+                                if (lastMatch.includes('/')) {
+                                    dynamicVariants = lastMatch.split('/').map(s => s.trim().toUpperCase());
+                                }
+                            }
+                            let hasV = fpInfo && (fpInfo.has_variants || dynamicVariants.length > 0 || (fpInfo.variant_options && Object.keys(fpInfo.variant_options).length > 0));
+
+                            let isComplete = totalSelected >= freeAmt;
+                            let btnClass = isComplete ? 'btn-outline-success' : 'btn-outline-primary';
+                            let iconHtml = isComplete ? '<i class="fa fa-check-circle me-1"></i>' : '<i class="fa fa-gift me-1"></i>';
+
+                            return `
+                                                <div class="mt-2 text-center">
+                                                    <span class="badge bg-success text-white px-2 py-1 shadow-sm mb-2 d-inline-block" style="font-size: 0.75rem; letter-spacing: 0.3px; border-radius: 6px;">
+                                                        <i class="fa fa-gift me-1"></i>+ ${freeAmt} FREE
+                                                    </span><br>
+                                                    ${hasV ? `
+                                                    <button type="button" class="btn btn-sm ${btnClass} fw-bold open-free-variant-modal mb-1 px-3 shadow-sm font-outfit" data-key="${key}" style="border-radius: 8px;">
+                                                        ${iconHtml} Click to Select
+                                                    </button>
+                                                    ${summaries.length > 0 ? `<div class="small fw-bold mt-1" style="color: #6c757d; font-size: 0.7rem; line-height: 1.2;">${summaries.join('<br>')}</div>` : ''}
+                                                    ` : ''}
+                                                </div>
+                                            `;
+                        })()}
+                                    </div>
+                                    ${(() => {
+                            let inputsHtml = '';
+                            let freeAttached = false;
+                            let getQty = 1;
+                            let fpInfo = eligibleFreeProducts.find(p => p.id == item.id);
+                            if (fpInfo && fpInfo.free_qty_get) getQty = fpInfo.free_qty_get;
+                            let freeAmt = (item.free_qty_buy > 0 && item.qty >= item.free_qty_buy) ? Math.floor(item.qty / item.free_qty_buy) * getQty : 0;
+
+                            item.variants.forEach((v, vIdx) => {
+                                let subKey = key + '_' + vIdx;
+                                inputsHtml += `
+                                                <input type="hidden" name="items[${subKey}][product_id]" value="${item.id}">
+                                                ${v.side ? `<input type="hidden" name="items[${subKey}][side]" value="${v.side}">` : ''}
+                                                ${v.size ? `<input type="hidden" name="items[${subKey}][size]" value="${v.size}">` : ''}
+                                                ${v.variant ? `<input type="hidden" name="items[${subKey}][variant]" value="${v.variant}">` : ''}
+                                                <input type="hidden" name="items[${subKey}][quantity]" value="${v.qty}">
+                                                <input type="hidden" name="items[${subKey}][unit]" value="${item.unit}">
+                                            `;
+                                if (!freeAttached && freeAmt > 0) {
+                                    inputsHtml += `<input type="hidden" name="items[${subKey}][free_product_id]" value="${item.id}">`;
+                                    inputsHtml += `<input type="hidden" name="items[${subKey}][free_quantity]" value="${freeAmt}">`;
+                                    let fSideStr = [];
+                                    if (item.free_selections && item.free_selections['side']) {
+                                        Object.entries(item.free_selections['side']).forEach(([v, q]) => {
+                                            if (q > 0) fSideStr.push(`${q} ${v}`);
+                                        });
+                                    }
+                                    let fSizeStr = [];
+                                    if (item.free_selections && item.free_selections['size']) {
+                                        Object.entries(item.free_selections['size']).forEach(([v, q]) => {
+                                            if (q > 0) fSizeStr.push(`${q} ${v}`);
+                                        });
+                                    }
+                                    let finalSide = fSideStr.join(', ');
+                                    let finalSize = fSizeStr.join(', ');
+
+                                    if (finalSide) inputsHtml += `<input type="hidden" name="items[${subKey}][free_side]" value="${finalSide}">`;
+                                    if (finalSize) inputsHtml += `<input type="hidden" name="items[${subKey}][free_size]" value="${finalSize}">`;
+                                    freeAttached = true;
+                                }
+                            });
+                            return inputsHtml;
+                        })()}
+                                </td>
+                                <td class="fw-medium">₹${item.price.toFixed(2)}</td>
+                                <td class="fw-bold text-primary">₹${lineTotal.toFixed(2)}</td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-danger btn-sm remove-btn mx-auto" 
+                                        data-key="${key}" style="width: 38px; height: 32px;">X
+                                        <i class="fa fa-trash-alt" style="font-size: 13px;"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `);
                 });
 
                 if (!hasItems) {
@@ -957,16 +991,16 @@
                 renderTable();
             });
 
-            $(document).on('click', '.remove-variant-btn', function() {
+            $(document).on('click', '.remove-variant-btn', function () {
                 let key = $(this).data('key');
                 let vIdx = $(this).data('vidx');
                 let item = addedItems[key];
-                
+
                 if (item) {
                     let removedVariant = item.variants[vIdx];
-                    item.qty -= removedVariant.qty; 
+                    item.qty -= removedVariant.qty;
                     item.variants.splice(vIdx, 1);
-                    
+
                     if (item.variants.length === 0 || item.qty <= 0) {
                         delete addedItems[key];
                     }
@@ -981,7 +1015,7 @@
                 setTimeout(() => { delete addedItems[key]; renderTable(); }, 400);
             });
 
-            $(document).on('change', '.free-product-select', function() {
+            $(document).on('change', '.free-product-select', function () {
                 let key = $(this).data('key');
                 let val = $(this).val();
                 let item = addedItems[key];
@@ -990,11 +1024,11 @@
                 item.free_size = null;
                 renderTable();
             });
-            
-        // --- New Modal Logic ---
-        let currentFreeVariantKey = null;
 
-        function renderFreeVariantModal(key) {
+            // --- New Modal Logic ---
+            let currentFreeVariantKey = null;
+
+            function renderFreeVariantModal(key) {
 
                 let item = addedItems[key];
                 if (!item) return;
@@ -1019,19 +1053,19 @@
                     let hasV = fp.has_variants || dynamicVariants.length > 0 || (fp.variant_options && Object.keys(fp.variant_options).length > 0);
                     if (hasV) {
                         variantsHtml += `<div class="free-variants-container" id="free_variants_${key}">`;
-                        
+
                         let allocated = 0;
                         if (item.free_selections) {
                             Object.values(item.free_selections).forEach(attrObj => {
                                 Object.values(attrObj).forEach(q => allocated += q);
                             });
                         }
-                        
+
                         variantsHtml += `
-                            <div class="alert alert-info py-2 px-3 mb-3 d-flex justify-content-between align-items-center" style="border-radius: 12px; font-size: 0.85rem;">
-                                <span><i class="fa fa-info-circle me-1"></i> Allocated: <strong>${allocated}</strong> of <strong>${freeAmt}</strong></span>
-                            </div>
-                        `;
+                                <div class="alert alert-info py-2 px-3 mb-3 d-flex justify-content-between align-items-center" style="border-radius: 12px; font-size: 0.85rem;">
+                                    <span><i class="fa fa-info-circle me-1"></i> Allocated: <strong>${allocated}</strong> of <strong>${freeAmt}</strong></span>
+                                </div>
+                            `;
 
                         if (fp.variant_options && Object.keys(fp.variant_options).length > 0) {
                             Object.keys(fp.variant_options).forEach(attrName => {
@@ -1040,67 +1074,67 @@
 
                                 let currentVals = item.free_selections && item.free_selections[attrName.toLowerCase()] ? item.free_selections[attrName.toLowerCase()] : {};
                                 variantsHtml += `
-                                    <div class="d-flex flex-column align-items-start mb-2 p-2 rounded bg-light dark-bg-dark border border-light-dark w-100">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <div style="width: 3px; height: 12px; background-color: var(--bs-primary); margin-right: 6px; border-radius: 2px;"></div>
-                                            <span class="fw-bold text-uppercase text-secondary" style="font-size: 0.7rem; letter-spacing: 0.5px;">${attrName}</span>
+                                        <div class="d-flex flex-column align-items-start mb-2 p-2 rounded bg-light dark-bg-dark border border-light-dark w-100">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div style="width: 3px; height: 12px; background-color: var(--bs-primary); margin-right: 6px; border-radius: 2px;"></div>
+                                                <span class="fw-bold text-uppercase text-secondary" style="font-size: 0.7rem; letter-spacing: 0.5px;">${attrName}</span>
+                                            </div>
+                                            <div class="d-flex flex-wrap gap-2 w-100">
+                                                ${options.map(v => {
+                                    let cQty = currentVals[v] || '';
+                                    return `
+                                                    <div class="d-flex align-items-center bg-white dark-bg-transparent border border-light-dark rounded shadow-sm" style="flex: 1 1 calc(50% - 0.5rem); min-width: 110px; padding: 4px;">
+                                                        <span class="fw-bold text-center ms-1 me-2 text-dark dark-text-light" style="font-size: 0.75rem; min-width: 24px;">${v}</span>
+                                                        <div class="d-flex align-items-center rounded bg-light dark-bg-dark border border-light-dark ms-auto" style="overflow: hidden;">
+                                                            <button type="button" class="btn btn-sm btn-light border-0 p-0 free-qty-btn d-flex align-items-center justify-content-center" data-action="minus" data-key="${key}" data-attr="${attrName.toLowerCase()}" data-val="${v}" style="width: 26px; height: 26px; border-radius: 0; background: transparent;">
+                                                                <i class="fa fa-minus text-secondary" style="font-size: 0.6rem;"></i>
+                                                            </button>
+                                                            <span class="fw-bold text-primary text-center px-1 border-start border-end border-light-dark bg-white dark-bg-transparent" style="font-size: 0.8rem; line-height: 26px; min-width: 26px;">${cQty || 0}</span>
+                                                            <button type="button" class="btn btn-sm btn-light border-0 p-0 free-qty-btn d-flex align-items-center justify-content-center" data-action="plus" data-key="${key}" data-attr="${attrName.toLowerCase()}" data-val="${v}" style="width: 26px; height: 26px; border-radius: 0; background: transparent;">
+                                                                <i class="fa fa-plus text-secondary" style="font-size: 0.6rem;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>`;
+                                }).join('')}
+                                            </div>
                                         </div>
-                                        <div class="d-flex flex-wrap gap-2 w-100">
-                                            ${options.map(v => {
-                                                let cQty = currentVals[v] || '';
-                                                return `
-                                                <div class="d-flex align-items-center bg-white dark-bg-transparent border border-light-dark rounded shadow-sm" style="flex: 1 1 calc(50% - 0.5rem); min-width: 110px; padding: 4px;">
-                                                    <span class="fw-bold text-center ms-1 me-2 text-dark dark-text-light" style="font-size: 0.75rem; min-width: 24px;">${v}</span>
-                                                    <div class="d-flex align-items-center rounded bg-light dark-bg-dark border border-light-dark ms-auto" style="overflow: hidden;">
-                                                        <button type="button" class="btn btn-sm btn-light border-0 p-0 free-qty-btn d-flex align-items-center justify-content-center" data-action="minus" data-key="${key}" data-attr="${attrName.toLowerCase()}" data-val="${v}" style="width: 26px; height: 26px; border-radius: 0; background: transparent;">
-                                                            <i class="fa fa-minus text-secondary" style="font-size: 0.6rem;"></i>
-                                                        </button>
-                                                        <span class="fw-bold text-primary text-center px-1 border-start border-end border-light-dark bg-white dark-bg-transparent" style="font-size: 0.8rem; line-height: 26px; min-width: 26px;">${cQty || 0}</span>
-                                                        <button type="button" class="btn btn-sm btn-light border-0 p-0 free-qty-btn d-flex align-items-center justify-content-center" data-action="plus" data-key="${key}" data-attr="${attrName.toLowerCase()}" data-val="${v}" style="width: 26px; height: 26px; border-radius: 0; background: transparent;">
-                                                            <i class="fa fa-plus text-secondary" style="font-size: 0.6rem;"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>`;
-                                            }).join('')}
-                                        </div>
-                                    </div>
-                                `;
+                                    `;
                             });
                         } else {
                             let variantsToUse = dynamicVariants.length > 0 ? dynamicVariants : ['S', 'M', 'L', 'XL'];
-                            
+
                             if (variantsToUse.length > 0) {
                                 let currentVals = item.free_selections && item.free_selections['size'] ? item.free_selections['size'] : {};
                                 variantsHtml += `
-                                    <div class="d-flex flex-column align-items-start mb-2 p-2 rounded bg-light dark-bg-dark border border-light-dark w-100">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <div style="width: 3px; height: 12px; background-color: var(--bs-primary); margin-right: 6px; border-radius: 2px;"></div>
-                                            <span class="fw-bold text-uppercase text-secondary" style="font-size: 0.7rem; letter-spacing: 0.5px;">SIZE</span>
+                                        <div class="d-flex flex-column align-items-start mb-2 p-2 rounded bg-light dark-bg-dark border border-light-dark w-100">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div style="width: 3px; height: 12px; background-color: var(--bs-primary); margin-right: 6px; border-radius: 2px;"></div>
+                                                <span class="fw-bold text-uppercase text-secondary" style="font-size: 0.7rem; letter-spacing: 0.5px;">SIZE</span>
+                                            </div>
+                                            <div class="d-flex flex-wrap gap-2 w-100">
+                                                ${variantsToUse.map(v => {
+                                    let cQty = currentVals[v] || '';
+                                    return `
+                                                    <div class="d-flex align-items-center bg-white dark-bg-transparent border border-light-dark rounded shadow-sm" style="flex: 1 1 calc(50% - 0.5rem); min-width: 110px; padding: 4px;">
+                                                        <span class="fw-bold text-center ms-1 me-2 text-dark dark-text-light" style="font-size: 0.75rem; min-width: 24px;">${v}</span>
+                                                        <div class="d-flex align-items-center rounded bg-light dark-bg-dark border border-light-dark ms-auto" style="overflow: hidden;">
+                                                            <button type="button" class="btn btn-sm btn-light border-0 p-0 free-qty-btn d-flex align-items-center justify-content-center" data-action="minus" data-key="${key}" data-attr="size" data-val="${v}" style="width: 26px; height: 26px; border-radius: 0; background: transparent;">
+                                                                <i class="fa fa-minus text-secondary" style="font-size: 0.6rem;"></i>
+                                                            </button>
+                                                            <span class="fw-bold text-primary text-center px-1 border-start border-end border-light-dark bg-white dark-bg-transparent" style="font-size: 0.8rem; line-height: 26px; min-width: 26px;">${cQty || 0}</span>
+                                                            <button type="button" class="btn btn-sm btn-light border-0 p-0 free-qty-btn d-flex align-items-center justify-content-center" data-action="plus" data-key="${key}" data-attr="size" data-val="${v}" style="width: 26px; height: 26px; border-radius: 0; background: transparent;">
+                                                                <i class="fa fa-plus text-secondary" style="font-size: 0.6rem;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>`;
+                                }).join('')}
+                                            </div>
                                         </div>
-                                        <div class="d-flex flex-wrap gap-2 w-100">
-                                            ${variantsToUse.map(v => {
-                                                let cQty = currentVals[v] || '';
-                                                return `
-                                                <div class="d-flex align-items-center bg-white dark-bg-transparent border border-light-dark rounded shadow-sm" style="flex: 1 1 calc(50% - 0.5rem); min-width: 110px; padding: 4px;">
-                                                    <span class="fw-bold text-center ms-1 me-2 text-dark dark-text-light" style="font-size: 0.75rem; min-width: 24px;">${v}</span>
-                                                    <div class="d-flex align-items-center rounded bg-light dark-bg-dark border border-light-dark ms-auto" style="overflow: hidden;">
-                                                        <button type="button" class="btn btn-sm btn-light border-0 p-0 free-qty-btn d-flex align-items-center justify-content-center" data-action="minus" data-key="${key}" data-attr="size" data-val="${v}" style="width: 26px; height: 26px; border-radius: 0; background: transparent;">
-                                                            <i class="fa fa-minus text-secondary" style="font-size: 0.6rem;"></i>
-                                                        </button>
-                                                        <span class="fw-bold text-primary text-center px-1 border-start border-end border-light-dark bg-white dark-bg-transparent" style="font-size: 0.8rem; line-height: 26px; min-width: 26px;">${cQty || 0}</span>
-                                                        <button type="button" class="btn btn-sm btn-light border-0 p-0 free-qty-btn d-flex align-items-center justify-content-center" data-action="plus" data-key="${key}" data-attr="size" data-val="${v}" style="width: 26px; height: 26px; border-radius: 0; background: transparent;">
-                                                            <i class="fa fa-plus text-secondary" style="font-size: 0.6rem;"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>`;
-                                            }).join('')}
-                                        </div>
-                                    </div>
-                                `;
+                                    `;
                             }
                         }
                         variantsHtml += `</div>`;
-                        
+
                         if (variantsHtml.indexOf('d-flex flex-column align-items-start') === -1) {
                             variantsHtml = `<div class="alert alert-warning mb-0 font-outfit"><i class="fa fa-exclamation-triangle me-1"></i> The distributor does not have any variants in stock for this free product.</div>`;
                         }
@@ -1111,7 +1145,7 @@
                 $('#freeVariantModalBody').html(variantsHtml);
             }
 
-            $(document).on('click', '.open-free-variant-modal', function() {
+            $(document).on('click', '.open-free-variant-modal', function () {
                 let key = $(this).data('key');
                 let item = addedItems[key];
                 if (!item) return;
@@ -1124,27 +1158,27 @@
             });
             // --- End Modal Logic ---
 
-            $(document).on('click', '.free-qty-btn', function() {
+            $(document).on('click', '.free-qty-btn', function () {
                 let key = $(this).data('key');
                 let attr = $(this).data('attr');
                 let val = $(this).data('val').toString();
                 let action = $(this).data('action');
-                
+
                 let item = addedItems[key];
                 if (!item.free_selections) item.free_selections = {};
                 if (!item.free_selections[attr]) item.free_selections[attr] = {};
-                
+
                 let fpInfo = eligibleFreeProducts.find(p => p.id == item.id);
                 let getQty = fpInfo && fpInfo.free_qty_get ? fpInfo.free_qty_get : 1;
                 let freeAmt = (item.free_qty_buy > 0 && item.qty >= item.free_qty_buy) ? Math.floor(item.qty / item.free_qty_buy) * getQty : 0;
-                
+
                 let currentQty = item.free_selections[attr][val] || 0;
-                
+
                 let allocated = 0;
                 Object.values(item.free_selections).forEach(attrObj => {
                     Object.values(attrObj).forEach(q => allocated += q);
                 });
-                
+
                 if (action === 'plus') {
                     if (allocated < freeAmt) {
                         item.free_selections[attr][val] = currentQty + 1;
@@ -1156,22 +1190,22 @@
                         item.free_selections[attr][val] = currentQty - 1;
                     }
                 }
-                
+
                 renderTable();
                 renderFreeVariantModal(key);
             });
 
             $('#createOrderForm').submit(function (e) {
                 e.preventDefault();
-                
+
                 // Validate free item variants
                 let hasIncompleteFree = false;
-                $.each(addedItems, function(key, item) {
+                $.each(addedItems, function (key, item) {
                     let getQty = 1;
                     let fpInfo = eligibleFreeProducts.find(p => p.id == item.id);
                     if (fpInfo && fpInfo.free_qty_get) getQty = fpInfo.free_qty_get;
                     let freeAmt = (item.free_qty_buy > 0 && item.qty >= item.free_qty_buy) ? Math.floor(item.qty / item.free_qty_buy) * getQty : 0;
-                    
+
                     let pName = (fpInfo ? fpInfo.product_name : '').toLowerCase();
                     let dynamicVariants = [];
                     let match = pName.match(/\(([^)]+)\)/g);
@@ -1182,7 +1216,7 @@
                         }
                     }
                     let hasV = fpInfo && (fpInfo.has_variants || dynamicVariants.length > 0 || (fpInfo.variant_options && Object.keys(fpInfo.variant_options).length > 0));
-                    
+
                     if (freeAmt > 0 && hasV) {
                         let attrs = (fpInfo.variant_options && Object.keys(fpInfo.variant_options).length > 0) ? Object.keys(fpInfo.variant_options) : ['size'];
                         if (attrs.length > 0) {
@@ -1229,7 +1263,7 @@
                     }
                 });
             });
-            $(document).on('click', '.size-btn', function() {
+            $(document).on('click', '.size-btn', function () {
                 $('.size-btn').removeClass('btn-primary text-white').addClass('btn-outline-primary');
                 $(this).removeClass('btn-outline-primary').addClass('btn-primary text-white');
                 $('#variantValue').val($(this).data('size'));
