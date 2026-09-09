@@ -594,7 +594,7 @@ class RetailerOrderController extends Controller
     {
         $request->validate([
             'status' => 'required|in:delivered,cancelled',
-            'cancellation_reason' => 'required_if:status,cancelled|string|min:3'
+            'cancellation_reason' => 'required_if:status,cancelled|nullable|string|min:3'
         ]);
 
         $user = auth('api')->user();

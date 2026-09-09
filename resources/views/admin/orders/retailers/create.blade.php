@@ -1212,8 +1212,8 @@
                                 }
 
                                 let itemJson = JSON.stringify(item).replace(/'/g, "&apos;");
-                                let rowHtml = `
-                                    <div class="ai-result-row p-4 bg-white rounded-4 shadow-sm mb-3 border ${hasStock ? 'border-light-dark' : 'border-danger border-opacity-25'} overflow-hidden transition-all hover-shadow" data-pid="${p.id}" data-item='${itemJson}' style="${hasStock ? '' : 'background-color: #fffafb !important;'}">
+                                let rowHtml = $(`
+                                    <div class="ai-result-row p-4 bg-white rounded-4 shadow-sm mb-3 border ${hasStock ? 'border-light-dark' : 'border-danger border-opacity-25'} overflow-hidden transition-all hover-shadow" data-pid="${p.id}" data-idx="${idx}" style="${hasStock ? '' : 'background-color: #fffafb !important;'}">
                                         <div class="row g-3">
                                             <!-- Main Details -->
                                             <div class="col-lg-4 col-md-6">
@@ -1257,7 +1257,9 @@
                                                 </button>
                                             </div>
                                         </div>
-                                    </div>`;
+                                    </div>`);
+                                rowHtml.data('item', item);
+                                rowHtml.attr('data-item', itemJson);
                                 resultsList.append(rowHtml);
                             });
 
