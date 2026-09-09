@@ -6812,6 +6812,125 @@
                 ]
             }
         },
+        "/api/sales-manager/fieldstaff-visits": {
+            "get": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "Get field staff visit history under this sales manager",
+                "description": "Returns visit history matching web dashboard filters (manager, user_id, party_type, purpose_id, status, is_repeat, date range).",
+                "operationId": "33920156b0a15d8c5113d5a326708f6d",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Filter by field staff user ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "party_type",
+                        "in": "query",
+                        "description": "Filter by party type: retailer, distributor, other",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "retailer",
+                                "distributor",
+                                "other"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "purpose_id",
+                        "in": "query",
+                        "description": "Filter by purpose ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status: ongoing, completed",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ongoing",
+                                "completed"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "is_repeat",
+                        "in": "query",
+                        "description": "Filter repeat visits: 1 for repeat, 0 for new",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search keyword for staff name, party name, purpose, or remarks",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (default: 15)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Field staff visit history list"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/settings/google-maps-api-key": {
             "get": {
                 "tags": [

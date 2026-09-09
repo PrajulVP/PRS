@@ -1857,4 +1857,171 @@ class SalesManagerDashboardApiController extends Controller
             'data' => $result
         ]);
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/sales-manager/fieldstaff-visits",
+     *     summary="Get field staff visit history under this sales manager",
+     *     description="Returns visit history matching web dashboard filters (manager, user_id, party_type, purpose_id, status, is_repeat, date range).",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="user_id", in="query", required=false, description="Filter by field staff user ID", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="party_type", in="query", required=false, description="Filter by party type: retailer, distributor, other", @OA\Schema(type="string", enum={"retailer", "distributor", "other"})),
+     *     @OA\Parameter(name="purpose_id", in="query", required=false, description="Filter by purpose ID", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="status", in="query", required=false, description="Filter by status: ongoing, completed", @OA\Schema(type="string", enum={"ongoing", "completed"})),
+     *     @OA\Parameter(name="is_repeat", in="query", required=false, description="Filter repeat visits: 1 for repeat, 0 for new", @OA\Schema(type="integer", enum={0, 1})),
+     *     @OA\Parameter(name="start_date", in="query", required=false, description="Start date (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="end_date", in="query", required=false, description="End date (YYYY-MM-DD)", @OA\Schema(type="string", format="date")),
+     *     @OA\Parameter(name="search", in="query", required=false, description="Search keyword for staff name, party name, purpose, or remarks", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="per_page", in="query", required=false, description="Items per page (default: 15)", @OA\Schema(type="integer", default=15)),
+     *     @OA\Response(response=200, description="Field staff visit history list")
+     * )
+     */
+    public function getFieldStaffVisitsHistory(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager') && !$user->hasRole('admin')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $query = \App\Models\FieldVisit::with(['user.fieldStaff.salesManager.user', 'purpose'])
+            ->orderBy('start_at', 'desc');
+
+        // Scope to sales manager's assigned field staff (if logged in as sales manager)
+        if ($user->hasRole('salesmanager')) {
+            $salesManager = $user->salesManager;
+            if (!$salesManager) {
+                return response()->json(['error' => 'Sales Manager profile not found'], 404);
+            }
+            $query->whereHas('user.fieldStaff', function ($q) use ($salesManager) {
+                $q->where('sales_manager_id', $salesManager->id)
+                  ->orWhere('sales_manager_id', $salesManager->user_id);
+            });
+        } elseif ($request->filled('manager_id')) {
+            $query->whereHas('user.fieldStaff.salesManager', function ($q) use ($request) {
+                $q->where('user_id', $request->manager_id)
+                  ->orWhere('id', $request->manager_id);
+            });
+        }
+
+        // Filter by specific field staff user_id
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        // Filter by Party Type
+        if ($request->filled('party_type')) {
+            $query->where('party_type', $request->party_type);
+        }
+
+        // Filter by Purpose
+        if ($request->filled('purpose_id')) {
+            $query->where('purpose_id', $request->purpose_id);
+        }
+
+        // Filter by Status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Search Keyword
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', function ($qu) use ($search) {
+                    $qu->where('name', 'LIKE', "%{$search}%");
+                })
+                ->orWhereHas('purpose', function ($qp) use ($search) {
+                    $qp->where('name', 'LIKE', "%{$search}%");
+                })
+                ->orWhere('remarks', 'LIKE', "%{$search}%")
+                ->orWhereIn('party_id', function ($sub) use ($search) {
+                    $sub->select('id')->from('retailers')->where('shop_name', 'LIKE', "%{$search}%");
+                })
+                ->orWhereIn('party_id', function ($sub) use ($search) {
+                    $sub->select('id')->from('distributors')->where('name', 'LIKE', "%{$search}%");
+                });
+            });
+        }
+
+        // Filter by Repeat Visit
+        if ($request->filled('is_repeat')) {
+            $isRepeat = $request->is_repeat == 1;
+            $operator = $isRepeat ? '> 1' : '= 1';
+            
+            $query->whereRaw("(
+                SELECT COUNT(*) 
+                FROM field_visits AS fv2 
+                WHERE fv2.user_id = field_visits.user_id 
+                AND fv2.party_type = field_visits.party_type 
+                AND fv2.party_id = field_visits.party_id 
+                AND DATE(fv2.start_at) = DATE(field_visits.start_at) 
+                AND fv2.deleted_at IS NULL
+            ) " . $operator);
+        }
+
+        // Filter by Date Range
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $startDate = \Carbon\Carbon::parse($request->start_date)->startOfDay();
+            $endDate = \Carbon\Carbon::parse($request->end_date)->endOfDay();
+            $query->whereBetween('start_at', [$startDate, $endDate]);
+        } elseif ($request->filled('start_date')) {
+            $startDate = \Carbon\Carbon::parse($request->start_date)->startOfDay();
+            $query->where('start_at', '>=', $startDate);
+        } elseif ($request->filled('end_date')) {
+            $endDate = \Carbon\Carbon::parse($request->end_date)->endOfDay();
+            $query->where('start_at', '<=', $endDate);
+        }
+
+        $perPage = (int) $request->get('per_page', 15);
+        $paginated = $query->paginate($perPage);
+
+        $transformedItems = collect($paginated->items())->map(function ($visit) {
+            $staffUser = $visit->user;
+            $managerName = optional(optional(optional($staffUser)->fieldStaff)->salesManager)->user->name ?? 'N/A';
+            
+            $durationFormatted = '-';
+            $durationMinutes = 0;
+            if ($visit->start_at && $visit->end_at) {
+                $durationMinutes = $visit->start_at->diffInMinutes($visit->end_at);
+                $hours = floor($durationMinutes / 60);
+                $mins = $durationMinutes % 60;
+                $durationFormatted = ($hours > 0 ? $hours . 'h ' : '') . $mins . 'm';
+            }
+
+            return [
+                'id' => $visit->id,
+                'user_id' => $visit->user_id,
+                'staff_member' => $staffUser->name ?? 'Unknown Staff',
+                'staff_avatar' => $staffUser->avatar_url ?? null,
+                'manager_name' => $managerName,
+                'party_type' => ucfirst($visit->party_type),
+                'party_id' => $visit->party_id,
+                'party_name' => $visit->party_name ?: 'N/A',
+                'purpose_id' => $visit->purpose_id,
+                'purpose_name' => optional($visit->purpose)->name ?? 'N/A',
+                'is_repeat' => (bool) $visit->is_repeat,
+                'date' => $visit->start_at ? $visit->start_at->format('Y-m-d') : null,
+                'date_formatted' => $visit->start_at ? $visit->start_at->format('d M, Y') : 'N/A',
+                'start_time' => $visit->start_at ? $visit->start_at->format('h:i A') : 'N/A',
+                'end_time' => $visit->end_at ? $visit->end_at->format('h:i A') : ($visit->status === 'ongoing' ? 'Ongoing' : '-'),
+                'duration' => $durationFormatted,
+                'duration_minutes' => $durationMinutes,
+                'status' => $visit->status,
+                'location_lat' => $visit->location_lat ? (float)$visit->location_lat : null,
+                'location_lng' => $visit->location_lng ? (float)$visit->location_lng : null,
+                'remarks' => $visit->remarks ?: 'No remarks provided.',
+                'image_url' => $visit->image ? asset('storage/' . $visit->image) : null,
+            ];
+        });
+
+        return response()->json([
+            'current_page' => $paginated->currentPage(),
+            'last_page' => $paginated->lastPage(),
+            'per_page' => $paginated->perPage(),
+            'total' => $paginated->total(),
+            'data' => $transformedItems
+        ]);
+    }
 }
