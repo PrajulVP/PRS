@@ -1983,6 +1983,9 @@
                 // Ensure key is formatted consistently as prodId-distId
                 let itemKey = p.id + '-' + distId;
 
+                let side = null;
+                let size = null;
+
                 if (addedItems[itemKey]) {
                     let existingVarIndex = addedItems[itemKey].variants.findIndex(v => v.side === side && v.size === size && v.variant === variantStr);
                     if (existingVarIndex !== -1) {
