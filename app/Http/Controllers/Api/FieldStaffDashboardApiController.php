@@ -138,7 +138,12 @@ class FieldStaffDashboardApiController extends Controller
                 'achievement_percent' => $staffTarget > 0 ? ($staffAchievementValue / $staffTarget) * 100 : 0,
                 'total_sales' => $staffAchievementValue
             ];
-        })->sortByDesc('achievement_percent')->values();
+        })->sort(function ($a, $b) {
+            if ($b['achievement_percent'] != $a['achievement_percent']) {
+                return $b['achievement_percent'] <=> $a['achievement_percent'];
+            }
+            return $b['total_sales'] <=> $a['total_sales'];
+        })->values();
 
         $myRank = $allStaffStats->search(fn($s) => $s['id'] === $fieldStaffId) + 1;
 

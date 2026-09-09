@@ -175,6 +175,57 @@
                         <h5 class="card-title mb-0 fw-bold" style="color: var(--med-text-main);"><i class="fa fa-gift me-2 text-warning"></i>Available Rewards</h5>
                     </div>
                     <div class="card-body p-4">
+                        @php
+                            $overallTotalSales = 0;
+                            $overallNextTarget = 0;
+                            $overallClaimedPoints = 0;
+
+                            if (isset($upcomingRewards) && is_array($upcomingRewards)) {
+                                foreach ($upcomingRewards as $r) {
+                                    $overallTotalSales += floatval($r['current_total'] ?? 0);
+                                    if (!empty($r['next_target'])) {
+                                        $overallNextTarget += floatval($r['next_target']);
+                                    }
+                                }
+                            }
+
+                            if (isset($retailer) && $retailer) {
+                                $overallClaimedPoints = \Illuminate\Support\Facades\DB::table('loyalty_redemptions')
+                                    ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
+                                    ->where('loyalty_redemptions.retailer_id', $retailer->id)
+                                    ->whereIn('loyalty_redemptions.status', ['pending', 'approved', 'delivered'])
+                                    ->sum('loyalty_slabs.min_points');
+                            }
+
+                            $overallRemaining = max(0, $overallNextTarget - $overallTotalSales);
+                        @endphp
+
+                        <!-- Overall Summary Bar Header -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="p-3 rounded-4 border shadow-2xs" style="background-color: var(--med-bg-subtle, rgba(0, 73, 122, 0.04)); border-color: var(--med-border, #e2e8f0) !important;">
+                                    <div class="row g-3 text-center">
+                                        <div class="col-md-3 col-6">
+                                            <span class="text-uppercase fw-bold text-muted d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Overall Target</span>
+                                            <h5 class="fw-bold mb-0 text-primary" style="font-weight: 800;">{{ $overallNextTarget > 0 ? '₹' . number_format($overallNextTarget, 2) : 'N/A' }}</h5>
+                                        </div>
+                                        <div class="col-md-3 col-6">
+                                            <span class="text-uppercase fw-bold text-muted d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Total Achieved / Sales</span>
+                                            <h5 class="fw-bold mb-0 text-success" style="font-weight: 800;">₹{{ number_format($overallTotalSales, 2) }}</h5>
+                                        </div>
+                                        <div class="col-md-3 col-6">
+                                            <span class="text-uppercase fw-bold text-muted d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">Points Claimed</span>
+                                            <h5 class="fw-bold mb-0 text-danger" style="font-weight: 800;">{{ number_format($overallClaimedPoints, 0) }} <span class="fs-6 fw-normal">pts</span></h5>
+                                        </div>
+                                        <div class="col-md-3 col-6">
+                                             <span class="text-uppercase fw-bold d-block mb-1" style="font-size: 0.68rem; letter-spacing: 0.5px; color: #475569;">Target Remaining</span>
+                                             <h5 class="fw-bold mb-0" style="font-weight: 800; color: #b45309 !important;">{{ $overallRemaining > 0 ? '₹' . number_format($overallRemaining, 2) : 'Achieved' }}</h5>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="row">
                             @forelse($upcomingRewards as $reward)
                                 <div class="col-12 mb-4">
