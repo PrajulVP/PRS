@@ -1787,14 +1787,21 @@
         document.addEventListener('click', function(e) {
             const link = e.target.closest('a');
             if (link) {
-                const href = link.getAttribute('href');
+                const href = link.getAttribute('href') || '';
                 const target = link.getAttribute('target');
                 const hasToggle = link.hasAttribute('data-bs-toggle') || link.hasAttribute('data-toggle');
+                const downloadAttr = link.hasAttribute('download');
                 
+                // Exclude file downloads, exports, and anchor links from triggering page preloader
+                const isExportLink = downloadAttr || 
+                    /\b(export|download|format=csv|format=excel|format=pdf|export_format=)\b/i.test(href) ||
+                    href.includes('/export');
+
                 if (href && 
                     !href.startsWith('#') && 
                     !href.startsWith('javascript:') && 
                     !hasToggle && 
+                    !isExportLink &&
                     target !== '_blank' && 
                     !e.ctrlKey && 
                     !e.metaKey
@@ -1818,6 +1825,14 @@
                         }
                     }
                 }
+            }
+        });
+
+        // Hide preloader if a file download trigger causes window blur or focus change
+        window.addEventListener('blur', function() {
+            const loader = document.getElementById('globalPageLoader');
+            if (loader) {
+                loader.classList.add('loaded');
             }
         });
 
