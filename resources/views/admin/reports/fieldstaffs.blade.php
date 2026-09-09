@@ -49,7 +49,7 @@
                                 <th style="width: 50px;">No.</th>
                                 <th>Staff Member</th>
                                 <th>Sales Manager</th>
-                                <th>Location</th>
+                                <th>Address</th>
                                 <th>Visits</th>
                                 <th>Punches</th>
                                 <th>Distance</th>

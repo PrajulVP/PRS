@@ -19,7 +19,7 @@ class DeviceBindingMiddleware
         
         // Only apply to authenticated users (Field Staff primarily)
         if ($user) {
-            $deviceId = $request->header('X-Device-ID');
+            $deviceId = $request->header('X-Device-ID') ?? $request->input('device_id') ?? $user->device_uuid;
 
             if (!$deviceId) {
                 return response()->json([

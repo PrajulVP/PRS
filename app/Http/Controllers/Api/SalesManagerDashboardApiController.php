@@ -279,8 +279,9 @@ class SalesManagerDashboardApiController extends Controller
             $fsUser = $fs->user;
             if (!$fsUser) continue;
 
-            // Check for the latest attendance log
+            // Check for the latest attendance log today
             $lastAttendance = \App\Models\AttendanceLog::where('user_id', $fsUser->id)
+                ->whereDate('timestamp', $today)
                 ->orderByDesc('timestamp')
                 ->orderByDesc('id')
                 ->first();

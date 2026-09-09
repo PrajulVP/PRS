@@ -2493,43 +2493,6 @@
                 ]
             }
         },
-        "/api/field-staff/performance-trend": {
-            "get": {
-                "tags": [
-                    "Field Staff Dashboard"
-                ],
-                "summary": "Get performance trend chart data for mobile",
-                "operationId": "99b3c1a69e34ef41086b328fa2c98adb",
-                "parameters": [
-                    {
-                        "name": "period",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "weekly",
-                                "monthly",
-                                "yearly"
-                            ]
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Chart labels and counts"
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    },
-                    {
-                        "deviceIdAuth": []
-                    }
-                ]
-            }
-        },
         "/api/field-staff/reports/sales-orders": {
             "get": {
                 "tags": [

@@ -646,12 +646,14 @@
                             $('#previewHsnCapsule').hide();
                         }
 
-                        let hasStrips = isValid(p.strip_size) || (p.units_per_strip > 1);
-                        let hasBoxes = isValid(p.box_size) || (p.strips_per_box > 1);
+                        let tabPerStr = (parseInt(p.units_per_strip) > 0) ? parseInt(p.units_per_strip) : 0;
+                        let strPerBox = (parseInt(p.strips_per_box) > 0) ? parseInt(p.strips_per_box) : 0;
 
-                        if (!isCount && (hasStrips || hasBoxes)) {
-                            let packInfoText = `${p.units_per_strip || 1} Tab/Str | ${p.strips_per_box || 1} Str/Box`;
-                            $('#previewBoxSpan').text(packInfoText);
+                        if (!isCount && (tabPerStr > 0 || strPerBox > 0)) {
+                            let parts = [];
+                            if (tabPerStr > 0) parts.push(`${tabPerStr} Tab/Str`);
+                            if (strPerBox > 0) parts.push(`${strPerBox} Str/Box`);
+                            $('#previewBoxSpan').text(parts.join(' | '));
                             $('#previewBoxCapsule').show();
                         } else {
                             $('#previewBoxCapsule').hide();
@@ -807,8 +809,8 @@
                                 <div class="small text-muted mt-1 font-outfit">
                                     ${item.brand ? `<span class="me-2"><i class="fa fa-tag me-1 text-secondary"></i>${item.brand}</span>` : ''}
                                     ${item.pack ? `<span class="me-2"><i class="fa fa-box me-1 text-warning"></i>${item.pack}</span>` : ''}
-                                    ${!item.is_count && item.units_per_strip ? `<span class="me-2"><i class="fa fa-pills me-1 text-primary"></i>${item.units_per_strip} Tab/Str</span>` : ''}
-                                    ${!item.is_count && item.strips_per_box ? `<span class="me-2"><i class="fa fa-layer-group me-1 text-info"></i>${item.strips_per_box} Str/Box</span>` : ''}
+                                    ${!item.is_count && parseInt(item.units_per_strip) > 0 ? `<span class="me-2"><i class="fa fa-pills me-1 text-primary"></i>${parseInt(item.units_per_strip)} Tab/Str</span>` : ''}
+                                    ${!item.is_count && parseInt(item.strips_per_box) > 0 ? `<span class="me-2"><i class="fa fa-layer-group me-1 text-info"></i>${parseInt(item.strips_per_box)} Str/Box</span>` : ''}
                                 </div>
                             </td>
                             <td class="text-center">
