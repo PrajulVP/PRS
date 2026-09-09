@@ -252,7 +252,7 @@ Route::middleware(['auth'])->group(function () {
         // Reports
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/executive', [ReportController::class, 'index'])->name('index');
-    Route::get('/', function() { return redirect()->route('admin.reports.index'); });
+            Route::get('/', function() { return redirect()->route('admin.reports.index'); });
             Route::get('/orders', [ReportController::class, 'orderReports'])->name('orders');
             Route::get('/distributors', [ReportController::class, 'distributorReports'])->name('distributors');
             Route::get('/retailers', [ReportController::class, 'retailerReports'])->name('retailers');

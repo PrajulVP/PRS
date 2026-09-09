@@ -3518,6 +3518,58 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
+                                                "properties": {
+                                                    "redemption_id": {
+                                                        "type": "integer",
+                                                        "example": 12
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2026-09-09 14:20:00"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "approved"
+                                                    },
+                                                    "retailer_id": {
+                                                        "type": "integer",
+                                                        "example": 42
+                                                    },
+                                                    "shop_name": {
+                                                        "type": "string",
+                                                        "example": "Metro Medicals"
+                                                    },
+                                                    "owner_name": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "selected_reward": {
+                                                        "type": "string",
+                                                        "example": "Smart Watch"
+                                                    },
+                                                    "fallback_reward": {
+                                                        "type": "string",
+                                                        "example": "Fitness Band"
+                                                    },
+                                                    "brand": {
+                                                        "type": "string",
+                                                        "example": "Atomeds"
+                                                    },
+                                                    "threshold": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 500
+                                                    },
+                                                    "device_id": {
+                                                        "type": "string",
+                                                        "example": "uuid-1234-5678"
+                                                    },
+                                                    "player_id": {
+                                                        "type": "string",
+                                                        "example": "onesignal-player-id"
+                                                    }
+                                                },
                                                 "type": "object"
                                             }
                                         }
@@ -6183,6 +6235,118 @@
                 "responses": {
                     "200": {
                         "description": "List of retailers' loyalty points"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sales-manager/loyalty-redemptions": {
+            "get": {
+                "tags": [
+                    "Sales Manager Dashboard"
+                ],
+                "summary": "List all retailer loyalty redemptions under this Sales Manager",
+                "operationId": "ce6715caf672825b8dfb8df342e9eacd",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status: pending, approved, delivered, rejected, all",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "approved",
+                                "delivered",
+                                "rejected",
+                                "all"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of loyalty redemptions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "redemption_id": {
+                                                        "type": "integer",
+                                                        "example": 15
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2026-09-09 14:30:00"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "approved"
+                                                    },
+                                                    "retailer_id": {
+                                                        "type": "integer",
+                                                        "example": 42
+                                                    },
+                                                    "shop_name": {
+                                                        "type": "string",
+                                                        "example": "Metro Medicals"
+                                                    },
+                                                    "owner_name": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "selected_reward": {
+                                                        "type": "string",
+                                                        "example": "Smart Watch"
+                                                    },
+                                                    "fallback_reward": {
+                                                        "type": "string",
+                                                        "example": "Fitness Band"
+                                                    },
+                                                    "brand": {
+                                                        "type": "string",
+                                                        "example": "Atomeds"
+                                                    },
+                                                    "threshold": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 500
+                                                    },
+                                                    "field_staff_name": {
+                                                        "type": "string",
+                                                        "example": "Abhishek gopan"
+                                                    },
+                                                    "device_id": {
+                                                        "type": "string",
+                                                        "example": "uuid-1234-5678"
+                                                    },
+                                                    "player_id": {
+                                                        "type": "string",
+                                                        "example": "onesignal-player-id"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [

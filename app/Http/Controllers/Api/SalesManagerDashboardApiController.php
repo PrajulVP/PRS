@@ -693,6 +693,96 @@ class SalesManagerDashboardApiController extends Controller
 
     /**
      * @OA\Get(
+     *     path="/api/sales-manager/loyalty-redemptions",
+     *     summary="List all retailer loyalty redemptions under this Sales Manager",
+     *     tags={"Sales Manager Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="status", in="query", required=false, description="Filter by status: pending, approved, delivered, rejected, all", @OA\Schema(type="string", enum={"pending", "approved", "delivered", "rejected", "all"})),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of loyalty redemptions",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="redemption_id", type="integer", example=15),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-09-09 14:30:00"),
+     *                     @OA\Property(property="status", type="string", example="approved"),
+     *                     @OA\Property(property="retailer_id", type="integer", example=42),
+     *                     @OA\Property(property="shop_name", type="string", example="Metro Medicals"),
+     *                     @OA\Property(property="owner_name", type="string", example="John Doe"),
+     *                     @OA\Property(property="selected_reward", type="string", example="Smart Watch"),
+     *                     @OA\Property(property="fallback_reward", type="string", example="Fitness Band"),
+     *                     @OA\Property(property="brand", type="string", example="Atomeds"),
+     *                     @OA\Property(property="threshold", type="number", format="float", example=500.00),
+     *                     @OA\Property(property="field_staff_name", type="string", example="Abhishek gopan"),
+     *                     @OA\Property(property="device_id", type="string", example="uuid-1234-5678"),
+     *                     @OA\Property(property="player_id", type="string", example="onesignal-player-id")
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function getLoyaltyRedemptions(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('salesmanager')) return response()->json(['error' => 'Unauthorized'], 403);
+
+        $salesManager = $user->salesManager;
+        if (!$salesManager) {
+            return response()->json(['error' => 'Sales Manager profile not found.'], 404);
+        }
+
+        $fieldStaffIds = \App\Models\FieldStaff::where(function ($q) use ($salesManager) {
+            $q->where('sales_manager_id', $salesManager->id)
+                ->orWhere('sales_manager_id', $salesManager->user_id);
+        })->pluck('id');
+
+        $query = DB::table('loyalty_redemptions')
+            ->join('retailers', 'loyalty_redemptions.retailer_id', '=', 'retailers.id')
+            ->join('users', 'retailers.user_id', '=', 'users.id')
+            ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
+            ->join('brands', 'loyalty_slabs.brand_id', '=', 'brands.id')
+            ->leftJoin('fieldstaffs', 'retailers.field_staff_id', '=', 'fieldstaffs.id')
+            ->leftJoin('users as fs_users', 'fieldstaffs.user_id', '=', 'fs_users.id')
+            ->whereIn('retailers.field_staff_id', $fieldStaffIds);
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('loyalty_redemptions.status', $request->status);
+        }
+
+        $redemptions = $query->select(
+                'loyalty_redemptions.id as redemption_id',
+                'loyalty_redemptions.created_at',
+                'loyalty_redemptions.status',
+                'retailers.id as retailer_id',
+                'retailers.shop_name',
+                'users.name as owner_name',
+                'loyalty_redemptions.selected_reward',
+                'loyalty_slabs.gift_name as fallback_reward',
+                'brands.name as brand',
+                'loyalty_slabs.min_points as threshold',
+                'fs_users.name as field_staff_name',
+                'users.device_uuid as device_id',
+                'users.player_id'
+            )
+            ->orderBy('loyalty_redemptions.created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $redemptions
+        ]);
+    }
+
+    /**
+     * @OA\Get(
      *     path="/api/sales-manager/retailers/{id}/loyalty-points",
      *     summary="Get loyalty points summary and history for a retailer",
      *     tags={"Sales Manager Dashboard"},

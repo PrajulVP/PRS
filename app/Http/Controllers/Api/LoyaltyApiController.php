@@ -171,7 +171,25 @@ class LoyaltyApiController extends Controller
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="status", type="boolean", example=true),
-     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="redemption_id", type="integer", example=12),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2026-09-09 14:20:00"),
+     *                     @OA\Property(property="status", type="string", example="approved"),
+     *                     @OA\Property(property="retailer_id", type="integer", example=42),
+     *                     @OA\Property(property="shop_name", type="string", example="Metro Medicals"),
+     *                     @OA\Property(property="owner_name", type="string", example="John Doe"),
+     *                     @OA\Property(property="selected_reward", type="string", example="Smart Watch"),
+     *                     @OA\Property(property="fallback_reward", type="string", example="Fitness Band"),
+     *                     @OA\Property(property="brand", type="string", example="Atomeds"),
+     *                     @OA\Property(property="threshold", type="number", format="float", example=500.00),
+     *                     @OA\Property(property="device_id", type="string", example="uuid-1234-5678"),
+     *                     @OA\Property(property="player_id", type="string", example="onesignal-player-id")
+     *                 )
+     *             )
      *         )
      *     )
      * )
