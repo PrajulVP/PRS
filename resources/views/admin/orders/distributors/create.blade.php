@@ -681,12 +681,12 @@
                         }
 
                         let tabPerStr = (parseInt(p.units_per_strip) > 0) ? parseInt(p.units_per_strip) : 0;
-                        let strPerBox = (parseInt(p.strips_per_box) > 0) ? parseInt(p.strips_per_box) : 0;
+                        let strPerBox = (parseInt(p.strips_per_box) > 1) ? parseInt(p.strips_per_box) : 0;
 
-                        if (!isCount && (tabPerStr > 0 || strPerBox > 0)) {
+                        if (!isCount && (tabPerStr > 0 || strPerBox > 1)) {
                             let parts = [];
                             if (tabPerStr > 0) parts.push(`${tabPerStr} Tab/Str`);
-                            if (strPerBox > 0) parts.push(`${strPerBox} Str/Box`);
+                            if (strPerBox > 1) parts.push(`${strPerBox} Str/Box`);
                             $('#previewBoxSpan').text(parts.join(' | '));
                             $('#previewBoxCapsule').show();
                         } else {

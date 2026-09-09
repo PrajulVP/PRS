@@ -954,12 +954,12 @@
 
                         // Dynamic Packaging Info
                         let tabPerStr = (parseInt(p.units_per_strip) > 0) ? parseInt(p.units_per_strip) : 0;
-                        let strPerBox = (parseInt(p.strips_per_box) > 0) ? parseInt(p.strips_per_box) : 0;
+                        let strPerBox = (parseInt(p.strips_per_box) > 1) ? parseInt(p.strips_per_box) : 0;
 
-                        if (!isCount && (tabPerStr > 0 || strPerBox > 0)) {
+                        if (!isCount && (tabPerStr > 0 || strPerBox > 1)) {
                             let parts = [];
                             if (tabPerStr > 0) parts.push(`${tabPerStr} Tab/Str`);
-                            if (strPerBox > 0) parts.push(`${strPerBox} Str/Box`);
+                            if (strPerBox > 1) parts.push(`${strPerBox} Str/Box`);
                             $('#previewBoxSpan').text(parts.join(' | '));
                             $('#previewBoxCapsule').show();
                         } else {
@@ -1317,8 +1317,8 @@
                     total += lineTotal;
                     let rowClass = (key === lastAddedKey) ? 'new-row' : '';
 
-                    let tabPerStr = parseInt(item.units_per_strip || 0);
-                    let strPerBox = parseInt(item.strips_per_box || 0);
+                    let tabPerStr = (parseInt(item.units_per_strip) > 0) ? parseInt(item.units_per_strip) : 0;
+                    let strPerBox = (parseInt(item.strips_per_box) > 1) ? parseInt(item.strips_per_box) : 0;
 
                     tbody.append(`
                                                 <tr class="${rowClass}">
@@ -1349,7 +1349,7 @@
                                                             ${item.brand ? `<span class="me-2"><i class="fa fa-tag me-1 text-secondary"></i>${item.brand}</span>` : ''}
                                                             ${item.pack ? `<span class="me-2"><i class="fa fa-box me-1 text-warning"></i>${item.pack}</span>` : ''}
                                                             ${!item.is_count && tabPerStr > 0 ? `<span class="me-2"><i class="fa fa-pills me-1 text-primary"></i>${tabPerStr} Tab/Str</span>` : ''}
-                                                            ${!item.is_count && strPerBox > 0 ? `<span class="me-2"><i class="fa fa-layer-group me-1 text-info"></i>${strPerBox} Str/Box</span>` : ''}
+                                                            ${!item.is_count && strPerBox > 1 ? `<span class="me-2"><i class="fa fa-layer-group me-1 text-info"></i>${strPerBox} Str/Box</span>` : ''}
                                                         </div>
                                                     </td>
                                                     <td class="small fw-medium text-muted">${item.distName}</td>
