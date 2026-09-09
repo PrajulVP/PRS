@@ -1920,7 +1920,7 @@
                 let idx = btn.data('idx');
                 let row = btn.closest('.ai-result-row');
                 
-                let item = (lastAiResponse && lastAiResponse.matched_items && lastAiResponse.matched_items[idx]) 
+                let item = (typeof lastAiResponse !== 'undefined' && lastAiResponse && lastAiResponse.matched_items && lastAiResponse.matched_items[idx]) 
                     ? lastAiResponse.matched_items[idx] 
                     : row.data('item');
 
@@ -1933,16 +1933,40 @@
                 let distSelect = row.find('.ai-dist-select');
                 let distId = distSelect.val();
                 
+                // Fallback for distributor ID if distSelect val is missing/empty
+                if (!distId) {
+                    let d = (item.distributors && item.distributors.length > 0) ? item.distributors[0] : (item.distributor || null);
+                    if (d && d.id) {
+                        distId = d.id;
+                    }
+                }
+
                 if (!distId) {
                     showToast('error', 'Please select a distributor with stock.');
                     return;
                 }
 
-                let distName = distSelect.find('option:selected').text().split(' - ')[0];
-                let maxStockRaw = parseInt(distSelect.find('option:selected').data('stock'));
+                let selectedOpt = distSelect.find('option:selected');
+                let distName = '';
+                let maxStockRaw = 0;
+
+                if (selectedOpt.length > 0 && selectedOpt.val() == distId) {
+                    distName = selectedOpt.text().split(' - ')[0].trim();
+                    maxStockRaw = parseFloat(selectedOpt.attr('data-stock')) || parseFloat(selectedOpt.data('stock')) || 0;
+                }
+                
+                if (!distName || maxStockRaw <= 0) {
+                    let d = (item.distributors && item.distributors.length > 0) ? item.distributors[0] : (item.distributor || null);
+                    if (d) {
+                        distName = distName || d.shop_name || d.name || 'Distributor';
+                        if (maxStockRaw <= 0) {
+                            maxStockRaw = parseFloat(d.stock) || 0;
+                        }
+                    }
+                }
                 
                 let qty = parseInt(row.find('.ai-qty').val()) || 1;
-                let unit = row.find('.ai-unit').val();
+                let unit = row.find('.ai-unit').val() || item.unit || 'Strips';
                 
                 let stripsPerBox = parseInt(p.strips_per_box || 1);
                 let boxesPerCarton = parseInt(p.boxes_per_carton || 1);
@@ -1957,7 +1981,6 @@
                 let hasCode = p.product_code && p.product_code !== '---' && p.product_code.trim() !== '';
                 let isCount = hasCode || pPack.includes('nos') || pPack.includes('count') || unit === 'Nos';
 
-
                 // Capture Variants from buttons
                 let variants = [];
                 row.find('.ai-variant-level').each(function() {
@@ -1968,28 +1991,25 @@
                 });
                 
                 // If product has variants but none selected
-                if (p.variant_options && Object.keys(p.variant_options).length > 0 && variants.length < Object.keys(p.variant_options).length) {
+                if (p.variant_options && typeof p.variant_options === 'object' && Object.keys(p.variant_options).length > 0 && variants.length < Object.keys(p.variant_options).length) {
                     showToast('warning', 'Please select all variants (Side/Size) for ' + p.product_name);
                     return;
                 }
 
                 let variantStr = variants.length > 0 ? variants.join(' - ') : null;
                 let requestedStrips = qty * mul;
-                let key = p.id + '-' + distId + (variantStr ? '-' + variantStr : '');
-
-                // Existing strips check
-                let existingStrips = addedItems[key] ? (addedItems[key].qty * addedItems[key].multiplier) : 0;
-                
-                if ((existingStrips + requestedStrips) > maxStockRaw) {
-                    let unitLabel = unit || 'Units';
-                    let cleanName = p.product_name.replace(/\s+\d+.*$/, ''); // clean out mg/pack numbers for clarity
-                    showToast('error', `Stock limit reached for "${p.product_name}". Only ${maxStockRaw} ${unitLabel} available with this distributor.`);
-                    return;
-                }
-
 
                 // Ensure key is formatted consistently as prodId-distId
                 let itemKey = p.id + '-' + distId;
+
+                // Existing strips check
+                let existingStrips = addedItems[itemKey] ? (addedItems[itemKey].qty * addedItems[itemKey].multiplier) : 0;
+                
+                if (maxStockRaw > 0 && (existingStrips + requestedStrips) > maxStockRaw) {
+                    let unitLabel = unit || 'Units';
+                    showToast('error', `Stock limit reached for "${p.product_name}". Only ${Math.round(maxStockRaw)} ${unitLabel} available with this distributor.`);
+                    return;
+                }
 
                 let side = null;
                 let size = null;
@@ -2010,7 +2030,7 @@
                         distName: distName,
                         name: p.product_name,
                         variants: [{ side: side, size: size, variant: variantStr, qty: qty }],
-                        price: parseFloat(p.ptr),
+                        price: parseFloat(p.ptr) || 0,
                         qty: qty,
                         unit: unit,
                         brand: p.brand,
@@ -2025,7 +2045,6 @@
                         maxStock: maxStockRaw
                     };
                 }
-
 
                 renderTable(itemKey);
                 btn.removeClass('btn-primary').addClass('btn-success').html('<i class="fa fa-check"></i> Added').prop('disabled', true);
