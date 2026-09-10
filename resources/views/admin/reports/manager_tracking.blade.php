@@ -428,31 +428,53 @@
             routePaths.push(path);
             return path;
         }
-        const apiKey = "{{ config('services.google_maps.key', env('GOOGLE_MAPS_API_KEY')) }}";
+        const osrmUrl = "{{ config('services.osrm.url', 'https://16-171-11-60.sslip.io') }}";
 
         async function snapPathToRoads(points) {
             if (points.length < 2) return points;
 
-            // Chunk points to stay within Roads API limits (max 100 per request)
+            // Chunk points to keep URL length safe (max 80 points per request)
+            const chunkSize = 80;
             const chunks = [];
-            for (let i = 0; i < points.length; i += 100) {
-                chunks.push(points.slice(i, i + 100));
+            for (let i = 0; i < points.length; i += chunkSize) {
+                chunks.push(points.slice(i, i + chunkSize));
             }
 
             let allSnapped = [];
             for (const chunk of chunks) {
-                const pathParam = chunk.map(p => `${p.lat},${p.lng}`).join('|');
+                if (chunk.length < 2) {
+                    allSnapped = allSnapped.concat(chunk);
+                    continue;
+                }
+
+                // OSRM expects coordinates formatted as {lng},{lat} separated by semicolons
+                const coordParam = chunk.map(p => `${p.lng},${p.lat}`).join(';');
+                const requestUrl = `${osrmUrl}/match/v1/driving/${coordParam}?overview=full&geometries=geojson`;
+
                 try {
-                    const response = await fetch(`https://roads.googleapis.com/v1/snapToRoads?path=${pathParam}&interpolate=true&key=${apiKey}`);
+                    const response = await fetch(requestUrl);
                     const data = await response.json();
-                    if (data.snappedPoints) {
-                        allSnapped = allSnapped.concat(data.snappedPoints.map(p => ({
-                            lat: p.location.latitude,
-                            lng: p.location.longitude
-                        })));
+
+                    if (data.code === 'Ok' && data.matchings && data.matchings.length > 0) {
+                        let chunkSnapped = [];
+                        for (const matching of data.matchings) {
+                            if (matching.geometry && matching.geometry.coordinates) {
+                                matching.geometry.coordinates.forEach(c => {
+                                    chunkSnapped.push({ lat: c[1], lng: c[0] });
+                                });
+                            }
+                        }
+                        if (chunkSnapped.length > 0) {
+                            allSnapped = allSnapped.concat(chunkSnapped);
+                        } else {
+                            allSnapped = allSnapped.concat(chunk);
+                        }
+                    } else {
+                        console.warn('OSRM Map Matching warning/error:', data);
+                        allSnapped = allSnapped.concat(chunk);
                     }
                 } catch (e) {
-                    console.error('Snap to Roads chunk failed:', e);
+                    console.error('OSRM Map Matching fetch failed:', e);
                     allSnapped = allSnapped.concat(chunk);
                 }
             }

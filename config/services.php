@@ -48,4 +48,8 @@ return [
         'rest_api_key' => env('ONESIGNAL_REST_API_KEY'),
     ],
 
+    'osrm' => [
+        'url' => env('OSRM_URL', 'https://16-171-11-60.sslip.io'),
+    ],
+
 ];
