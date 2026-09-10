@@ -1774,16 +1774,30 @@
             }, 5000);
         };
 
-        // Smoothly hide loader after initial page parse and render
-        window.addEventListener('DOMContentLoaded', function() {
+        function hideGlobalLoader() {
             const loader = document.getElementById('globalPageLoader');
             if (loader) {
-                requestAnimationFrame(function() {
-                    loader.classList.add('loaded');
-                });
+                loader.classList.add('loaded');
             }
-        });
+        }
+
+        // Hide loader when document is ready or window loads
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            hideGlobalLoader();
+        }
+        window.addEventListener('DOMContentLoaded', hideGlobalLoader);
+        window.addEventListener('load', hideGlobalLoader);
+
+        // Hide loader instantly on browser history navigation (back/forward button / BFCache)
+        window.addEventListener('pageshow', hideGlobalLoader);
+        window.addEventListener('popstate', hideGlobalLoader);
         // Show preloader immediately on click of valid external page navigation links
+        // Hide preloader if a file download or back navigation causes window blur/focus or safety timeout
+        window.addEventListener('blur', hideGlobalLoader);
+        window.addEventListener('focus', hideGlobalLoader);
+        window.addEventListener('pagehide', hideGlobalLoader);
+
+        // Safety fallback: Never leave loader visible for more than 4 seconds under any navigation condition
         document.addEventListener('click', function(e) {
             const link = e.target.closest('a');
             if (link) {
@@ -1815,24 +1829,17 @@
                             const loader = document.getElementById('globalPageLoader');
                             if (loader) {
                                 loader.classList.remove('loaded');
+                                setTimeout(hideGlobalLoader, 4000);
                             }
                         }
                     } catch(err) {
-                        // Fallback for relative or special URLs
                         const loader = document.getElementById('globalPageLoader');
                         if (loader) {
                             loader.classList.remove('loaded');
+                            setTimeout(hideGlobalLoader, 4000);
                         }
                     }
                 }
-            }
-        });
-
-        // Hide preloader if a file download trigger causes window blur or focus change
-        window.addEventListener('blur', function() {
-            const loader = document.getElementById('globalPageLoader');
-            if (loader) {
-                loader.classList.add('loaded');
             }
         });
 

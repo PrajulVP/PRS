@@ -607,6 +607,7 @@
                                 <div class="position-relative">
                                     <div id="map"></div>
                                     <div class="legend">
+                                        <div class="mb-1 d-flex align-items-center"><i style="background: transparent; border-radius: 0; width: 20px; height: 22px; display: inline-flex; align-items: center; justify-content: center; margin-top: -4px;"><svg viewBox="0 0 24 24" width="20" height="22" fill="#51bb25" stroke="#2e7d32" stroke-width="1.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></i> Current Position</div>
                                         <div class="mb-1"><i style="background: #51bb25"></i> Punch In</div>
                                         <div class="mb-1"><i style="background: #f73164"></i> Punch Out</div>
                                         <div class="mb-1"><i style="background: #7366ff"></i> Customer Visit</div>
@@ -1186,12 +1187,13 @@
                     map: map,
                     title: "Current Position",
                     icon: {
-                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                        scale: 5,
-                        fillColor: "#7366ff",
-                        fillOpacity: 1,
-                        strokeWeight: 2,
-                        rotation: 0
+                        path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+                        fillColor: "#51bb25", // Punch-in green
+                        fillOpacity: 1.0,
+                        strokeColor: "#2e7d32",
+                        strokeWeight: 1.5,
+                        scale: 1.5, // Standard size on map
+                        anchor: new google.maps.Point(12, 22)
                     }
                 });
             }
@@ -1377,11 +1379,13 @@
                     position: newPos,
                     map: map,
                     icon: {
-                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                        scale: 5,
-                        fillColor: "#7366ff",
-                        fillOpacity: 1,
-                        strokeWeight: 2
+                        path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+                        fillColor: "#51bb25", // Punch-in green
+                        fillOpacity: 1.0,
+                        strokeColor: "#2e7d32",
+                        strokeWeight: 1.5,
+                        scale: 1.5, // Standard size on map
+                        anchor: new google.maps.Point(12, 22)
                     }
                 });
             }
