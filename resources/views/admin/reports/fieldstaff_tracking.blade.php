@@ -1011,7 +1011,7 @@
         let snappedPoints = [];
         let markers = [];
         let lastTimestamp = null;
-        let currentRouteMode = 'smoothened';
+        let currentRouteMode = 'both';
 
         function createSmoothenedPolyline() {
             let path = new google.maps.Polyline({
@@ -1062,15 +1062,21 @@
         async function snapPathToRoads(points) {
             if (points.length < 2) return points;
 
-            // Chunk points to keep URL length safe (max 80 points per request)
+            // Chunk points with 1-point overlap to prevent gaps between chunks
             const chunkSize = 80;
             const chunks = [];
-            for (let i = 0; i < points.length; i += chunkSize) {
-                chunks.push(points.slice(i, i + chunkSize));
+            for (let i = 0; i < points.length; i += (chunkSize - 1)) {
+                const chunk = points.slice(i, i + chunkSize);
+                if (chunk.length >= 2) {
+                    chunks.push(chunk);
+                } else if (chunk.length === 1 && chunks.length === 0) {
+                    chunks.push(chunk);
+                }
             }
 
             let allSnapped = [];
-            for (const chunk of chunks) {
+            for (let idx = 0; idx < chunks.length; idx++) {
+                const chunk = chunks[idx];
                 if (chunk.length < 2) {
                     allSnapped = allSnapped.concat(chunk);
                     continue;
@@ -1094,17 +1100,20 @@
                             }
                         }
                         if (chunkSnapped.length > 0) {
+                            if (allSnapped.length > 0 && chunkSnapped.length > 1) {
+                                chunkSnapped = chunkSnapped.slice(1);
+                            }
                             allSnapped = allSnapped.concat(chunkSnapped);
                         } else {
-                            allSnapped = allSnapped.concat(chunk);
+                            allSnapped = allSnapped.concat(idx > 0 ? chunk.slice(1) : chunk);
                         }
                     } else {
                         console.warn('OSRM Map Matching warning/error:', data);
-                        allSnapped = allSnapped.concat(chunk);
+                        allSnapped = allSnapped.concat(idx > 0 ? chunk.slice(1) : chunk);
                     }
                 } catch (e) {
                     console.error('OSRM Map Matching fetch failed:', e);
-                    allSnapped = allSnapped.concat(chunk);
+                    allSnapped = allSnapped.concat(idx > 0 ? chunk.slice(1) : chunk);
                 }
             }
             return allSnapped;
@@ -1128,109 +1137,61 @@
             initRealTimeTracking();
         }
 
-        function isValidLatLng(lat, lng) {
-            const latitude = parseFloat(lat);
-            const longitude = parseFloat(lng);
-            return !isNaN(latitude) && !isNaN(longitude) &&
-                   latitude !== 0 && longitude !== 0 &&
-                   latitude >= -90 && latitude <= 90 &&
-                   longitude >= -180 && longitude <= 180;
-        }
-
         async function loadInitialData() {
             const bounds = new google.maps.LatLngBounds();
 
             // 1. Plot History Path & Extend Bounds Immediately
             let pathSegments = [];
-            let currentSegment = [];
 
             @foreach($locations as $loc)
                 (function () {
-                    let lat = parseFloat({{ $loc->latitude }});
-                    let lng = parseFloat({{ $loc->longitude }});
-                    if (!isValidLatLng(lat, lng)) return;
-
-                    let currentTimestamp = new Date("{{ str_replace('-', '/', $loc->timestamp) }}").getTime();
-                    let point = { lat: lat, lng: lng };
-
-                    if (lastTimestamp) {
-                        let diffMins = (currentTimestamp - lastTimestamp) / (1000 * 60);
-                        if (diffMins > 15) {
-                            if (currentSegment.length > 0) {
-                                pathSegments.push(currentSegment);
-                            }
-                            currentSegment = [];
-                        }
-                    }
-                    currentSegment.push(point);
-                    lastTimestamp = currentTimestamp;
-
+                    let point = { lat: {{ $loc->latitude }}, lng: {{ $loc->longitude }} };
                     pathPoints.push(point);
                     bounds.extend(point);
                 })();
             @endforeach
 
-            if (currentSegment.length > 0) {
-                pathSegments.push(currentSegment);
+            if (pathPoints.length > 0) {
+                pathSegments.push(pathPoints);
             }
 
             // 2. Add Current Position Marker (if today and has locations)
             if (pathPoints.length > 0) {
                 const lastPos = pathPoints[pathPoints.length - 1];
-                if (isValidLatLng(lastPos.lat, lastPos.lng)) {
-                    staffMarker = new google.maps.Marker({
-                        position: lastPos,
-                        map: map,
-                        title: "Current Position",
-                        icon: {
-                            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                            scale: 5,
-                            fillColor: "#7366ff",
-                            fillOpacity: 1,
-                            strokeWeight: 2,
-                            rotation: 0
-                        }
-                    });
-                }
+                staffMarker = new google.maps.Marker({
+                    position: lastPos,
+                    map: map,
+                    title: "Current Position",
+                    icon: {
+                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                        scale: 5,
+                        fillColor: "#7366ff",
+                        fillOpacity: 1,
+                        strokeWeight: 2,
+                        rotation: 0
+                    }
+                });
             }
 
             // 3. Plot Punches
             @foreach($punches as $p)
-                (function() {
-                    let lat = parseFloat({{ $p->latitude }});
-                    let lng = parseFloat({{ $p->longitude }});
-                    if (isValidLatLng(lat, lng)) {
-                        addSpecialMarker(lat, lng, "{{ $p->type == 'punch_in' ? '#51bb25' : '#f73164' }}", "fa-user", 1000, 6);
-                        bounds.extend({ lat: lat, lng: lng });
-                    }
-                })();
+                addSpecialMarker({{ $p->latitude }}, {{ $p->longitude }}, "{{ $p->type == 'punch_in' ? '#51bb25' : '#f73164' }}", "fa-user", 1000, 6);
+                bounds.extend({ lat: {{ $p->latitude }}, lng: {{ $p->longitude }} });
             @endforeach
 
             // 4. Plot Visits
             @foreach($visits as $v)
-                (function() {
-                    let lat = parseFloat({{ $v->latitude }});
-                    let lng = parseFloat({{ $v->longitude }});
-                    if (isValidLatLng(lat, lng)) {
-                        addSpecialMarker(lat, lng, "#7366ff", "fa-store", 500, 7);
-                        bounds.extend({ lat: lat, lng: lng });
-                    }
-                })();
+                addSpecialMarker({{ $v->latitude }}, {{ $v->longitude }}, "#7366ff", "fa-store", 500, 7);
+                bounds.extend({ lat: {{ $v->latitude }}, lng: {{ $v->longitude }} });
             @endforeach
 
             // 5. Plot Stops (> 5 mins)
             @foreach($stops as $stop)
-                (function() {
-                    let lat = parseFloat({{ $stop['lat'] }});
-                    let lng = parseFloat({{ $stop['lng'] }});
-                    if (isValidLatLng(lat, lng)) {
-                        addStopMarker(lat, lng, '{{ \App\Http\Controllers\ReportController::formatDurationHumans($stop['start_time'], $stop['end_time']) }}', '{{ \Carbon\Carbon::parse($stop['start_time'])->format('h:i A') }}', '{{ \Carbon\Carbon::parse($stop['end_time'])->format('h:i A') }}');
-                        bounds.extend({ lat: lat, lng: lng });
-                    }
-                })();
+                addStopMarker({{ $stop['lat'] }}, {{ $stop['lng'] }}, '{{ \App\Http\Controllers\ReportController::formatDurationHumans($stop['start_time'], $stop['end_time']) }}', '{{ \Carbon\Carbon::parse($stop['start_time'])->format('h:i A') }}', '{{ \Carbon\Carbon::parse($stop['end_time'])->format('h:i A') }}');
+                bounds.extend({ lat: {{ $stop['lat'] }}, lng: {{ $stop['lng'] }} });
             @endforeach
 
-            // Instantly fit map to valid activity bounds
+            // Instantly fit map to activity bounds
             if (!bounds.isEmpty()) {
                 map.fitBounds(bounds);
                 google.maps.event.addListenerOnce(map, "idle", function () {

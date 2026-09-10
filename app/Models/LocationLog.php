@@ -36,20 +36,14 @@ class LocationLog extends Model
     {
         $cacheKey = "user_{$userId}_distance_{$date}";
         
-        // Forget stale cache to ensure accuracy
-        if (request()->has('refresh') || $date === now()->toDateString()) {
-            \Illuminate\Support\Facades\Cache::forget($cacheKey);
-        }
-
+        // If it's a past date, we can cache it for a long time. 
+        // If it's today, we only cache for 5 minutes.
         $isToday = $date === now()->toDateString();
-        $ttl = $isToday ? 120 : 86400;
+        $ttl = $isToday ? 300 : 86400;
 
         return \Illuminate\Support\Facades\Cache::remember($cacheKey, $ttl, function() use ($userId, $date) {
             $logs = self::where('user_id', $userId)
                 ->whereDate('timestamp', $date)
-                ->where('latitude', '!=', 0)
-                ->where('longitude', '!=', 0)
-                ->where('latitude', '>', 1.0)
                 ->orderBy('timestamp', 'asc')
                 ->get();
 
@@ -57,31 +51,77 @@ class LocationLog extends Model
                 return 0;
             }
 
+            $apiKey = config('services.google_maps.key');
+            
+            if ($apiKey) {
+                try {
+                    return self::calculateRoadDistance($logs, $apiKey);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning("Roads API distance calculation failed, falling back to Haversine: " . $e->getMessage());
+                }
+            }
+
+            // Fallback to Haversine
             return self::calculateHaversineDistance($logs);
         });
     }
 
     /**
-     * Standard Haversine distance for a collection of valid logs
+     * Calculate distance by snapping points to roads via Google Roads API
+     */
+    protected static function calculateRoadDistance($logs, $apiKey)
+    {
+        $points = $logs->map(fn($l) => "{$l->latitude},{$l->longitude}")->toArray();
+        $chunks = array_chunk($points, 100); // Roads API limit is 100 points per request
+        $totalDistance = 0;
+        $lastPoint = null;
+
+        foreach ($chunks as $chunk) {
+            $path = implode('|', $chunk);
+            $response = \Illuminate\Support\Facades\Http::get("https://roads.googleapis.com/v1/snapToRoads", [
+                'path' => $path,
+                'interpolate' => 'true',
+                'key' => $apiKey
+            ]);
+
+            if ($response->successful()) {
+                $snappedPoints = $response->json()['snappedPoints'] ?? [];
+                
+                for ($i = 0; $i < count($snappedPoints); $i++) {
+                    $currentPoint = [
+                        'lat' => $snappedPoints[$i]['location']['latitude'],
+                        'lng' => $snappedPoints[$i]['location']['longitude']
+                    ];
+
+                    if ($lastPoint) {
+                        $totalDistance += self::haversineDistance(
+                            $lastPoint['lat'], $lastPoint['lng'],
+                            $currentPoint['lat'], $currentPoint['lng']
+                        );
+                    }
+                    $lastPoint = $currentPoint;
+                }
+            } else {
+                // If one chunk fails, we use Haversine for that segment to avoid 0 distance
+                // But for simplicity, let's just throw an exception to trigger the full fallback
+                throw new \Exception("Roads API request failed: " . $response->body());
+            }
+        }
+
+        return round($totalDistance, 2);
+    }
+
+    /**
+     * Standard Haversine distance for a collection of logs
      */
     protected static function calculateHaversineDistance($logs)
     {
-        $validLogs = $logs->filter(function($l) {
-            $lat = (float)$l->latitude;
-            $lng = (float)$l->longitude;
-            return $lat != 0 && $lng != 0 && $lat > 1.0 && $lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180;
-        })->values();
-
         $totalDistance = 0;
-        for ($i = 0; $i < $validLogs->count() - 1; $i++) {
-            $step = self::haversineDistance(
-                (float)$validLogs[$i]->latitude, (float)$validLogs[$i]->longitude,
-                (float)$validLogs[$i+1]->latitude, (float)$validLogs[$i+1]->longitude
+        for ($i = 0; $i < $logs->count() - 1; $i++) {
+            $totalDistance += self::haversineDistance(
+                (float)$logs[$i]->latitude, (float)$logs[$i]->longitude,
+                (float)$logs[$i+1]->latitude, (float)$logs[$i+1]->longitude
             );
-            // Ignore unnatural jumps greater than 100 km (corrupt pings)
-            if ($step < 100) {
-                $totalDistance += $step;
-            }
         }
         return round($totalDistance, 2);
     }

@@ -537,10 +537,22 @@ class SalesManagerDashboardApiController extends Controller
 
         $osrmUrl = config('services.osrm.url', 'https://16-171-11-60.sslip.io');
         $chunkSize = 80;
-        $chunks = array_chunk($locations->toArray(), $chunkSize);
+        $locArray = $locations->toArray();
+        $totalPoints = count($locArray);
+        $chunks = [];
+
+        for ($i = 0; $i < $totalPoints; $i += ($chunkSize - 1)) {
+            $slice = array_slice($locArray, $i, $chunkSize);
+            if (count($slice) >= 2) {
+                $chunks[] = $slice;
+            } else if (count($slice) === 1 && empty($chunks)) {
+                $chunks[] = $slice;
+            }
+        }
+
         $allSnapped = [];
 
-        foreach ($chunks as $chunk) {
+        foreach ($chunks as $idx => $chunk) {
             if (count($chunk) < 2) {
                 foreach ($chunk as $p) {
                     $allSnapped[] = [
@@ -579,9 +591,13 @@ class SalesManagerDashboardApiController extends Controller
                             }
                         }
                         if (!empty($chunkSnapped)) {
+                            if (count($allSnapped) > 0 && count($chunkSnapped) > 1) {
+                                $chunkSnapped = array_slice($chunkSnapped, 1);
+                            }
                             $allSnapped = array_merge($allSnapped, $chunkSnapped);
                         } else {
-                            foreach ($chunk as $p) {
+                            $pointsToAdd = $idx > 0 ? array_slice($chunk, 1) : $chunk;
+                            foreach ($pointsToAdd as $p) {
                                 $allSnapped[] = [
                                     'latitude' => (float) $p['latitude'],
                                     'longitude' => (float) $p['longitude'],
@@ -591,7 +607,8 @@ class SalesManagerDashboardApiController extends Controller
                             }
                         }
                     } else {
-                        foreach ($chunk as $p) {
+                        $pointsToAdd = $idx > 0 ? array_slice($chunk, 1) : $chunk;
+                        foreach ($pointsToAdd as $p) {
                             $allSnapped[] = [
                                 'latitude' => (float) $p['latitude'],
                                 'longitude' => (float) $p['longitude'],
@@ -601,7 +618,8 @@ class SalesManagerDashboardApiController extends Controller
                         }
                     }
                 } else {
-                    foreach ($chunk as $p) {
+                    $pointsToAdd = $idx > 0 ? array_slice($chunk, 1) : $chunk;
+                    foreach ($pointsToAdd as $p) {
                         $allSnapped[] = [
                             'latitude' => (float) $p['latitude'],
                             'longitude' => (float) $p['longitude'],
@@ -612,7 +630,8 @@ class SalesManagerDashboardApiController extends Controller
                 }
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::error('OSRM API Error in getRouteMap: ' . $e->getMessage());
-                foreach ($chunk as $p) {
+                $pointsToAdd = $idx > 0 ? array_slice($chunk, 1) : $chunk;
+                foreach ($pointsToAdd as $p) {
                     $allSnapped[] = [
                         'latitude' => (float) $p['latitude'],
                         'longitude' => (float) $p['longitude'],
@@ -863,9 +882,8 @@ class SalesManagerDashboardApiController extends Controller
             ->leftJoin('users as fs_users', 'fieldstaffs.user_id', '=', 'fs_users.id')
             ->whereIn('retailers.field_staff_id', $fieldStaffIds);
 
-        $statusParam = $request->filled('status') ? strtolower(trim($request->status)) : null;
-        if ($statusParam && $statusParam !== 'all') {
-            $query->where('loyalty_redemptions.status', $statusParam);
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('loyalty_redemptions.status', $request->status);
         }
 
         $redemptions = $query->select(

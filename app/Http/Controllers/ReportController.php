@@ -2378,6 +2378,36 @@ class ReportController extends Controller
         $visits = \App\Models\VisitLog::where('user_id', $userId)
             ->whereDate('check_in_at', $date)
             ->get();
+
+        $offlineLogs = \App\Models\OfflineLog::where('user_id', $userId)
+            ->where(function($query) use ($date) {
+                $query->whereDate('from_time', $date)
+                      ->orWhereDate('to_time', $date);
+            })
+            ->orderBy('from_time', 'asc')
+            ->get();
+            
+        $stops = collect($this->calculateStops($locations));
+
+        // Filter stops and offline logs based on punches
+        $firstPunchIn = $punches->where('type', 'punch_in')->first();
+        if ($firstPunchIn) {
+            $lastPunchOut = $punches->where('type', 'punch_out')->last();
+            $punchOutTime = $lastPunchOut ? clone $lastPunchOut->timestamp : now();
+            
+            $stops = $stops->filter(function($stop) use ($firstPunchIn, $punchOutTime) {
+                $stopStart = \Carbon\Carbon::parse($stop['start_time']);
+                return $stopStart->between($firstPunchIn->timestamp, $punchOutTime);
+            })->values();
+
+            $offlineLogs = $offlineLogs->filter(function($log) use ($firstPunchIn, $punchOutTime) {
+                $logStart = \Carbon\Carbon::parse($log->from_time);
+                return $logStart->between($firstPunchIn->timestamp, $punchOutTime);
+            })->values();
+        } else {
+            $stops = collect([]);
+            $offlineLogs = collect([]);
+        }
  
         // Calculate total distance coverd
         $totalDistance = \App\Models\LocationLog::calculateDailyDistance($userId, $date);
@@ -2390,7 +2420,7 @@ class ReportController extends Controller
         $lastPunch = $punches->last();
         $isOnline = $lastPunch && $lastPunch->type === 'punch_in';
 
-        return view('admin.reports.manager_tracking', compact('user', 'locations', 'punches', 'visits', 'date', 'totalDistance', 'isOnline', 'mockGpsCount'));
+        return view('admin.reports.manager_tracking', compact('user', 'locations', 'punches', 'visits', 'offlineLogs', 'date', 'totalDistance', 'isOnline', 'mockGpsCount', 'stops'));
     }
  
     public function managerTrackingExport(Request $request)
@@ -2412,50 +2442,155 @@ class ReportController extends Controller
             ->whereDate('check_in_at', $date)
             ->get();
 
+        $offlineLogs = \App\Models\OfflineLog::where('user_id', $userId)
+            ->where(function($query) use ($date) {
+                $query->whereDate('from_time', $date)
+                      ->orWhereDate('to_time', $date);
+            })
+            ->orderBy('from_time', 'asc')
+            ->get();
+            
+        $stops = collect($this->calculateStops($locations));
+
+        // Filter stops and offline logs based on punches
+        $firstPunchIn = $punches->where('type', 'punch_in')->first();
+        if ($firstPunchIn) {
+            $lastPunchOut = $punches->where('type', 'punch_out')->last();
+            $punchOutTime = $lastPunchOut ? clone $lastPunchOut->timestamp : now();
+            
+            $stops = $stops->filter(function($stop) use ($firstPunchIn, $punchOutTime) {
+                $stopStart = \Carbon\Carbon::parse($stop['start_time']);
+                return $stopStart->between($firstPunchIn->timestamp, $punchOutTime);
+            })->values();
+
+            $offlineLogs = $offlineLogs->filter(function($log) use ($firstPunchIn, $punchOutTime) {
+                $logStart = \Carbon\Carbon::parse($log->from_time);
+                return $logStart->between($firstPunchIn->timestamp, $punchOutTime);
+            })->values();
+        } else {
+            $stops = collect([]);
+            $offlineLogs = collect([]);
+        }
+            
+        $totalOfflineMinutes = 0;
+        foreach($offlineLogs as $log) {
+            if($log->from_time && $log->to_time) {
+                $totalOfflineMinutes += $log->from_time->diffInMinutes($log->to_time);
+            }
+        }
+        $offlineCount = $offlineLogs->count();
+
         $totalDistance = \App\Models\LocationLog::calculateDailyDistance($userId, $date);
 
-        if ($format === 'csv') {
+        if ($format === 'csv' || $format === 'excel') {
+            $filename = "manager_tracking_{$user->name}_{$date}." . ($format === 'excel' ? 'xls' : 'csv');
             $headers = [
-                'Content-Type' => 'text/csv',
-                'Content-Disposition' => 'attachment; filename="manager_tracking_'.$date.'.csv"',
+                "Content-type"        => $format === 'excel' ? "application/vnd.ms-excel" : "text/csv",
+                "Content-Disposition" => "attachment; filename=$filename",
+                "Pragma"              => "no-cache",
+                "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+                "Expires"             => "0"
             ];
 
-            $callback = function() use ($locations, $punches, $visits) {
-                $file = fopen('php://output', 'w');
+            $events = collect();
+            $punches->each(fn($p) => $events->push(['time' => $p->timestamp, 'type' => 'Attendance', 'details' => str_replace('_', ' ', $p->type), 'lat' => $p->latitude, 'lng' => $p->longitude]));
+            $visits->each(fn($v) => $events->push(['time' => $v->check_in_at, 'type' => 'Visit', 'details' => $v->customer_name . " (" . $v->customer_category . ") | Start: " . \Carbon\Carbon::parse($v->check_in_at)->format('h:i A') . " | End: " . ($v->check_out_at ? \Carbon\Carbon::parse($v->check_out_at)->format('h:i A') : 'Ongoing'), 'lat' => $v->latitude, 'lng' => $v->longitude]));
+            $offlineLogs->each(function($o) use ($events) {
+                $duration = $o->to_time ? \App\Http\Controllers\ReportController::formatDurationHumans($o->from_time, $o->to_time) : "Ongoing";
+                $reasonText = $o->reason ? " (" . $o->reason . ")" : "";
+                $events->push([
+                    'time' => $o->from_time, 
+                    'type' => 'Offline', 
+                    'details' => "Offline Period" . $reasonText . " - Duration: $duration. Resumed at: " . ($o->to_time ? $o->to_time->format('h:i A') : 'N/A'), 
+                    'lat' => $o->latitude ?? 'N/A', 
+                    'lng' => $o->longitude ?? 'N/A'
+                ]);
+            });
+
+            // Add System Alerts
+            $locations->whereNotNull('remarks')->each(fn($l) => $events->push([
+                'time' => $l->timestamp,
+                'type' => 'System Alert',
+                'details' => $l->remarks,
+                'lat' => $l->latitude,
+                'lng' => $l->longitude
+            ]));
+
+            // Add Stops
+            $stops->each(fn($s) => $events->push([
+                'time' => $s['start_time'],
+                'type' => 'Stop',
+                'details' => "Stop - Duration: " . \App\Http\Controllers\ReportController::formatDurationHumans($s['start_time'], $s['end_time']) . ". " . Carbon::parse($s['start_time'])->format('h:i A') . " to " . Carbon::parse($s['end_time'])->format('h:i A'),
+                'lat' => $s['lat'],
+                'lng' => $s['lng']
+            ]));
+
+            if ($format === 'excel') {
+                $html = "<table border='1'>";
+                $html .= "<tr><th colspan='4'>MANAGER TRACKING REPORT - {$user->name} | Date: {$date} | Dist: {$totalDistance} KM | Offline: {$offlineCount} ({$totalOfflineMinutes} mins)</th></tr>";
                 
-                fputcsv($file, ['--- PUNCH LOGS ---']);
-                fputcsv($file, ['Time', 'Type', 'Coordinates']);
-                foreach ($punches as $p) {
-                    fputcsv($file, [$p->timestamp->format('H:i'), $p->type, $p->latitude . ',' . $p->longitude]);
+                $html .= "<tr><th>Time</th><th>Type</th><th>Details</th><th>Location (Lat/Lng)</th></tr>";
+                foreach ($events->sortBy('time') as $event) {
+                    $loc = $event['lat'] . ($event['lng'] !== 'N/A' ? ", " . $event['lng'] : "");
+                    $time = Carbon::parse($event['time'])->format('h:i A');
+                    $html .= "<tr><td>{$time}</td><td>{$event['type']}</td><td>{$event['details']}</td><td>{$loc}</td></tr>";
                 }
 
-                fputcsv($file, []);
-                fputcsv($file, ['--- VISITS ---']);
-                fputcsv($file, ['Time', 'Customer', 'Duration', 'Coordinates']);
-                foreach ($visits as $v) {
+                $html .= "<tr><td colspan='4'></td></tr>";
+                $html .= "<tr><th colspan='4'>RAW GPS LOGS</th></tr>";
+                $html .= "<tr><th>Timestamp</th><th>Latitude</th><th>Longitude</th><th>Mock GPS</th></tr>";
+                foreach ($locations as $loc) {
+                    $mock = $loc->is_mock_location ? 'Yes' : 'No';
+                    $html .= "<tr><td>{$loc->timestamp->format('H:i:s')}</td><td>{$loc->latitude}</td><td>{$loc->longitude}</td><td>{$mock}</td></tr>";
+                }
+                $html .= "</table>";
+
+                return response($html, 200, $headers);
+            }
+
+            $callback = function() use($user, $date, $locations, $events, $totalDistance, $totalOfflineMinutes, $offlineCount) {
+                $file = fopen('php://output', 'w');
+                fputcsv($file, ["MANAGER TRACKING REPORT - {$user->name} | Date: {$date} | Dist: {$totalDistance} KM | Offline: {$offlineCount} ({$totalOfflineMinutes} mins)"]);
+                fputcsv($file, ["Time", "Type", "Details", "Location (Lat/Lng)"]);
+                
+                foreach ($events->sortBy('time') as $event) {
                     fputcsv($file, [
-                        $v->check_in_at->format('H:i'), 
-                        $v->customer_name, 
-                        $v->duration_minutes . ' mins', 
-                        $v->latitude . ',' . $v->longitude
+                        Carbon::parse($event['time'])->format('h:i A'),
+                        $event['type'],
+                        $event['details'],
+                        $event['lat'] . ($event['lng'] !== 'N/A' ? ", " . $event['lng'] : "")
                     ]);
                 }
 
                 fputcsv($file, []);
-                fputcsv($file, ['--- ROUTE PATH ---']);
-                fputcsv($file, ['Time', 'Coordinates']);
-                foreach ($locations as $l) {
-                    fputcsv($file, [$l->timestamp->format('H:i:s'), $l->latitude . ',' . $l->longitude]);
+                fputcsv($file, ["RAW GPS LOGS"]);
+                fputcsv($file, ["Timestamp", "Latitude", "Longitude", "Mock GPS"]);
+                foreach ($locations as $loc) {
+                    fputcsv($file, [
+                        $loc->timestamp->format('H:i:s'),
+                        $loc->latitude,
+                        $loc->longitude,
+                        $loc->is_mock_location ? 'Yes' : 'No'
+                    ]);
                 }
-
                 fclose($file);
             };
-
             return response()->stream($callback, 200, $headers);
-        }
+        } else {
+            $pdf = Pdf::loadView('admin.reports.pdf.tracking_report', [
+                'user' => $user,
+                'date' => $date,
+                'locations' => $locations,
+                'punches' => $punches,
+                'visits' => $visits,
+                'offlineLogs' => $offlineLogs,
+                'totalOfflineMinutes' => $totalOfflineMinutes,
+                'offlineCount' => $offlineCount,
+                'totalDistance' => $totalDistance,
+                'reportDate' => now()->format('M d, Y H:i')
+            ])->setPaper('a4', 'portrait');
 
-        // PDF Export
-        $pdf = Pdf::loadView('admin.reports.pdf.manager_tracking', compact('user', 'locations', 'punches', 'visits', 'date', 'totalDistance'));
-        return $pdf->download("manager_tracking_{$date}.pdf");
+            return $pdf->download("manager_tracking_{$user->name}_{$date}.pdf");
+        }
     }
 }
