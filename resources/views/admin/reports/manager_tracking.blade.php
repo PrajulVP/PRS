@@ -204,29 +204,6 @@
             background-color: #f8f9fa !important;
             transform: translateY(-1px);
         }
-
-        .map-processing-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.45);
-            backdrop-filter: blur(3px);
-            z-index: 100;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-
-        .map-processing-overlay.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
     </style>
 @endpush
 
@@ -393,15 +370,6 @@
 
                                 <div class="position-relative">
                                     <div id="map"></div>
-                                    <div id="mapLoaderMgr" class="map-processing-overlay">
-                                        <div class="bg-white p-3 rounded-4 shadow-lg text-center d-flex flex-column align-items-center" style="min-width: 200px;">
-                                            <div class="spinner-border text-primary mb-2" role="status" style="width: 2.2rem; height: 2.2rem; border-width: 0.22em;">
-                                                <span class="visually-hidden">Processing Route...</span>
-                                            </div>
-                                            <span class="fw-bold text-dark fs-6 mb-0">Processing Route...</span>
-                                            <small class="text-muted" style="font-size: 0.75rem;">Optimizing map matching</small>
-                                        </div>
-                                    </div>
                                     <div class="legend">
                                         <div class="mb-1"><i style="background: #51bb25"></i> Punch In</div>
                                         <div class="mb-1"><i style="background: #f73164"></i> Punch Out</div>
@@ -566,6 +534,18 @@
         async function snapPathToRoads(points) {
             if (points.length < 2) return points;
 
+            // 1. Calculate total movement distance. If stationary (< 30 meters total), do not draw polyline road stubs
+            let totalMoveDistance = 0;
+            for (let i = 0; i < points.length - 1; i++) {
+                const p1 = new google.maps.LatLng(points[i].lat, points[i].lng);
+                const p2 = new google.maps.LatLng(points[i + 1].lat, points[i + 1].lng);
+                totalMoveDistance += google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
+            }
+
+            if (totalMoveDistance < 30) {
+                return [];
+            }
+
             const chunkSize = 80;
             const chunks = [];
             for (let i = 0; i < points.length; i += (chunkSize - 1)) {
@@ -582,7 +562,7 @@
                 if (chunk.length < 2) return Promise.resolve({ idx, points: chunk });
 
                 const coordParam = chunk.map(p => `${p.lng},${p.lat}`).join(';');
-                const radiusParam = chunk.map(() => '100').join(';');
+                const radiusParam = chunk.map(() => '50').join(';');
                 const requestUrl = `${osrmUrl}/match/v1/driving/${coordParam}?overview=full&geometries=geojson&radiuses=${radiusParam}`;
 
                 return fetch(requestUrl)
@@ -597,28 +577,15 @@
                                     });
                                 }
                             }
-                            return { idx, points: chunkSnapped };
-                        }
-                        
-                        // If OSRM map matching returned no valid matchings, use tracepoints or raw chunk points
-                        if (data.tracepoints && data.tracepoints.length > 0) {
-                            let tpSnapped = [];
-                            data.tracepoints.forEach((tp, i) => {
-                                if (tp && tp.location) {
-                                    tpSnapped.push({ lat: tp.location[1], lng: tp.location[0] });
-                                } else {
-                                    tpSnapped.push(chunk[i]);
-                                }
-                            });
-                            if (tpSnapped.length >= 2) {
-                                return { idx, points: tpSnapped };
+                            if (chunkSnapped.length > 0) {
+                                return { idx, points: chunkSnapped };
                             }
                         }
-                        return { idx, points: chunk };
+                        return { idx, points: [] };
                     })
                     .catch(e => {
                         console.error('OSRM fetch error:', e);
-                        return { idx, points: chunk };
+                        return { idx, points: [] };
                     });
             });
 
@@ -719,10 +686,7 @@
             }
 
             // 6. Draw Polylines (Fast Parallel OSRM Smoothened & Raw)
-            const loaderEl = document.getElementById("mapLoaderMgr");
-            if (pathSegments.length > 0 && pathPoints.length > 1) {
-                if (loaderEl) loaderEl.classList.remove("hidden");
-
+            if (pathSegments.length > 0) {
                 for (let segment of pathSegments) {
                     if (segment.length > 0) {
                         currentRawPath = createRawPolyline();
@@ -730,21 +694,16 @@
 
                         currentSmoothenedPath = createSmoothenedPolyline();
 
-                        // Asynchronously snap to road via parallel OSRM fetch and render ONLY processed snapped route
+                        // Asynchronously snap to road via parallel OSRM fetch and render ONLY snapped road route
                         snapPathToRoads(segment).then(snappedSegment => {
                             snappedPoints = snappedPoints.concat(snappedSegment);
                             currentSmoothenedPath.setPath(snappedSegment);
                             if (currentRouteMode === 'smoothened') {
                                 updateDistanceDisplay(snappedSegment);
                             }
-                            if (loaderEl) loaderEl.classList.add("hidden");
-                        }).catch(() => {
-                            if (loaderEl) loaderEl.classList.add("hidden");
                         });
                     }
                 }
-            } else {
-                if (loaderEl) loaderEl.classList.add("hidden");
             }
         }
 
