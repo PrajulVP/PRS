@@ -1072,12 +1072,6 @@
             rawRoutePaths.forEach(p => {
                 p.setMap((mode === 'closest' || mode === 'both') ? map : null);
             });
-
-            if (mode === 'closest') {
-                updateDistanceDisplay(pathPoints);
-            } else {
-                updateDistanceDisplay(snappedPoints.length > 0 ? snappedPoints : pathPoints);
-            }
         }
 
         const osrmUrl = "{{ config('services.osrm.url', 'https://16-171-11-60.sslip.io') }}";
@@ -1238,15 +1232,12 @@
                         currentRawPath.setPath(segment);
 
                         currentSmoothenedPath = createSmoothenedPolyline();
-                        currentSmoothenedPath.setPath(segment);
+                        // Do not pre-fill smoothened line with raw off-road line to prevent instant off-road flicker
 
                         // Asynchronously snap to road via parallel OSRM fetch and update to snapped road route
                         snapPathToRoads(segment).then(snappedSegment => {
                             snappedPoints = snappedPoints.concat(snappedSegment);
                             currentSmoothenedPath.setPath(snappedSegment);
-                            if (currentRouteMode === 'smoothened') {
-                                updateDistanceDisplay(snappedSegment);
-                            }
                         });
                     }
                 }
