@@ -566,11 +566,14 @@ class SalesManagerDashboardApiController extends Controller
             }
 
             $coordStrings = [];
+            $radiusStrings = [];
             foreach ($chunk as $p) {
                 $coordStrings[] = $p['longitude'] . ',' . $p['latitude'];
+                $radiusStrings[] = '50';
             }
             $coordParam = implode(';', $coordStrings);
-            $requestUrl = "{$osrmUrl}/match/v1/driving/{$coordParam}?overview=full&geometries=geojson";
+            $radiusParam = implode(';', $radiusStrings);
+            $requestUrl = "{$osrmUrl}/match/v1/driving/{$coordParam}?overview=full&geometries=geojson&radiuses={$radiusParam}";
 
             try {
                 $response = \Illuminate\Support\Facades\Http::timeout(5)->get($requestUrl);

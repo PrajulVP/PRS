@@ -204,6 +204,29 @@
             background-color: #f8f9fa !important;
             transform: translateY(-1px);
         }
+
+        .map-processing-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(3px);
+            z-index: 100;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .map-processing-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
     </style>
 @endpush
 
@@ -370,12 +393,22 @@
 
                                 <div class="position-relative">
                                     <div id="map"></div>
+                                    <div id="mapLoaderMgr" class="map-processing-overlay">
+                                        <div class="bg-white p-3 rounded-4 shadow-lg text-center d-flex flex-column align-items-center" style="min-width: 200px;">
+                                            <div class="spinner-border text-primary mb-2" role="status" style="width: 2.2rem; height: 2.2rem; border-width: 0.22em;">
+                                                <span class="visually-hidden">Processing Route...</span>
+                                            </div>
+                                            <span class="fw-bold text-dark fs-6 mb-0">Processing Route...</span>
+                                            <small class="text-muted" style="font-size: 0.75rem;">Optimizing map matching</small>
+                                        </div>
+                                    </div>
                                     <div class="legend">
                                         <div class="mb-1"><i style="background: #51bb25"></i> Punch In</div>
                                         <div class="mb-1"><i style="background: #f73164"></i> Punch Out</div>
                                         <div class="mb-1"><i style="background: #7366ff"></i> Customer Visit</div>
-                                        <div class="mb-1"><i style="background: #7366ff; border-radius: 0; height: 3px; margin-top: 10px;"></i> Smoothened Route</div>
-                                        <div><i style="background: #1a3a63; border-radius: 0; height: 3px; margin-top: 10px;"></i> Closest Route</div>
+                                        <div class="mb-1"><i style="background: #ff9800"></i> Stopped</div>
+                                        <div class="mb-1"><i style="background: #2563eb; border-radius: 0; height: 4px; margin-top: 8px;"></i> Smoothened Route</div>
+                                        <div><i style="background: #1a3a63; border-radius: 0; height: 3px; margin-top: 8px;"></i> Closest Route</div>
                                     </div>
                                 </div>
                             </div>
@@ -459,29 +492,52 @@
         let snappedPoints = [];
         let markers = [];
         let lastTimestamp = null;
-        let currentRouteMode = 'both';
+        let currentRouteMode = 'smoothened';
 
         function createSmoothenedPolyline() {
-            let path = new google.maps.Polyline({
+            const isVisible = (currentRouteMode === 'smoothened' || currentRouteMode === 'both');
+            
+            // Clean crisp white outline border casing (Google Maps Directions style)
+            let borderPath = new google.maps.Polyline({
                 path: [],
                 geodesic: true,
-                strokeColor: "#7366ff",
-                strokeOpacity: 0.85,
-                strokeWeight: 5,
-                map: (currentRouteMode === 'smoothened' || currentRouteMode === 'both') ? map : null
+                strokeColor: "#ffffff",
+                strokeOpacity: 0.95,
+                strokeWeight: 8.5,
+                zIndex: 10,
+                map: isVisible ? map : null
             });
-            smoothenedRoutePaths.push(path);
-            return path;
+
+            // Inner vibrant Google-style navigation blue route line
+            let innerPath = new google.maps.Polyline({
+                path: [],
+                geodesic: true,
+                strokeColor: "#2563eb", // Official Google Maps navigation blue
+                strokeOpacity: 1.0,
+                strokeWeight: 5.5,
+                zIndex: 11,
+                map: isVisible ? map : null
+            });
+
+            smoothenedRoutePaths.push(borderPath, innerPath);
+            return {
+                setPath: function(pts) {
+                    borderPath.setPath(pts);
+                    innerPath.setPath(pts);
+                }
+            };
         }
 
         function createRawPolyline() {
+            const isVisible = (currentRouteMode === 'closest' || currentRouteMode === 'both');
             let path = new google.maps.Polyline({
                 path: [],
                 geodesic: true,
                 strokeColor: "#1a3a63",
-                strokeOpacity: 0.75,
-                strokeWeight: 3,
-                map: (currentRouteMode === 'closest' || currentRouteMode === 'both') ? map : null
+                strokeOpacity: 0.8,
+                strokeWeight: 3.5,
+                zIndex: 5,
+                map: isVisible ? map : null
             });
             rawRoutePaths.push(path);
             return path;
@@ -510,7 +566,6 @@
         async function snapPathToRoads(points) {
             if (points.length < 2) return points;
 
-            // Chunk points with 1-point overlap to prevent gaps between chunks
             const chunkSize = 80;
             const chunks = [];
             for (let i = 0; i < points.length; i += (chunkSize - 1)) {
@@ -522,47 +577,46 @@
                 }
             }
 
-            let allSnapped = [];
-            for (let idx = 0; idx < chunks.length; idx++) {
-                const chunk = chunks[idx];
-                if (chunk.length < 2) {
-                    allSnapped = allSnapped.concat(chunk);
-                    continue;
-                }
+            // Parallel fetch for all OSRM chunks
+            const fetchPromises = chunks.map((chunk, idx) => {
+                if (chunk.length < 2) return Promise.resolve({ idx, points: chunk });
 
-                // OSRM expects coordinates formatted as {lng},{lat} separated by semicolons
                 const coordParam = chunk.map(p => `${p.lng},${p.lat}`).join(';');
-                const requestUrl = `${osrmUrl}/match/v1/driving/${coordParam}?overview=full&geometries=geojson`;
+                const radiusParam = chunk.map(() => '50').join(';');
+                const requestUrl = `${osrmUrl}/match/v1/driving/${coordParam}?overview=full&geometries=geojson&radiuses=${radiusParam}`;
 
-                try {
-                    const response = await fetch(requestUrl);
-                    const data = await response.json();
+                return fetch(requestUrl)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.code === 'Ok' && data.matchings && data.matchings.length > 0) {
+                            let chunkSnapped = [];
+                            for (const matching of data.matchings) {
+                                if (matching.geometry && matching.geometry.coordinates) {
+                                    matching.geometry.coordinates.forEach(c => {
+                                        chunkSnapped.push({ lat: c[1], lng: c[0] });
+                                    });
+                                }
+                            }
+                            return { idx, points: chunkSnapped.length > 0 ? chunkSnapped : chunk };
+                        }
+                        return { idx, points: chunk };
+                    })
+                    .catch(e => {
+                        console.error('OSRM fetch error:', e);
+                        return { idx, points: chunk };
+                    });
+            });
 
-                    if (data.code === 'Ok' && data.matchings && data.matchings.length > 0) {
-                        let chunkSnapped = [];
-                        for (const matching of data.matchings) {
-                            if (matching.geometry && matching.geometry.coordinates) {
-                                matching.geometry.coordinates.forEach(c => {
-                                    chunkSnapped.push({ lat: c[1], lng: c[0] });
-                                });
-                            }
-                        }
-                        if (chunkSnapped.length > 0) {
-                            if (allSnapped.length > 0 && chunkSnapped.length > 1) {
-                                chunkSnapped = chunkSnapped.slice(1);
-                            }
-                            allSnapped = allSnapped.concat(chunkSnapped);
-                        } else {
-                            allSnapped = allSnapped.concat(idx > 0 ? chunk.slice(1) : chunk);
-                        }
-                    } else {
-                        console.warn('OSRM Map Matching warning/error:', data);
-                        allSnapped = allSnapped.concat(idx > 0 ? chunk.slice(1) : chunk);
-                    }
-                } catch (e) {
-                    console.error('OSRM Map Matching fetch failed:', e);
-                    allSnapped = allSnapped.concat(idx > 0 ? chunk.slice(1) : chunk);
+            const results = await Promise.all(fetchPromises);
+            results.sort((a, b) => a.idx - b.idx);
+
+            let allSnapped = [];
+            for (let idx = 0; idx < results.length; idx++) {
+                let pts = results[idx].points;
+                if (allSnapped.length > 0 && pts.length > 1) {
+                    pts = pts.slice(1);
                 }
+                allSnapped = allSnapped.concat(pts);
             }
             return allSnapped;
         }
@@ -633,33 +687,49 @@
                 bounds.extend({ lat: {{ $v->latitude }}, lng: {{ $v->longitude }} });
             @endforeach
 
+            // 5. Plot Stops (> 5 mins)
+            @foreach($stops as $stop)
+                addStopMarker({{ $stop['lat'] }}, {{ $stop['lng'] }}, '{{ \App\Http\Controllers\ReportController::formatDurationHumans($stop['start_time'], $stop['end_time']) }}', '{{ \Carbon\Carbon::parse($stop['start_time'])->format('h:i A') }}', '{{ \Carbon\Carbon::parse($stop['end_time'])->format('h:i A') }}');
+                bounds.extend({ lat: {{ $stop['lat'] }}, lng: {{ $stop['lng'] }} });
+            @endforeach
+
             // Instantly fit map to activity bounds
             if (!bounds.isEmpty()) {
                 map.fitBounds(bounds);
-                google.maps.event.addListenerOnce(map, "idle", function() { 
+                google.maps.event.addListenerOnce(map, "idle", function () {
                     if (map.getZoom() > 16) {
                         map.setZoom(16);
                     }
                 });
             }
 
-            // 5. Asynchronously Draw Polylines (Raw & OSRM Smoothened)
-            if (pathSegments.length > 0) {
+            // 6. Draw Polylines (Fast Parallel OSRM Smoothened & Raw)
+            const loaderEl = document.getElementById("mapLoaderMgr");
+            if (pathSegments.length > 0 && pathPoints.length > 1) {
+                if (loaderEl) loaderEl.classList.remove("hidden");
+
                 for (let segment of pathSegments) {
                     if (segment.length > 0) {
-                        // Plot Raw GPS Path
                         currentRawPath = createRawPolyline();
                         currentRawPath.setPath(segment);
 
-                        // Plot OSRM Smoothened Path
-                        let snappedSegment = await snapPathToRoads(segment);
-                        snappedPoints = snappedPoints.concat(snappedSegment);
-                        
                         currentSmoothenedPath = createSmoothenedPolyline();
-                        currentSmoothenedPath.setPath(snappedSegment);
+
+                        // Asynchronously snap to road via parallel OSRM fetch and render ONLY processed snapped route
+                        snapPathToRoads(segment).then(snappedSegment => {
+                            snappedPoints = snappedPoints.concat(snappedSegment);
+                            currentSmoothenedPath.setPath(snappedSegment);
+                            if (currentRouteMode === 'smoothened') {
+                                updateDistanceDisplay(snappedSegment);
+                            }
+                            if (loaderEl) loaderEl.classList.add("hidden");
+                        }).catch(() => {
+                            if (loaderEl) loaderEl.classList.add("hidden");
+                        });
                     }
                 }
-                updateDistanceDisplay(snappedPoints.length > 0 ? snappedPoints : pathPoints);
+            } else {
+                if (loaderEl) loaderEl.classList.add("hidden");
             }
         }
 
