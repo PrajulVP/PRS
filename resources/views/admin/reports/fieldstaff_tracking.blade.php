@@ -412,6 +412,27 @@
             background-color: #f8f9fa !important;
             transform: translateY(-1px);
         }
+
+        .route-mode-btn-group {
+            padding: 3px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+        }
+
+        .route-mode-btn-group label {
+            margin-bottom: 0 !important;
+            padding: 4px 14px !important;
+            line-height: 1.2 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            cursor: pointer;
+        }
+
+        .route-mode-btn-group .btn-check:checked + label {
+            background-color: #7366ff !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 6px rgba(115, 102, 255, 0.25);
+        }
     </style>
 @endpush
 
@@ -562,34 +583,37 @@
 
                         <div class="row">
                             <!-- Map Column -->
-                            <div class="col-xl-8 col-lg-7 position-relative">
-                                <div id="map"></div>
-                                <div class="map-mode-toggle position-absolute top-0 start-0 m-3 bg-white p-2 rounded-3 shadow-sm border d-flex align-items-center gap-2" style="z-index: 5;">
-                                    <span class="fw-bold small text-dark"><i class="fa fa-route me-1 text-primary"></i> Route Mode:</span>
-                                    <div class="btn-group btn-group-sm" role="group" aria-label="Route Mode">
-                                        <input type="radio" class="btn-check" name="routeMode" id="modeSmoothened" value="smoothened" checked onchange="toggleRouteMode('smoothened')">
-                                        <label class="btn btn-outline-primary btn-sm py-1 px-2 fw-semibold" for="modeSmoothened">
-                                            <i class="fa fa-magic me-1"></i> Smoothened (OSRM)
-                                        </label>
+                            <div class="col-xl-8 col-lg-7">
+                                <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+                                    <h6 class="mb-0 fw-bold text-dark d-flex align-items-center">
+                                        <i class="fa fa-map-marked-alt me-2" style="color: #7366ff;"></i> Monitoring Location Map
+                                    </h6>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="small fw-bold text-muted">Route Mode:</span>
+                                        <div class="btn-group btn-group-sm p-1 rounded-3 bg-light border shadow-sm route-mode-btn-group" role="group" aria-label="Route Mode">
+                                            <input type="radio" class="btn-check" name="routeMode" id="modeSmoothened" value="smoothened" checked onchange="toggleRouteMode('smoothened')">
+                                            <label class="btn btn-sm rounded-2 py-1 px-3 fw-bold border-0 text-muted" for="modeSmoothened" style="font-size: 0.8rem;">
+                                                <i class="fa fa-magic me-1"></i> Smoothened
+                                            </label>
 
-                                        <input type="radio" class="btn-check" name="routeMode" id="modeRaw" value="raw" onchange="toggleRouteMode('raw')">
-                                        <label class="btn btn-outline-danger btn-sm py-1 px-2 fw-semibold" for="modeRaw">
-                                            <i class="fa fa-draw-polygon me-1"></i> Raw GPS
-                                        </label>
-
-                                        <input type="radio" class="btn-check" name="routeMode" id="modeBoth" value="both" onchange="toggleRouteMode('both')">
-                                        <label class="btn btn-outline-secondary btn-sm py-1 px-2 fw-semibold" for="modeBoth">
-                                            <i class="fa fa-layer-group me-1"></i> Both Modes
-                                        </label>
+                                            <input type="radio" class="btn-check" name="routeMode" id="modeClosest" value="closest" onchange="toggleRouteMode('closest')">
+                                            <label class="btn btn-sm rounded-2 py-1 px-3 fw-bold border-0 text-muted" for="modeClosest" style="font-size: 0.8rem;">
+                                                <i class="fa fa-crosshairs me-1"></i> Closest
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="legend">
-                                    <div class="mb-1"><i style="background: #51bb25"></i> Punch In</div>
-                                    <div class="mb-1"><i style="background: #f73164"></i> Punch Out</div>
-                                    <div class="mb-1"><i style="background: #7366ff"></i> Customer Visit</div>
-                                    <div class="mb-1"><i style="background: #ff9800"></i> Stopped</div>
-                                    <div class="mb-1"><i style="background: #7366ff; border-radius: 0; height: 3px; margin-top: 10px;"></i> Smoothened Route</div>
-                                    <div><i style="background: #ff5722; border-radius: 0; height: 3px; margin-top: 10px;"></i> Raw GPS Route</div>
+
+                                <div class="position-relative">
+                                    <div id="map"></div>
+                                    <div class="legend">
+                                        <div class="mb-1"><i style="background: #51bb25"></i> Punch In</div>
+                                        <div class="mb-1"><i style="background: #f73164"></i> Punch Out</div>
+                                        <div class="mb-1"><i style="background: #7366ff"></i> Customer Visit</div>
+                                        <div class="mb-1"><i style="background: #ff9800"></i> Stopped</div>
+                                        <div class="mb-1"><i style="background: #7366ff; border-radius: 0; height: 3px; margin-top: 10px;"></i> Smoothened Route</div>
+                                        <div><i style="background: #1a3a63; border-radius: 0; height: 3px; margin-top: 10px;"></i> Closest Route</div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -987,7 +1011,7 @@
         let snappedPoints = [];
         let markers = [];
         let lastTimestamp = null;
-        let currentRouteMode = 'smoothened';
+        let currentRouteMode = 'both';
 
         function createSmoothenedPolyline() {
             let path = new google.maps.Polyline({
@@ -1006,10 +1030,10 @@
             let path = new google.maps.Polyline({
                 path: [],
                 geodesic: true,
-                strokeColor: "#ff5722",
+                strokeColor: "#1a3a63",
                 strokeOpacity: 0.75,
                 strokeWeight: 3,
-                map: (currentRouteMode === 'raw' || currentRouteMode === 'both') ? map : null
+                map: (currentRouteMode === 'closest' || currentRouteMode === 'both') ? map : null
             });
             rawRoutePaths.push(path);
             return path;
@@ -1023,10 +1047,10 @@
             });
 
             rawRoutePaths.forEach(p => {
-                p.setMap((mode === 'raw' || mode === 'both') ? map : null);
+                p.setMap((mode === 'closest' || mode === 'both') ? map : null);
             });
 
-            if (mode === 'raw') {
+            if (mode === 'closest') {
                 updateDistanceDisplay(pathPoints);
             } else {
                 updateDistanceDisplay(snappedPoints.length > 0 ? snappedPoints : pathPoints);
@@ -1107,7 +1131,7 @@
         async function loadInitialData() {
             const bounds = new google.maps.LatLngBounds();
 
-            // 1. Plot History Path
+            // 1. Plot History Path & Extend Bounds Immediately
             let pathSegments = [];
             let currentSegment = [];
 
@@ -1129,32 +1153,12 @@
                     lastTimestamp = currentTimestamp;
 
                     pathPoints.push(point);
+                    bounds.extend(point);
                 })();
             @endforeach
 
             if (currentSegment.length > 0) {
                 pathSegments.push(currentSegment);
-            }
-
-            if (pathSegments.length > 0) {
-                for (let segment of pathSegments) {
-                    if (segment.length > 0) {
-                        // Plot Raw GPS Path
-                        currentRawPath = createRawPolyline();
-                        currentRawPath.setPath(segment);
-
-                        // Plot OSRM Smoothened Path
-                        let snappedSegment = await snapPathToRoads(segment);
-                        snappedPoints = snappedPoints.concat(snappedSegment);
-
-                        currentSmoothenedPath = createSmoothenedPolyline();
-                        currentSmoothenedPath.setPath(snappedSegment);
-
-                        segment.forEach(p => bounds.extend(p));
-                        snappedSegment.forEach(p => bounds.extend(p));
-                    }
-                }
-                updateDistanceDisplay(snappedPoints.length > 0 ? snappedPoints : pathPoints);
             }
 
             // 2. Add Current Position Marker (if today and has locations)
@@ -1193,15 +1197,33 @@
                 bounds.extend({ lat: {{ $stop['lat'] }}, lng: {{ $stop['lng'] }} });
             @endforeach
 
-                    if (!bounds.isEmpty()) {
+            // Instantly fit map to activity bounds
+            if (!bounds.isEmpty()) {
                 map.fitBounds(bounds);
-
-                // Prevent extreme zoom level when there is only one point or points are very close
                 google.maps.event.addListenerOnce(map, "idle", function () {
-                    if (map.getZoom() > 15) {
-                        map.setZoom(15);
+                    if (map.getZoom() > 16) {
+                        map.setZoom(16);
                     }
                 });
+            }
+
+            // 6. Asynchronously Draw Polylines (Raw & OSRM Smoothened)
+            if (pathSegments.length > 0) {
+                for (let segment of pathSegments) {
+                    if (segment.length > 0) {
+                        // Plot Raw GPS Path
+                        currentRawPath = createRawPolyline();
+                        currentRawPath.setPath(segment);
+
+                        // Plot OSRM Smoothened Path
+                        let snappedSegment = await snapPathToRoads(segment);
+                        snappedPoints = snappedPoints.concat(snappedSegment);
+
+                        currentSmoothenedPath = createSmoothenedPolyline();
+                        currentSmoothenedPath.setPath(snappedSegment);
+                    }
+                }
+                updateDistanceDisplay(snappedPoints.length > 0 ? snappedPoints : pathPoints);
             }
         }
 

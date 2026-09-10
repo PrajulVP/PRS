@@ -487,10 +487,13 @@ class SalesManagerDashboardApiController extends Controller
         }
 
         // 1. Fetch GPS Locations (for the Polyline)
-        $locations = \App\Models\LocationLog::where('user_id', $userId)
+        $rawLocations = \App\Models\LocationLog::where('user_id', $userId)
             ->whereDate('timestamp', $date)
             ->orderBy('timestamp', 'asc')
             ->get(['latitude', 'longitude', 'timestamp', 'is_mock_location']);
+
+        // Perform Server-Side OSRM Road Smoothing
+        $locations = $this->snapPathToRoads($rawLocations);
 
         // 2. Fetch Punches (Start/End markers)
         $punches = \App\Models\AttendanceLog::where('user_id', $userId)
@@ -514,6 +517,113 @@ class SalesManagerDashboardApiController extends Controller
             'punches' => $punches,
             'visits' => $visits
         ]);
+    }
+
+    /**
+     * Helper to snap raw coordinates onto roads via OSRM map matching service for API consumers.
+     */
+    private function snapPathToRoads($locations)
+    {
+        if (count($locations) < 2) {
+            return $locations->map(function ($loc) {
+                return [
+                    'latitude' => (float) $loc->latitude,
+                    'longitude' => (float) $loc->longitude,
+                    'timestamp' => $loc->timestamp,
+                    'is_mock_location' => (bool) ($loc->is_mock_location ?? false),
+                ];
+            })->values();
+        }
+
+        $osrmUrl = config('services.osrm.url', 'https://16-171-11-60.sslip.io');
+        $chunkSize = 80;
+        $chunks = array_chunk($locations->toArray(), $chunkSize);
+        $allSnapped = [];
+
+        foreach ($chunks as $chunk) {
+            if (count($chunk) < 2) {
+                foreach ($chunk as $p) {
+                    $allSnapped[] = [
+                        'latitude' => (float) $p['latitude'],
+                        'longitude' => (float) $p['longitude'],
+                        'timestamp' => $p['timestamp'] ?? null,
+                        'is_mock_location' => (bool) ($p['is_mock_location'] ?? false),
+                    ];
+                }
+                continue;
+            }
+
+            $coordStrings = [];
+            foreach ($chunk as $p) {
+                $coordStrings[] = $p['longitude'] . ',' . $p['latitude'];
+            }
+            $coordParam = implode(';', $coordStrings);
+            $requestUrl = "{$osrmUrl}/match/v1/driving/{$coordParam}?overview=full&geometries=geojson";
+
+            try {
+                $response = \Illuminate\Support\Facades\Http::timeout(5)->get($requestUrl);
+                if ($response->successful()) {
+                    $data = $response->json();
+                    if (isset($data['code']) && $data['code'] === 'Ok' && !empty($data['matchings'])) {
+                        $chunkSnapped = [];
+                        foreach ($data['matchings'] as $matching) {
+                            if (isset($matching['geometry']['coordinates'])) {
+                                foreach ($matching['geometry']['coordinates'] as $coord) {
+                                    $chunkSnapped[] = [
+                                        'latitude' => (float) $coord[1],
+                                        'longitude' => (float) $coord[0],
+                                        'timestamp' => $chunk[0]['timestamp'] ?? null,
+                                        'is_mock_location' => false,
+                                    ];
+                                }
+                            }
+                        }
+                        if (!empty($chunkSnapped)) {
+                            $allSnapped = array_merge($allSnapped, $chunkSnapped);
+                        } else {
+                            foreach ($chunk as $p) {
+                                $allSnapped[] = [
+                                    'latitude' => (float) $p['latitude'],
+                                    'longitude' => (float) $p['longitude'],
+                                    'timestamp' => $p['timestamp'] ?? null,
+                                    'is_mock_location' => (bool) ($p['is_mock_location'] ?? false),
+                                ];
+                            }
+                        }
+                    } else {
+                        foreach ($chunk as $p) {
+                            $allSnapped[] = [
+                                'latitude' => (float) $p['latitude'],
+                                'longitude' => (float) $p['longitude'],
+                                'timestamp' => $p['timestamp'] ?? null,
+                                'is_mock_location' => (bool) ($p['is_mock_location'] ?? false),
+                            ];
+                        }
+                    }
+                } else {
+                    foreach ($chunk as $p) {
+                        $allSnapped[] = [
+                            'latitude' => (float) $p['latitude'],
+                            'longitude' => (float) $p['longitude'],
+                            'timestamp' => $p['timestamp'] ?? null,
+                            'is_mock_location' => (bool) ($p['is_mock_location'] ?? false),
+                        ];
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('OSRM API Error in getRouteMap: ' . $e->getMessage());
+                foreach ($chunk as $p) {
+                    $allSnapped[] = [
+                        'latitude' => (float) $p['latitude'],
+                        'longitude' => (float) $p['longitude'],
+                        'timestamp' => $p['timestamp'] ?? null,
+                        'is_mock_location' => (bool) ($p['is_mock_location'] ?? false),
+                    ];
+                }
+            }
+        }
+
+        return $allSnapped;
     }
 
     /**
