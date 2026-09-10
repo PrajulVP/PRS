@@ -576,6 +576,15 @@
             initRealTimeTracking();
         }
 
+        function isValidLatLng(lat, lng) {
+            const latitude = parseFloat(lat);
+            const longitude = parseFloat(lng);
+            return !isNaN(latitude) && !isNaN(longitude) &&
+                   latitude !== 0 && longitude !== 0 &&
+                   latitude >= -90 && latitude <= 90 &&
+                   longitude >= -180 && longitude <= 180;
+        }
+
         async function loadInitialData() {
             const bounds = new google.maps.LatLngBounds();
 
@@ -585,8 +594,12 @@
 
             @foreach($locations as $loc)
                 (function() {
+                    let lat = parseFloat({{ $loc->latitude }});
+                    let lng = parseFloat({{ $loc->longitude }});
+                    if (!isValidLatLng(lat, lng)) return;
+
                     let currentTimestamp = new Date("{{ str_replace('-', '/', $loc->timestamp) }}").getTime();
-                    let point = { lat: {{ $loc->latitude }}, lng: {{ $loc->longitude }} };
+                    let point = { lat: lat, lng: lng };
                     
                     if (lastTimestamp) {
                         let diffMins = (currentTimestamp - lastTimestamp) / (1000 * 60);
@@ -612,34 +625,48 @@
             // 2. Add Current Position Marker (if today and has locations)
             if (pathPoints.length > 0) {
                 const lastPos = pathPoints[pathPoints.length - 1];
-                staffMarker = new google.maps.Marker({
-                    position: lastPos,
-                    map: map,
-                    title: "Current Position",
-                    icon: {
-                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                        scale: 5,
-                        fillColor: "#7366ff",
-                        fillOpacity: 1,
-                        strokeWeight: 2,
-                        rotation: 0
-                    }
-                });
+                if (isValidLatLng(lastPos.lat, lastPos.lng)) {
+                    staffMarker = new google.maps.Marker({
+                        position: lastPos,
+                        map: map,
+                        title: "Current Position",
+                        icon: {
+                            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                            scale: 5,
+                            fillColor: "#7366ff",
+                            fillOpacity: 1,
+                            strokeWeight: 2,
+                            rotation: 0
+                        }
+                    });
+                }
             }
 
             // 3. Plot Punches
             @foreach($punches as $p)
-                addSpecialMarker({{ $p->latitude }}, {{ $p->longitude }}, "{{ $p->type == 'punch_in' ? '#51bb25' : '#f73164' }}", "fa-user", 1000, 6);
-                bounds.extend({ lat: {{ $p->latitude }}, lng: {{ $p->longitude }} });
+                (function() {
+                    let lat = parseFloat({{ $p->latitude }});
+                    let lng = parseFloat({{ $p->longitude }});
+                    if (isValidLatLng(lat, lng)) {
+                        addSpecialMarker(lat, lng, "{{ $p->type == 'punch_in' ? '#51bb25' : '#f73164' }}", "fa-user", 1000, 6);
+                        bounds.extend({ lat: lat, lng: lng });
+                    }
+                })();
             @endforeach
 
             // 4. Plot Visits
             @foreach($visits as $v)
-                addSpecialMarker({{ $v->latitude }}, {{ $v->longitude }}, "#7366ff", "fa-store", 500, 7);
-                bounds.extend({ lat: {{ $v->latitude }}, lng: {{ $v->longitude }} });
+                (function() {
+                    let lat = parseFloat({{ $v->latitude }});
+                    let lng = parseFloat({{ $v->longitude }});
+                    if (isValidLatLng(lat, lng)) {
+                        addSpecialMarker(lat, lng, "#7366ff", "fa-store", 500, 7);
+                        bounds.extend({ lat: lat, lng: lng });
+                    }
+                })();
             @endforeach
 
-            // Instantly fit map to activity bounds
+            // Instantly fit map to valid activity bounds
             if (!bounds.isEmpty()) {
                 map.fitBounds(bounds);
                 google.maps.event.addListenerOnce(map, "idle", function() { 
