@@ -3493,12 +3493,14 @@
                     {
                         "name": "status",
                         "in": "query",
-                        "description": "Filter redemptions by status. Default is 'approved'. Pass 'all' to see history.",
+                        "description": "Filter redemptions by status. If parameter is omitted, returns all redemptions.",
                         "required": false,
                         "schema": {
                             "type": "string",
                             "enum": [
+                                "pending",
                                 "approved",
+                                "delivered",
                                 "all"
                             ]
                         }

@@ -162,8 +162,8 @@ class LoyaltyApiController extends Controller
      *         name="status",
      *         in="query",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"approved", "all"}),
-     *         description="Filter redemptions by status. Default is 'approved'. Pass 'all' to see history."
+     *         @OA\Schema(type="string", enum={"pending", "approved", "delivered", "all"}),
+     *         description="Filter redemptions by status. If parameter is omitted, returns all redemptions."
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -207,11 +207,11 @@ class LoyaltyApiController extends Controller
             ->join('retailers', 'loyalty_redemptions.retailer_id', '=', 'retailers.id')
             ->join('users', 'retailers.user_id', '=', 'users.id')
             ->join('loyalty_slabs', 'loyalty_redemptions.loyalty_slab_id', '=', 'loyalty_slabs.id')
-            ->join('brands', 'loyalty_slabs.brand_id', '=', 'brands.id')
+            ->leftJoin('brands', 'loyalty_slabs.brand_id', '=', 'brands.id')
             ->where('retailers.field_staff_id', $fieldStaff->id);
-            
-        if ($request->status !== 'all') {
-            $query->where('loyalty_redemptions.status', 'approved');
+
+        if ($request->has('status') && !empty($request->status) && $request->status !== 'all') {
+            $query->where('loyalty_redemptions.status', $request->status);
         }
             
         $redemptions = $query->select(

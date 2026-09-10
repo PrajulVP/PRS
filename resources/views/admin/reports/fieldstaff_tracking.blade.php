@@ -1085,38 +1085,28 @@
         async function snapPathToRoads(points) {
             if (points.length < 2) return points;
 
-            // 1. Calculate total movement distance. If stationary (< 30 meters total), do not draw polyline road stubs
-            let totalMoveDistance = 0;
-            for (let i = 0; i < points.length - 1; i++) {
-                const p1 = new google.maps.LatLng(points[i].lat, points[i].lng);
-                const p2 = new google.maps.LatLng(points[i + 1].lat, points[i + 1].lng);
-                totalMoveDistance += google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
-            }
-
-            if (totalMoveDistance < 30) {
-                return [];
-            }
-
             const chunkSize = 80;
             const chunks = [];
             for (let i = 0; i < points.length; i += (chunkSize - 1)) {
                 const chunk = points.slice(i, i + chunkSize);
                 if (chunk.length >= 2) {
                     chunks.push(chunk);
-                } else if (chunk.length === 1 && chunks.length === 0) {
-                    chunks.push(chunk);
                 }
             }
+
+            if (chunks.length === 0) return points;
 
             const fetchPromises = chunks.map((chunk, idx) => {
                 if (chunk.length < 2) return Promise.resolve({ idx, points: chunk });
 
                 const coordParam = chunk.map(p => `${p.lng},${p.lat}`).join(';');
-                const radiusParam = chunk.map(() => '50').join(';');
-                const requestUrl = `${osrmUrl}/match/v1/driving/${coordParam}?overview=full&geometries=geojson&radiuses=${radiusParam}`;
+                const requestUrl = `${osrmUrl}/match/v1/driving/${coordParam}?overview=full&geometries=geojson`;
 
                 return fetch(requestUrl)
-                    .then(res => res.json())
+                    .then(res => {
+                        if (!res.ok) throw new Error('Network response was not ok');
+                        return res.json();
+                    })
                     .then(data => {
                         if (data.code === 'Ok' && data.matchings && data.matchings.length > 0) {
                             let chunkSnapped = [];
@@ -1131,26 +1121,31 @@
                                 return { idx, points: chunkSnapped };
                             }
                         }
-                        return { idx, points: [] };
+                        return { idx, points: chunk };
                     })
                     .catch(e => {
-                        console.error('OSRM fetch error:', e);
-                        return { idx, points: [] };
+                        console.warn('OSRM fetch error:', e);
+                        return { idx, points: chunk };
                     });
             });
 
-            const results = await Promise.all(fetchPromises);
-            results.sort((a, b) => a.idx - b.idx);
+            try {
+                const results = await Promise.all(fetchPromises);
+                results.sort((a, b) => a.idx - b.idx);
 
-            let allSnapped = [];
-            for (let idx = 0; idx < results.length; idx++) {
-                let pts = results[idx].points;
-                if (allSnapped.length > 0 && pts.length > 1) {
-                    pts = pts.slice(1);
+                let allSnapped = [];
+                for (let idx = 0; idx < results.length; idx++) {
+                    let pts = results[idx].points;
+                    if (allSnapped.length > 0 && pts.length > 1) {
+                        pts = pts.slice(1);
+                    }
+                    allSnapped = allSnapped.concat(pts);
                 }
-                allSnapped = allSnapped.concat(pts);
+                return allSnapped.length > 0 ? allSnapped : points;
+            } catch (e) {
+                console.error('snapPathToRoads failed:', e);
+                return points;
             }
-            return allSnapped;
         }
 
         function initMap() {
@@ -1243,8 +1238,9 @@
                         currentRawPath.setPath(segment);
 
                         currentSmoothenedPath = createSmoothenedPolyline();
+                        currentSmoothenedPath.setPath(segment);
 
-                        // Asynchronously snap to road via parallel OSRM fetch and render ONLY snapped road route
+                        // Asynchronously snap to road via parallel OSRM fetch and update to snapped road route
                         snapPathToRoads(segment).then(snappedSegment => {
                             snappedPoints = snappedPoints.concat(snappedSegment);
                             currentSmoothenedPath.setPath(snappedSegment);
