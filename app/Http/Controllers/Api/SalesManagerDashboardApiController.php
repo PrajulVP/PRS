@@ -863,8 +863,9 @@ class SalesManagerDashboardApiController extends Controller
             ->leftJoin('users as fs_users', 'fieldstaffs.user_id', '=', 'fs_users.id')
             ->whereIn('retailers.field_staff_id', $fieldStaffIds);
 
-        if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('loyalty_redemptions.status', $request->status);
+        $statusParam = $request->filled('status') ? strtolower(trim($request->status)) : null;
+        if ($statusParam && $statusParam !== 'all') {
+            $query->where('loyalty_redemptions.status', $statusParam);
         }
 
         $redemptions = $query->select(

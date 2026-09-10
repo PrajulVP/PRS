@@ -210,12 +210,10 @@ class LoyaltyApiController extends Controller
             ->leftJoin('brands', 'loyalty_slabs.brand_id', '=', 'brands.id')
             ->where('retailers.field_staff_id', $fieldStaff->id);
             
-        if ($request->filled('status')) {
-            if ($request->status !== 'all') {
-                $query->where('loyalty_redemptions.status', $request->status);
-            }
-        } else {
-            $query->where('loyalty_redemptions.status', 'approved');
+        $statusParam = $request->filled('status') ? strtolower(trim($request->status)) : 'approved';
+        
+        if ($statusParam !== 'all') {
+            $query->where('loyalty_redemptions.status', $statusParam);
         }
             
         $redemptions = $query->select(
