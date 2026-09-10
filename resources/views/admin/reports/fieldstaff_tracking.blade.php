@@ -1133,7 +1133,7 @@
                 if (chunk.length < 2) return Promise.resolve({ idx, points: chunk });
 
                 const coordParam = chunk.map(p => `${p.lng},${p.lat}`).join(';');
-                const radiusParam = chunk.map(() => '50').join(';');
+                const radiusParam = chunk.map(() => '100').join(';');
                 const requestUrl = `${osrmUrl}/match/v1/driving/${coordParam}?overview=full&geometries=geojson&radiuses=${radiusParam}`;
 
                 return fetch(requestUrl)
@@ -1148,7 +1148,22 @@
                                     });
                                 }
                             }
-                            return { idx, points: chunkSnapped.length > 0 ? chunkSnapped : chunk };
+                            return { idx, points: chunkSnapped };
+                        }
+                        
+                        // If OSRM map matching returned no valid matchings, use tracepoints or raw chunk points
+                        if (data.tracepoints && data.tracepoints.length > 0) {
+                            let tpSnapped = [];
+                            data.tracepoints.forEach((tp, i) => {
+                                if (tp && tp.location) {
+                                    tpSnapped.push({ lat: tp.location[1], lng: tp.location[0] });
+                                } else {
+                                    tpSnapped.push(chunk[i]);
+                                }
+                            });
+                            if (tpSnapped.length >= 2) {
+                                return { idx, points: tpSnapped };
+                            }
                         }
                         return { idx, points: chunk };
                     })
