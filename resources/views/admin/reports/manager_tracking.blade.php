@@ -459,7 +459,7 @@
         let snappedPoints = [];
         let markers = [];
         let lastTimestamp = null;
-        let currentRouteMode = 'both';
+        let currentRouteMode = 'smoothened';
 
         function createSmoothenedPolyline() {
             let path = new google.maps.Polyline({
