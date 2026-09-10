@@ -723,11 +723,7 @@
             for (let i = 0; i < points.length - 1; i++) {
                 const p1 = new google.maps.LatLng(points[i].lat, points[i].lng);
                 const p2 = new google.maps.LatLng(points[i + 1].lat, points[i + 1].lng);
-                const distMeters = google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
-                // Filter out unrealistic GPS jumps (> 5 KM per step)
-                if (distMeters < 5000) {
-                    total += distMeters;
-                }
+                total += google.maps.geometry.spherical.computeDistanceBetween(p1, p2);
             }
             return (total / 1000).toFixed(2); // Convert meters to KM
         }

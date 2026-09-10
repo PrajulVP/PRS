@@ -78,8 +78,8 @@ class LocationLog extends Model
                 (float)$validLogs[$i]->latitude, (float)$validLogs[$i]->longitude,
                 (float)$validLogs[$i+1]->latitude, (float)$validLogs[$i+1]->longitude
             );
-            // Ignore unnatural jumps greater than 5 km (corrupt GPS pings / cell tower teleports)
-            if ($step < 5.0) {
+            // Ignore unnatural jumps greater than 100 km (corrupt pings)
+            if ($step < 100) {
                 $totalDistance += $step;
             }
         }
