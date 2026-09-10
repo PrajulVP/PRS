@@ -564,14 +564,32 @@
                             <!-- Map Column -->
                             <div class="col-xl-8 col-lg-7 position-relative">
                                 <div id="map"></div>
+                                <div class="map-mode-toggle position-absolute top-0 start-0 m-3 bg-white p-2 rounded-3 shadow-sm border d-flex align-items-center gap-2" style="z-index: 5;">
+                                    <span class="fw-bold small text-dark"><i class="fa fa-route me-1 text-primary"></i> Route Mode:</span>
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="Route Mode">
+                                        <input type="radio" class="btn-check" name="routeMode" id="modeSmoothened" value="smoothened" checked onchange="toggleRouteMode('smoothened')">
+                                        <label class="btn btn-outline-primary btn-sm py-1 px-2 fw-semibold" for="modeSmoothened">
+                                            <i class="fa fa-magic me-1"></i> Smoothened (OSRM)
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="routeMode" id="modeRaw" value="raw" onchange="toggleRouteMode('raw')">
+                                        <label class="btn btn-outline-danger btn-sm py-1 px-2 fw-semibold" for="modeRaw">
+                                            <i class="fa fa-draw-polygon me-1"></i> Raw GPS
+                                        </label>
+
+                                        <input type="radio" class="btn-check" name="routeMode" id="modeBoth" value="both" onchange="toggleRouteMode('both')">
+                                        <label class="btn btn-outline-secondary btn-sm py-1 px-2 fw-semibold" for="modeBoth">
+                                            <i class="fa fa-layer-group me-1"></i> Both Modes
+                                        </label>
+                                    </div>
+                                </div>
                                 <div class="legend">
                                     <div class="mb-1"><i style="background: #51bb25"></i> Punch In</div>
                                     <div class="mb-1"><i style="background: #f73164"></i> Punch Out</div>
                                     <div class="mb-1"><i style="background: #7366ff"></i> Customer Visit</div>
                                     <div class="mb-1"><i style="background: #ff9800"></i> Stopped</div>
-                                    <div><i
-                                            style="background: #7366ff; border-radius: 0; height: 2px; margin-top: 11px;"></i>
-                                        Route</div>
+                                    <div class="mb-1"><i style="background: #7366ff; border-radius: 0; height: 3px; margin-top: 10px;"></i> Smoothened Route</div>
+                                    <div><i style="background: #ff5722; border-radius: 0; height: 3px; margin-top: 10px;"></i> Raw GPS Route</div>
                                 </div>
                             </div>
 
@@ -961,25 +979,60 @@
         async defer></script>
     <script>
         let map, staffMarker;
-        let routePaths = [];
-        let currentRoutePath = null;
+        let smoothenedRoutePaths = [];
+        let rawRoutePaths = [];
+        let currentSmoothenedPath = null;
+        let currentRawPath = null;
         let pathPoints = [];
         let snappedPoints = [];
         let markers = [];
         let lastTimestamp = null;
+        let currentRouteMode = 'smoothened';
 
-        function createNewPolyline() {
+        function createSmoothenedPolyline() {
             let path = new google.maps.Polyline({
                 path: [],
                 geodesic: true,
                 strokeColor: "#7366ff",
-                strokeOpacity: 0.8,
+                strokeOpacity: 0.85,
                 strokeWeight: 5,
-                map: map
+                map: (currentRouteMode === 'smoothened' || currentRouteMode === 'both') ? map : null
             });
-            routePaths.push(path);
+            smoothenedRoutePaths.push(path);
             return path;
         }
+
+        function createRawPolyline() {
+            let path = new google.maps.Polyline({
+                path: [],
+                geodesic: true,
+                strokeColor: "#ff5722",
+                strokeOpacity: 0.75,
+                strokeWeight: 3,
+                map: (currentRouteMode === 'raw' || currentRouteMode === 'both') ? map : null
+            });
+            rawRoutePaths.push(path);
+            return path;
+        }
+
+        function toggleRouteMode(mode) {
+            currentRouteMode = mode;
+
+            smoothenedRoutePaths.forEach(p => {
+                p.setMap((mode === 'smoothened' || mode === 'both') ? map : null);
+            });
+
+            rawRoutePaths.forEach(p => {
+                p.setMap((mode === 'raw' || mode === 'both') ? map : null);
+            });
+
+            if (mode === 'raw') {
+                updateDistanceDisplay(pathPoints);
+            } else {
+                updateDistanceDisplay(snappedPoints.length > 0 ? snappedPoints : pathPoints);
+            }
+        }
+
         const osrmUrl = "{{ config('services.osrm.url', 'https://16-171-11-60.sslip.io') }}";
 
         async function snapPathToRoads(points) {
@@ -1079,24 +1132,29 @@
                 })();
             @endforeach
 
-                if (currentSegment.length > 0) {
+            if (currentSegment.length > 0) {
                 pathSegments.push(currentSegment);
             }
 
             if (pathSegments.length > 0) {
                 for (let segment of pathSegments) {
                     if (segment.length > 0) {
+                        // Plot Raw GPS Path
+                        currentRawPath = createRawPolyline();
+                        currentRawPath.setPath(segment);
+
+                        // Plot OSRM Smoothened Path
                         let snappedSegment = await snapPathToRoads(segment);
                         snappedPoints = snappedPoints.concat(snappedSegment);
 
-                        currentRoutePath = createNewPolyline();
-                        currentRoutePath.setPath(snappedSegment);
+                        currentSmoothenedPath = createSmoothenedPolyline();
+                        currentSmoothenedPath.setPath(snappedSegment);
 
+                        segment.forEach(p => bounds.extend(p));
                         snappedSegment.forEach(p => bounds.extend(p));
                     }
                 }
-                // Update frontend distance display based on snapped points
-                updateDistanceDisplay(snappedPoints);
+                updateDistanceDisplay(snappedPoints.length > 0 ? snappedPoints : pathPoints);
             }
 
             // 2. Add Current Position Marker (if today and has locations)
@@ -1240,16 +1298,21 @@
             if (lastTimestamp) {
                 let diffMins = (currentTimestamp - lastTimestamp) / (1000 * 60);
                 if (diffMins > 15) {
-                    currentRoutePath = createNewPolyline();
+                    currentSmoothenedPath = createSmoothenedPolyline();
+                    currentRawPath = createRawPolyline();
                 }
             } else {
-                if (!currentRoutePath) {
-                    currentRoutePath = createNewPolyline();
+                if (!currentSmoothenedPath) {
+                    currentSmoothenedPath = createSmoothenedPolyline();
+                }
+                if (!currentRawPath) {
+                    currentRawPath = createRawPolyline();
                 }
             }
             lastTimestamp = currentTimestamp;
 
             pathPoints.push(newPos);
+            currentRawPath.getPath().push(new google.maps.LatLng(newPos.lat, newPos.lng));
 
             // Snap only the last segment for performance
             const lastTwo = pathPoints.slice(-2);
@@ -1263,11 +1326,9 @@
             }
 
             snappedPoints.push(latestSnappedPoint);
+            currentSmoothenedPath.getPath().push(new google.maps.LatLng(latestSnappedPoint.lat, latestSnappedPoint.lng));
 
-            let currentPath = currentRoutePath.getPath();
-            currentPath.push(new google.maps.LatLng(latestSnappedPoint.lat, latestSnappedPoint.lng));
-
-            updateDistanceDisplay(snappedPoints);
+            toggleRouteMode(currentRouteMode);
 
             // Update Arrow Marker
             if (staffMarker) {
