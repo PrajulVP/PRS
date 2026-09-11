@@ -368,13 +368,13 @@ class FieldStaffDashboardApiController extends Controller
             'shop_name' => 'required|string|max:255',
             'pincode' => 'required',
             'gst' => 'nullable|unique:retailers',
-            'drug_license_no' => 'required|string|max:255',
+            'drug_license_no' => 'nullable|string|max:255',
             'contact_no' => 'required|digits:10',
             'address' => 'nullable|string',
             'district_id' => 'required|exists:districts,id',
             'area_id' => 'required|exists:areas,id',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
         try {
@@ -492,7 +492,7 @@ class FieldStaffDashboardApiController extends Controller
             'shop_name' => 'sometimes|required|string|max:255',
             'pincode' => 'sometimes|required',
             'gst' => 'nullable|unique:retailers,gst,' . $retailer->id,
-            'drug_license_no' => 'sometimes|required|string|max:255',
+            'drug_license_no' => 'nullable|string|max:255',
             'contact_no' => 'sometimes|required|digits:10',
             'address' => 'nullable|string',
             'district_id' => 'sometimes|required|exists:districts,id',

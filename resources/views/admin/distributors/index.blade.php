@@ -184,7 +184,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Drug License No</label>
-                                <input type="text" name="drug_license_no" class="form-control" required>
+                                <input type="text" name="drug_license_no" class="form-control">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Contact No</label>
@@ -281,7 +281,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Drug License No</label>
-                                <input type="text" name="drug_license_no" id="edit_drug_license_no" class="form-control" required>
+                                <input type="text" name="drug_license_no" id="edit_drug_license_no" class="form-control">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Contact No</label>

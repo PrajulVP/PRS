@@ -133,7 +133,7 @@ class DistributorController extends Controller
         $distributorData = $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'gst' => ['required', 'unique:distributors', 'regex:/^[a-zA-Z0-9]+$/'],
-            'drug_license_no' => ['required', 'string', 'regex:/^[a-zA-Z0-9\/\-]+$/'],
+            'drug_license_no' => ['nullable', 'string', 'regex:/^[a-zA-Z0-9\/\-]+$/'],
             'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
             'address' => ['required', 'string'],
             'pincode' => ['required', 'digits:6'],
@@ -231,7 +231,7 @@ class DistributorController extends Controller
         $distributorData = $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'gst' => ['required', 'unique:distributors,gst,' . $distributor->id, 'regex:/^[a-zA-Z0-9]+$/'],
-            'drug_license_no' => ['required', 'string', 'regex:/^[a-zA-Z0-9\/\-]+$/'],
+            'drug_license_no' => ['nullable', 'string', 'regex:/^[a-zA-Z0-9\/\-]+$/'],
             'contact_no' => ['required', 'digits:10', 'regex:/^[1-9][0-9]{9}$/'],
             'address' => ['required', 'string'],
             'pincode' => ['required', 'digits:6'],

@@ -204,6 +204,62 @@
             background-color: #f8f9fa !important;
             transform: translateY(-1px);
         }
+
+        /* Compact Google Maps InfoWindow Overrides */
+        .gm-style-iw-c {
+            padding: 8px 26px 8px 10px !important;
+            max-width: 220px !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+        }
+        .gm-style-iw-d {
+            overflow: hidden !important;
+            max-height: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .gm-style-iw-ch {
+            padding-top: 0 !important;
+            height: 0 !important;
+        }
+        .gm-style-iw-c button[aria-label="Close"],
+        .gm-style-iw-c button.gm-ui-hover-or-focus,
+        button.gm-ui-hover-or-focus {
+            position: absolute !important;
+            top: 4px !important;
+            right: 4px !important;
+            width: 20px !important;
+            height: 20px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border-radius: 50% !important;
+            background: #e2e8f0 !important;
+            opacity: 0.9 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border: none !important;
+            outline: none !important;
+        }
+        .gm-style-iw-c button[aria-label="Close"]:hover,
+        .gm-style-iw-c button.gm-ui-hover-or-focus:hover,
+        button.gm-ui-hover-or-focus:hover {
+            opacity: 1 !important;
+            background: #cbd5e1 !important;
+        }
+        .gm-style-iw-c button span,
+        button.gm-ui-hover-or-focus span {
+            background-color: #334155 !important;
+            width: 10px !important;
+            height: 10px !important;
+            display: inline-block !important;
+            margin: 0 !important;
+            mask-size: cover !important;
+            -webkit-mask-size: cover !important;
+        }
+        .gm-style-iw-tc::after {
+            background: #ffffff !important;
+        }
     </style>
 @endpush
 
@@ -463,6 +519,47 @@
         let lastTimestamp = null;
         let currentRouteMode = 'smoothened';
 
+        let routeInfoWindow = null;
+        let activeInfoWindow = null;
+
+        function findNearestPing(clickLatLng, locationList) {
+            if (!locationList || locationList.length === 0) return null;
+            let minDistance = Infinity;
+            let nearest = null;
+            locationList.forEach(loc => {
+                let locLatLng = new google.maps.LatLng(loc.lat, loc.lng);
+                let dist = google.maps.geometry.spherical.computeDistanceBetween(clickLatLng, locLatLng);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    nearest = loc;
+                }
+            });
+            return nearest;
+        }
+
+        function showRoutePointInfo(latLng, locationData) {
+            if (activeInfoWindow) return;
+
+            if (!routeInfoWindow) {
+                routeInfoWindow = new google.maps.InfoWindow();
+            }
+            let content = `<div style="font-family: system-ui, -apple-system, sans-serif; min-width: 175px; line-height: 1.4;">
+                <div class="d-flex align-items-center gap-1 mb-1 text-primary fw-bold" style="font-size: 0.75rem; text-transform: uppercase;">
+                    <i class="fa fa-route me-1"></i>Route Telemetry Ping
+                </div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="fa fa-user-circle text-success fs-6"></i>
+                    <span class="fw-bold text-dark" style="font-size: 0.85rem;">{{ $user->name }}</span>
+                </div>
+                <div class="small text-dark fw-bold">Time: ${locationData.formatted_time || locationData.time || 'N/A'}</div>
+                <div class="small text-dark fw-bold" style="font-size: 0.75rem;">Coords: ${parseFloat(latLng.lat()).toFixed(6)}, ${parseFloat(latLng.lng()).toFixed(6)}</div>
+                ${locationData.is_mock ? '<div class="text-danger small fw-bold mt-1"><i class="fa fa-exclamation-triangle me-1"></i>Mock Location Flagged</div>' : ''}
+            </div>`;
+            routeInfoWindow.setContent(content);
+            routeInfoWindow.setPosition(latLng);
+            routeInfoWindow.open(map);
+        }
+
         function createSmoothenedPolyline() {
             const isVisible = (currentRouteMode === 'smoothened' || currentRouteMode === 'both');
             
@@ -488,6 +585,15 @@
                 map: isVisible ? map : null
             });
 
+            [borderPath, innerPath].forEach(poly => {
+                poly.addListener('click', (e) => {
+                    let nearest = findNearestPing(e.latLng, rawTelemetryPings);
+                    if (nearest) {
+                        showRoutePointInfo(e.latLng, nearest);
+                    }
+                });
+            });
+
             smoothenedRoutePaths.push(borderPath, innerPath);
             return {
                 setPath: function(pts) {
@@ -504,10 +610,18 @@
                 geodesic: true,
                 strokeColor: "#1a3a63",
                 strokeOpacity: 0.8,
-                strokeWeight: 3.5,
+                strokeWeight: 4.5,
                 zIndex: 5,
                 map: isVisible ? map : null
             });
+
+            path.addListener('click', (e) => {
+                let nearest = findNearestPing(e.latLng, rawTelemetryPings);
+                if (nearest) {
+                    showRoutePointInfo(e.latLng, nearest);
+                }
+            });
+
             rawRoutePaths.push(path);
             return path;
         }
@@ -626,12 +740,24 @@
                 ]
             });
 
+            map.addListener('click', () => {
+                if (routeInfoWindow) {
+                    routeInfoWindow.close();
+                }
+                if (activeInfoWindow) {
+                    activeInfoWindow.close();
+                    activeInfoWindow = null;
+                }
+            });
+
             // Initial Plotting
             loadInitialData();
 
             // Initialize WebSocket Listener
             initRealTimeTracking();
         }
+
+        let rawTelemetryPings = [];
 
         async function loadInitialData() {
             const bounds = new google.maps.LatLngBounds();
@@ -641,8 +767,15 @@
 
             @foreach($locations as $loc)
                 (function() {
-                    let point = { lat: {{ $loc->latitude }}, lng: {{ $loc->longitude }} };
+                    let point = { 
+                        lat: {{ $loc->latitude }}, 
+                        lng: {{ $loc->longitude }},
+                        time: "{{ \Carbon\Carbon::parse($loc->timestamp ?? $loc->created_at)->format('h:i:s A') }}",
+                        formatted_time: "{{ \Carbon\Carbon::parse($loc->timestamp ?? $loc->created_at)->format('M d, Y h:i:s A') }}",
+                        is_mock: {{ $loc->is_mock_location ? 'true' : 'false' }}
+                    };
                     pathPoints.push(point);
+                    rawTelemetryPings.push(point);
                     bounds.extend(point);
                 })();
             @endforeach
@@ -657,7 +790,8 @@
                 staffMarker = new google.maps.Marker({
                     position: lastPos,
                     map: map,
-                    title: "Current Position",
+                    title: "{{ $user->name }} - Current Position",
+                    zIndex: 2000,
                     icon: {
                         path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
                         fillColor: "#51bb25", // Punch-in green
@@ -668,17 +802,42 @@
                         anchor: new google.maps.Point(12, 22)
                     }
                 });
+
+                const staffInfoWindow = new google.maps.InfoWindow({
+                    content: `<div style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.3;">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <i class="fa fa-user-circle text-success fs-5"></i>
+                            <div>
+                                <div class="fw-bold text-dark" style="font-size: 0.88rem; line-height: 1.1;">{{ $user->name }}</div>
+                                <div class="text-success fw-bold" style="font-size: 0.7rem; text-transform: uppercase;">Live Current Location</div>
+                            </div>
+                        </div>
+                        <div class="small text-muted mb-1"><strong>Last Ping:</strong> ${lastPos.time || 'N/A'}</div>
+                        <div class="small fw-bold text-dark" style="font-size: 0.75rem;">Coords: ${parseFloat(lastPos.lat).toFixed(6)}, ${parseFloat(lastPos.lng).toFixed(6)}</div>
+                    </div>`
+                });
+
+                staffMarker.addListener('click', () => {
+                    if (activeInfoWindow) activeInfoWindow.close();
+                    if (routeInfoWindow) routeInfoWindow.close();
+                    activeInfoWindow = staffInfoWindow;
+                    staffInfoWindow.open(map, staffMarker);
+                });
+
+                staffInfoWindow.addListener('closeclick', () => {
+                    activeInfoWindow = null;
+                });
             }
 
             // 3. Plot Punches
             @foreach($punches as $p)
-                addSpecialMarker({{ $p->latitude }}, {{ $p->longitude }}, "{{ $p->type == 'punch_in' ? '#51bb25' : '#f73164' }}", "fa-user", 1000, 6);
+                addActivityMarker({{ $p->latitude }}, {{ $p->longitude }}, "{{ $p->type == 'punch_in' ? '#51bb25' : '#f73164' }}", "{{ strtoupper(str_replace('_', ' ', $p->type)) }}", "Attendance Log<br><span class='text-muted small'>Time: {{ \Carbon\Carbon::parse($p->timestamp)->format('h:i A') }}</span>", 1000);
                 bounds.extend({ lat: {{ $p->latitude }}, lng: {{ $p->longitude }} });
             @endforeach
 
             // 4. Plot Visits
             @foreach($visits as $v)
-                addSpecialMarker({{ $v->latitude }}, {{ $v->longitude }}, "#7366ff", "fa-store", 500, 7);
+                addActivityMarker({{ $v->latitude }}, {{ $v->longitude }}, "#7366ff", "{{ $v->customer_name ?? $v->party?->name ?? 'Customer Visit' }}", "{{ ucfirst($v->customer_category ?? 'Retailer') }} Visit<br><span class='text-muted small'>Check-in: {{ isset($v->check_in_at) ? \Carbon\Carbon::parse($v->check_in_at)->format('h:i A') : (isset($v->start_at) ? \Carbon\Carbon::parse($v->start_at)->format('h:i A') : 'N/A') }}</span>", 500);
                 bounds.extend({ lat: {{ $v->latitude }}, lng: {{ $v->longitude }} });
             @endforeach
 
@@ -718,9 +877,9 @@
             }
         }
 
-        function addSpecialMarker(lat, lng, color, icon, zIndexParam = 500, scaleParam = 7) {
-            new google.maps.Marker({
-                position: { lat: lat, lng: lng },
+        function addActivityMarker(lat, lng, color, title, details, zIndexParam = 500, scaleParam = 7) {
+            const marker = new google.maps.Marker({
+                position: { lat: parseFloat(lat), lng: parseFloat(lng) },
                 map: map,
                 zIndex: zIndexParam,
                 icon: {
@@ -731,6 +890,28 @@
                     strokeColor: "#fff",
                     strokeWeight: 2
                 }
+            });
+
+            const infoWindow = new google.maps.InfoWindow({
+                content: `<div style="font-family: system-ui, -apple-system, sans-serif; min-width: 170px; line-height: 1.4;">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <i class="fa fa-user-circle text-success fs-6"></i>
+                        <span class="fw-bold text-dark" style="font-size: 0.85rem;">{{ $user->name }}</span>
+                    </div>
+                    <h6 class="fw-bold mb-1" style="color: ${color}; font-size: 0.85rem;">${title}</h6>
+                    <div class="small text-dark">${details}</div>
+                    <div class="small fw-bold text-dark mt-1" style="font-size: 0.75rem;">Coords: ${parseFloat(lat).toFixed(6)}, ${parseFloat(lng).toFixed(6)}</div>
+                </div>`
+            });
+
+            marker.addListener('click', () => {
+                if (routeInfoWindow) routeInfoWindow.close();
+                activeInfoWindow = infoWindow;
+                infoWindow.open(map, marker);
+            });
+
+            infoWindow.addListener('closeclick', () => {
+                activeInfoWindow = null;
             });
         }
 
