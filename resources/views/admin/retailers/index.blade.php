@@ -37,6 +37,9 @@
         gap: 5px;
         white-space: nowrap;
     }
+    .pac-container {
+        z-index: 1060 !important;
+    }
 </style>
 @endpush
 
@@ -562,6 +565,10 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="col-12" id="ret_view_map_container">
+                                <label class="form-label text-muted small fw-bold"><i class="fa fa-map-marked-alt me-1 text-primary"></i>Location (Map)</label>
+                                <div id="show_map" style="height: 250px; width: 100%; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
+                            </div>
 
                         </div>
                     </div>
@@ -614,12 +621,14 @@
                     $('#create_longitude').val(createMarker.getPosition().lng());
                 });
 
-                const createSearchBox = new google.maps.places.SearchBox(document.getElementById('create_map_search'));
-                createMap.addListener('bounds_changed', () => createSearchBox.setBounds(createMap.getBounds()));
-                createSearchBox.addListener('places_changed', () => {
-                    const places = createSearchBox.getPlaces();
-                    if (places.length === 0 || !places[0].geometry) return;
-                    const loc = places[0].geometry.location;
+                const createAutocomplete = new google.maps.places.Autocomplete(document.getElementById('create_map_search'), {
+                    fields: ['geometry', 'name', 'formatted_address']
+                });
+                createAutocomplete.bindTo('bounds', createMap);
+                createAutocomplete.addListener('place_changed', () => {
+                    const place = createAutocomplete.getPlace();
+                    if (!place || !place.geometry || !place.geometry.location) return;
+                    const loc = place.geometry.location;
                     createMap.setCenter(loc);
                     createMap.setZoom(15);
                     createMarker.setPosition(loc);
@@ -636,12 +645,14 @@
                     $('#edit_longitude').val(editMarker.getPosition().lng());
                 });
 
-                const editSearchBox = new google.maps.places.SearchBox(document.getElementById('edit_map_search'));
-                editMap.addListener('bounds_changed', () => editSearchBox.setBounds(editMap.getBounds()));
-                editSearchBox.addListener('places_changed', () => {
-                    const places = editSearchBox.getPlaces();
-                    if (places.length === 0 || !places[0].geometry) return;
-                    const loc = places[0].geometry.location;
+                const editAutocomplete = new google.maps.places.Autocomplete(document.getElementById('edit_map_search'), {
+                    fields: ['geometry', 'name', 'formatted_address']
+                });
+                editAutocomplete.bindTo('bounds', editMap);
+                editAutocomplete.addListener('place_changed', () => {
+                    const place = editAutocomplete.getPlace();
+                    if (!place || !place.geometry || !place.geometry.location) return;
+                    const loc = place.geometry.location;
                     editMap.setCenter(loc);
                     editMap.setZoom(15);
                     editMarker.setPosition(loc);
@@ -686,7 +697,7 @@
                         editMap.setZoom(15);
                     }
                 }, function (error) {
-                    alert("Error getting location: " + error.message);
+                    console.warn("Geolocation notice: " + error.message);
                 });
             }
         }
@@ -834,6 +845,8 @@
                             editMarker.setPosition(pos);
                             editMap.setCenter(pos);
                             editMap.setZoom(15);
+                        } else {
+                            getGeoLocation('edit_latitude', 'edit_longitude', 'edit');
                         }
                     }
                 }, 300);
@@ -867,6 +880,22 @@
                 $('#ret_header_credits').text('₹' + credits);
                 $('#ret_view_fieldstaff').text(data.field_staff_name || 'N/A');
                 $('#ret_view_salesmanager').text(data.sales_manager_name || 'N/A');
+
+                if (data.latitude && data.longitude) {
+                    $('#ret_view_map_container').show();
+                    setTimeout(() => {
+                        if (showMap && showMarker) {
+                            let pos = { lat: parseFloat(data.latitude), lng: parseFloat(data.longitude) };
+                            google.maps.event.trigger(showMap, 'resize');
+                            showMarker.setPosition(pos);
+                            showMap.setCenter(pos);
+                            showMap.setZoom(15);
+                        }
+                    }, 300);
+                } else {
+                    $('#ret_view_map_container').hide();
+                }
+
                 $('#showRetailerModal').modal('show');
             });
 

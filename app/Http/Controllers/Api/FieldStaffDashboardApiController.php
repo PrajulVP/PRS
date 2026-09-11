@@ -431,6 +431,191 @@ class FieldStaffDashboardApiController extends Controller
         }
     }
 
+    /**
+     * @OA\Put(
+     *     path="/api/field-staff/retailers/{id}",
+     *     summary="Edit/Update a Retailer",
+     *     tags={"Field Staff Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Retailer ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="email", type="string"),
+     *             @OA\Property(property="password", type="string"),
+     *             @OA\Property(property="password_confirmation", type="string"),
+     *             @OA\Property(property="shop_name", type="string"),
+     *             @OA\Property(property="contact_no", type="string"),
+     *             @OA\Property(property="address", type="string"),
+     *             @OA\Property(property="pincode", type="string"),
+     *             @OA\Property(property="gst", type="string"),
+     *             @OA\Property(property="drug_license_no", type="string"),
+     *             @OA\Property(property="district_id", type="integer"),
+     *             @OA\Property(property="area_id", type="integer"),
+     *             @OA\Property(property="latitude", type="number", format="float", description="Latitude of the retailer"),
+     *             @OA\Property(property="longitude", type="number", format="float", description="Longitude of the retailer")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Retailer updated successfully"),
+     *     @OA\Response(response=404, description="Retailer not found")
+     * )
+     */
+    public function updateRetailer(Request $request, $id)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('fieldstaff')) {
+            return response()->json(['error' => 'Unauthorized. Only Field Staff can edit Retailers.'], 403);
+        }
+
+        $retailer = Retailer::find($id);
+        if (!$retailer) {
+            return response()->json(['error' => 'Retailer not found.'], 404);
+        }
+
+        $userId = $retailer->user_id;
+
+        $userData = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|email|unique:users,email,' . $userId,
+            'password' => 'nullable|min:4|confirmed',
+        ]);
+
+        $retailerData = $request->validate([
+            'shop_name' => 'sometimes|required|string|max:255',
+            'pincode' => 'sometimes|required',
+            'gst' => 'nullable|unique:retailers,gst,' . $retailer->id,
+            'drug_license_no' => 'sometimes|required|string|max:255',
+            'contact_no' => 'sometimes|required|digits:10',
+            'address' => 'nullable|string',
+            'district_id' => 'sometimes|required|exists:districts,id',
+            'area_id' => 'sometimes|required|exists:areas,id',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            if ($retailer->user) {
+                $userUpdate = [];
+                if (isset($userData['name'])) $userUpdate['name'] = $userData['name'];
+                if (isset($userData['email'])) $userUpdate['email'] = $userData['email'];
+                if (!empty($userData['password'])) $userUpdate['password'] = Hash::make($userData['password']);
+                if (isset($retailerData['contact_no'])) $userUpdate['contact_no'] = $retailerData['contact_no'];
+                if (isset($retailerData['address'])) $userUpdate['address'] = $retailerData['address'];
+                if (isset($retailerData['pincode'])) $userUpdate['pincode'] = $retailerData['pincode'];
+
+                if (!empty($userUpdate)) {
+                    $retailer->user->update($userUpdate);
+                }
+            }
+
+            $retailer->update($retailerData);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Retailer updated successfully.',
+                'retailer' => $retailer->fresh('user')
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to update retailer. ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/field-staff/distributors/{id}",
+     *     summary="Edit/Update a Distributor location and details",
+     *     tags={"Field Staff Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Distributor ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="contact_no", type="string"),
+     *             @OA\Property(property="address", type="string"),
+     *             @OA\Property(property="pincode", type="string"),
+     *             @OA\Property(property="gst", type="string"),
+     *             @OA\Property(property="drug_license_no", type="string"),
+     *             @OA\Property(property="district_id", type="integer"),
+     *             @OA\Property(property="latitude", type="number", format="float", description="Latitude of the distributor"),
+     *             @OA\Property(property="longitude", type="number", format="float", description="Longitude of the distributor")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Distributor updated successfully"),
+     *     @OA\Response(response=404, description="Distributor not found")
+     * )
+     */
+    public function updateDistributor(Request $request, $id)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->hasRole('fieldstaff') && !$user->hasRole('salesmanager') && !$user->hasRole('superadmin')) {
+            return response()->json(['error' => 'Unauthorized to edit Distributor.'], 403);
+        }
+
+        $distributor = \App\Models\Distributor::find($id);
+        if (!$distributor) {
+            return response()->json(['error' => 'Distributor not found.'], 404);
+        }
+
+        $distributorData = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'contact_no' => 'sometimes|required|digits:10',
+            'address' => 'nullable|string',
+            'pincode' => 'sometimes|required',
+            'gst' => 'nullable|unique:distributors,gst,' . $distributor->id,
+            'drug_license_no' => 'sometimes|required|string|max:255',
+            'district_id' => 'sometimes|required|exists:districts,id',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $distributor->update($distributorData);
+
+            if ($distributor->user && isset($distributorData['name'])) {
+                $distributor->user->update([
+                    'name' => $distributorData['name'],
+                    'contact_no' => $distributorData['contact_no'] ?? $distributor->user->contact_no,
+                    'address' => $distributorData['address'] ?? $distributor->user->address,
+                    'pincode' => $distributorData['pincode'] ?? $distributor->user->pincode,
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Distributor updated successfully.',
+                'distributor' => $distributor->fresh('user')
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to update distributor. ' . $e->getMessage()], 500);
+        }
+    }
+
 
 
     /**

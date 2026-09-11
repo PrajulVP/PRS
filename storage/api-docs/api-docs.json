@@ -2493,6 +2493,173 @@
                 ]
             }
         },
+        "/api/field-staff/retailers/{id}": {
+            "put": {
+                "tags": [
+                    "Field Staff Dashboard"
+                ],
+                "summary": "Edit/Update a Retailer",
+                "operationId": "9a39832d7b18d996e80faac2cfb3f643",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Retailer ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string"
+                                    },
+                                    "shop_name": {
+                                        "type": "string"
+                                    },
+                                    "contact_no": {
+                                        "type": "string"
+                                    },
+                                    "address": {
+                                        "type": "string"
+                                    },
+                                    "pincode": {
+                                        "type": "string"
+                                    },
+                                    "gst": {
+                                        "type": "string"
+                                    },
+                                    "drug_license_no": {
+                                        "type": "string"
+                                    },
+                                    "district_id": {
+                                        "type": "integer"
+                                    },
+                                    "area_id": {
+                                        "type": "integer"
+                                    },
+                                    "latitude": {
+                                        "description": "Latitude of the retailer",
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "longitude": {
+                                        "description": "Longitude of the retailer",
+                                        "type": "number",
+                                        "format": "float"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Retailer updated successfully"
+                    },
+                    "404": {
+                        "description": "Retailer not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/field-staff/distributors/{id}": {
+            "put": {
+                "tags": [
+                    "Field Staff Dashboard"
+                ],
+                "summary": "Edit/Update a Distributor location and details",
+                "operationId": "deabd691afb25ca644667de43339af2d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Distributor ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "contact_no": {
+                                        "type": "string"
+                                    },
+                                    "address": {
+                                        "type": "string"
+                                    },
+                                    "pincode": {
+                                        "type": "string"
+                                    },
+                                    "gst": {
+                                        "type": "string"
+                                    },
+                                    "drug_license_no": {
+                                        "type": "string"
+                                    },
+                                    "district_id": {
+                                        "type": "integer"
+                                    },
+                                    "latitude": {
+                                        "description": "Latitude of the distributor",
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "longitude": {
+                                        "description": "Longitude of the distributor",
+                                        "type": "number",
+                                        "format": "float"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Distributor updated successfully"
+                    },
+                    "404": {
+                        "description": "Distributor not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/field-staff/reports/sales-orders": {
             "get": {
                 "tags": [
