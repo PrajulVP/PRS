@@ -362,7 +362,7 @@
 
                                             <input type="radio" class="btn-check" name="routeMode" id="modeClosestMgr" value="closest" onchange="toggleRouteMode('closest')">
                                             <label class="btn btn-sm rounded-2 py-1 px-3 fw-bold border-0 text-muted" for="modeClosestMgr" style="font-size: 0.8rem;">
-                                                <i class="fa fa-crosshairs me-1"></i> Closest
+                                                <i class="fa fa-crosshairs me-1"></i> Raw
                                             </label>
                                         </div>
                                     </div>
@@ -377,7 +377,7 @@
                                         <div class="mb-1"><i style="background: #7366ff"></i> Customer Visit</div>
                                         <div class="mb-1"><i style="background: #ff9800"></i> Stopped</div>
                                         <div class="mb-1"><i style="background: #2563eb; border-radius: 0; height: 4px; margin-top: 8px;"></i> Smoothened Route</div>
-                                        <div><i style="background: #1a3a63; border-radius: 0; height: 3px; margin-top: 8px;"></i> Closest Route</div>
+                                        <div><i style="background: #1a3a63; border-radius: 0; height: 3px; margin-top: 8px;"></i> Raw Route</div>
                                     </div>
                                 </div>
                             </div>
