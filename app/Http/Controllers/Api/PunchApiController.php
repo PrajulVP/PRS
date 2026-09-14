@@ -175,15 +175,16 @@ class PunchApiController extends Controller
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Last punch status retrieved",
+     *         description="Attendance status retrieved successfully",
      *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="string", enum={"punched_in", "punched_out"}),
-     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Attendance updated successfully"),
      *             @OA\Property(property="date", type="string", example="2026-09-14"),
-     *             @OA\Property(property="time", type="string", example="03:56:06 PM"),
-     *             @OA\Property(property="timestamp", type="string", example="2026-09-14 15:56:06"),
-     *             @OA\Property(property="admin_approved", type="boolean"),
-     *             @OA\Property(property="last_log", type="object")
+     *             @OA\Property(property="check_in_time", type="string", nullable=true, example="09:15:32"),
+     *             @OA\Property(property="check_out_time", type="string", nullable=true, example=null),
+     *             @OA\Property(property="check_in_timestamp", type="string", nullable=true, example="2026-09-14T09:15:32+05:30"),
+     *             @OA\Property(property="check_out_timestamp", type="string", nullable=true, example=null),
+     *             @OA\Property(property="admin_approved", type="boolean", example=true)
      *         )
      *     )
      * )
@@ -197,27 +198,35 @@ class PunchApiController extends Controller
             return response()->json(['error' => 'Device mismatch.'], 403);
         }
 
-        $lastPunch = AttendanceLog::where('user_id', $user->id)
+        $today = Carbon::today();
+
+        $checkInLog = AttendanceLog::where('user_id', $user->id)
+            ->where('type', 'punch_in')
+            ->whereDate('timestamp', $today)
+            ->orderBy('timestamp', 'asc')
+            ->first();
+
+        $checkOutLog = AttendanceLog::where('user_id', $user->id)
+            ->where('type', 'punch_out')
+            ->whereDate('timestamp', $today)
             ->orderBy('timestamp', 'desc')
             ->first();
 
-        $status = 'punched_out';
-        $message = 'The user has been punched out.';
-        if ($lastPunch && $lastPunch->type === 'punch_in') {
-            $status = 'punched_in';
-            $message = 'The user is currently punched in.';
-        }
+        $checkInTime = $checkInLog ? Carbon::parse($checkInLog->timestamp)->format('H:i:s') : null;
+        $checkInTimestamp = $checkInLog ? Carbon::parse($checkInLog->timestamp)->toIso8601String() : null;
 
-        $lastTime = $lastPunch ? Carbon::parse($lastPunch->timestamp) : null;
+        $checkOutTime = $checkOutLog ? Carbon::parse($checkOutLog->timestamp)->format('H:i:s') : null;
+        $checkOutTimestamp = $checkOutLog ? Carbon::parse($checkOutLog->timestamp)->toIso8601String() : null;
 
         return response()->json([
-            'status' => $status,
-            'message' => $message,
-            'date' => $lastTime ? $lastTime->toDateString() : null,
-            'time' => $lastTime ? $lastTime->format('h:i:s A') : null,
-            'timestamp' => $lastTime ? $lastTime->toDateTimeString() : null,
+            'status' => 'success',
+            'message' => 'Attendance updated successfully',
+            'date' => Carbon::now()->toDateString(),
+            'check_in_time' => $checkInTime,
+            'check_out_time' => $checkOutTime,
+            'check_in_timestamp' => $checkInTimestamp,
+            'check_out_timestamp' => $checkOutTimestamp,
             'admin_approved' => (bool) $user->clock_in_permission,
-            'last_log' => $lastPunch
         ]);
     }
 

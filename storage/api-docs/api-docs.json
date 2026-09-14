@@ -5365,38 +5365,46 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Last punch status retrieved",
+                        "description": "Attendance status retrieved successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "status": {
                                             "type": "string",
-                                            "enum": [
-                                                "punched_in",
-                                                "punched_out"
-                                            ]
+                                            "example": "success"
                                         },
                                         "message": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "example": "Attendance updated successfully"
                                         },
                                         "date": {
                                             "type": "string",
                                             "example": "2026-09-14"
                                         },
-                                        "time": {
+                                        "check_in_time": {
                                             "type": "string",
-                                            "example": "03:56:06 PM"
+                                            "example": "09:15:32",
+                                            "nullable": true
                                         },
-                                        "timestamp": {
+                                        "check_out_time": {
                                             "type": "string",
-                                            "example": "2026-09-14 15:56:06"
+                                            "example": null,
+                                            "nullable": true
+                                        },
+                                        "check_in_timestamp": {
+                                            "type": "string",
+                                            "example": "2026-09-14T09:15:32+05:30",
+                                            "nullable": true
+                                        },
+                                        "check_out_timestamp": {
+                                            "type": "string",
+                                            "example": null,
+                                            "nullable": true
                                         },
                                         "admin_approved": {
-                                            "type": "boolean"
-                                        },
-                                        "last_log": {
-                                            "type": "object"
+                                            "type": "boolean",
+                                            "example": true
                                         }
                                     },
                                     "type": "object"
