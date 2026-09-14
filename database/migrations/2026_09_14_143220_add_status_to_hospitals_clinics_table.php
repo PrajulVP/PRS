@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('hospitals_clinics', function (Blueprint $table) {
-            $table->enum('status', ['active', 'inactive'])->default('active');
-        });
+        if (!Schema::hasColumn('hospitals_clinics', 'status')) {
+            Schema::table('hospitals_clinics', function (Blueprint $table) {
+                $table->enum('status', ['active', 'inactive'])->default('active');
+            });
+        }
     }
 
     /**
