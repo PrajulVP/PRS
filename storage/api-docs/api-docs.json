@@ -2660,6 +2660,84 @@
                 ]
             }
         },
+        "/api/field-staff/distributors": {
+            "get": {
+                "tags": [
+                    "Field Staff Dashboard"
+                ],
+                "summary": "List all distributors assigned to this Field Staff",
+                "operationId": "e7250fca753b6070c48659b3ecbe1ed6",
+                "responses": {
+                    "200": {
+                        "description": "List of assigned distributors",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "email": {
+                                                "type": "string"
+                                            },
+                                            "contact_no": {
+                                                "type": "string"
+                                            },
+                                            "gst": {
+                                                "type": "string"
+                                            },
+                                            "drug_license_no": {
+                                                "type": "string"
+                                            },
+                                            "address": {
+                                                "type": "string"
+                                            },
+                                            "district_id": {
+                                                "type": "integer"
+                                            },
+                                            "district_name": {
+                                                "type": "string"
+                                            },
+                                            "pincode": {
+                                                "type": "string"
+                                            },
+                                            "latitude": {
+                                                "type": "number",
+                                                "format": "float"
+                                            },
+                                            "longitude": {
+                                                "type": "number",
+                                                "format": "float"
+                                            },
+                                            "status": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized"
+                    },
+                    "404": {
+                        "description": "Field Staff profile not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/field-staff/reports/sales-orders": {
             "get": {
                 "tags": [

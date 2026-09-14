@@ -117,10 +117,11 @@ Route::middleware('auth:api')->group(function () {
         Route::get('targets', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getTargetsByMonth']);
         Route::get('reports/sales-orders', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'generateSalesOrdersReport']);
         Route::get('retailers', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailers']);
+        Route::get('retailers/{id}/loyalty-points', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailerLoyaltyDetails']);
         Route::post('retailers', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'storeRetailer']);
         Route::put('retailers/{id}', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'updateRetailer']);
         Route::put('distributors/{id}', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'updateDistributor']);
-        Route::get('retailers/{id}/loyalty-points', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getRetailerLoyaltyDetails']);
+        Route::get('distributors', [\App\Http\Controllers\Api\FieldStaffDashboardApiController::class, 'getDistributors']);
         Route::get('retailer-orders', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'index']);
         Route::get('retailer-orders/calculate-price', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'calculatePrice']);
         Route::get('retailer-orders/{id}', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'show']);

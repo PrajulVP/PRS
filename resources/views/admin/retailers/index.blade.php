@@ -772,10 +772,12 @@
                         render: function (id, type, row) {
                             let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
                             let deleteUrl = "{{ route('admin.retailers.destroy', ':id') }}".replace(':id', id);
+                            let resetUrl = "{{ route('admin.retailers.reset-location', ':id') }}".replace(':id', id);
                             let btns = `<div class="action-buttons">
                                 ${isDistributor ? `<a href="{{ route('admin.retailer.index') }}?retailer_id=${id}" class="btn btn-sm btn-warning" title="View Orders"><i class="fa fa-shopping-cart"></i></a>` : ''}
                                 <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>`;
                             if (row.can_edit) btns += `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>`;
+                            btns += `<button type="button" class="btn btn-sm btn-warning text-white reset-location-btn" data-url="${resetUrl}" data-name="${row.shop_name}" title="Reset Saved Location"><span style="position: relative; display: inline-flex; align-items: center; justify-content: center; line-height: 1; overflow: visible;"><i class="fa fa-map-marker" style="font-size: 1.5rem; color: #ffffff;"></i><span style="position: absolute; top: 50%; left: 50%; width: 210%; height: 2px; background-color: #ffffff; transform: translate(-50%, -50%) rotate(-45deg); transform-origin: center; box-shadow: 0 0 1px rgba(0,0,0,0.5);"></span></span></button>`;
                             if (row.can_delete) btns += `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>`;
                             return btns + `</div>`;
                         }
@@ -1241,6 +1243,35 @@
                         if ($(this).val() === "" || optionManagerId == managerId) $(this).show(); else $(this).hide();
                     });
                 }
+            });
+
+            $(document).on('click', '.reset-location-btn', function () {
+                let resetUrl = $(this).data('url');
+                let name = $(this).data('name') || 'this retailer';
+
+                Swal.fire({
+                    title: 'Reset Location?',
+                    text: `Are you sure you want to reset the saved location for ${name}? Field staff will be allowed to re-capture the location.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#f59e0b',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, reset location!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.post(resetUrl, { _token: "{{ csrf_token() }}" }, function (response) {
+                            if (response.success) {
+                                table.ajax.reload(null, false);
+                                showToast('success', response.message);
+                            } else {
+                                showToast('danger', response.message || 'Failed to reset location');
+                            }
+                        }).fail(function (xhr) {
+                            let msg = xhr.responseJSON?.message || 'Error resetting location';
+                            showToast('danger', msg);
+                        });
+                    }
+                });
             });
 
             $('#create_sales_manager_id').trigger('change');

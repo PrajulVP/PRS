@@ -211,7 +211,7 @@ return [
          * 'method' (sort by HTTP method).
          * Default is the order returned by the server unchanged.
          */
-        'operations_sort' => env('L5_SWAGGER_OPERATIONS_SORT', null),
+        'operations_sort' => null,
 
         /*
          * Pass the validatorUrl parameter to SwaggerUi init on the JS side.
@@ -232,6 +232,7 @@ return [
                  * 'none' (expands nothing).
                  */
                 'doc_expansion' => env('L5_SWAGGER_UI_DOC_EXPANSION', 'none'),
+                'operations_sorter' => null, // null preserves code declaration order in Swagger UI
 
                 /**
                  * If set, enables filtering. The top bar will show an edit box that

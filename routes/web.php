@@ -104,6 +104,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('distributors', DistributorController::class);
         Route::patch('distributors/{distributor}/activate', [DistributorController::class, 'activate'])->name('distributors.activate');
         Route::patch('distributors/{distributor}/deactivate', [DistributorController::class, 'deactivate'])->name('distributors.deactivate');
+        Route::post('distributors/{distributor}/reset-location', [DistributorController::class, 'resetLocation'])->name('distributors.reset-location');
 
         Route::resource('field-staffs', FieldStaffController::class);
         Route::patch('field-staffs/{field_staff}/activate', [FieldStaffController::class, 'activate'])->name('field-staffs.activate');
@@ -130,6 +131,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('retailers', RetailerController::class);
         Route::patch('retailers/{retailer}/activate', [RetailerController::class, 'activate'])->name('retailers.activate');
         Route::patch('retailers/{retailer}/deactivate', [RetailerController::class, 'deactivate'])->name('retailers.deactivate');
+        Route::post('retailers/{retailer}/reset-location', [RetailerController::class, 'resetLocation'])->name('retailers.reset-location');
 
         Route::get('retailer-orders/get-products', [RetailerOrderManagementController::class, 'getProducts'])->name('retailer-orders.get-products');
 

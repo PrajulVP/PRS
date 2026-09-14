@@ -400,4 +400,36 @@ class DistributorController extends Controller
         }
         return redirect()->route('admin.distributors.index')->with('success', 'Distributor deactivated successfully!');
     }
+
+    public function resetLocation(Distributor $distributor)
+    {
+        /** @var User $currentUser */
+        $currentUser = Auth::user();
+        if (!$currentUser->hasRole('superadmin') && !$currentUser->hasRole('admin') && !$currentUser->hasRole('salesmanager')) {
+            $msg = 'Only Superadmin, Admin or Sales Manager can reset distributor location.';
+            if (request()->ajax() || request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 403);
+            }
+            return redirect()->back()->with('error', $msg);
+        }
+
+        if (empty($distributor->latitude) && empty($distributor->longitude)) {
+            $msg = 'No location exists to reset for this distributor.';
+            if (request()->ajax() || request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            return redirect()->back()->with('error', $msg);
+        }
+
+        $distributor->update([
+            'latitude' => null,
+            'longitude' => null,
+        ]);
+
+        $msg = 'Distributor location reset successfully! Field staff can now re-capture the location.';
+        if (request()->ajax() || request()->expectsJson()) {
+            return response()->json(['success' => true, 'message' => $msg]);
+        }
+        return redirect()->back()->with('success', $msg);
+    }
 }

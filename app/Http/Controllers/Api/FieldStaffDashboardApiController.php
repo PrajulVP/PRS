@@ -501,6 +501,16 @@ class FieldStaffDashboardApiController extends Controller
             'longitude' => 'nullable|numeric',
         ]);
 
+        // Check if location is already set in DB and user is not an Admin/Sales Manager
+        $hasExistingLocation = !empty($retailer->latitude) && !empty($retailer->longitude);
+        if ($hasExistingLocation && (isset($retailerData['latitude']) || isset($retailerData['longitude']))) {
+            if (!$user->hasRole('superadmin') && !$user->hasRole('salesmanager')) {
+                return response()->json([
+                    'error' => 'Location is already set for this Retailer. Only Admin can reset the location.'
+                ], 403);
+            }
+        }
+
         try {
             DB::beginTransaction();
 
@@ -589,6 +599,16 @@ class FieldStaffDashboardApiController extends Controller
             'longitude' => 'nullable|numeric',
         ]);
 
+        // Check if location is already set in DB and user is not an Admin/Sales Manager
+        $hasExistingLocation = !empty($distributor->latitude) && !empty($distributor->longitude);
+        if ($hasExistingLocation && (isset($distributorData['latitude']) || isset($distributorData['longitude']))) {
+            if (!$user->hasRole('superadmin') && !$user->hasRole('salesmanager')) {
+                return response()->json([
+                    'error' => 'Location is already set for this Distributor. Only Admin can reset the location.'
+                ], 403);
+            }
+        }
+
         try {
             DB::beginTransaction();
 
@@ -614,6 +634,81 @@ class FieldStaffDashboardApiController extends Controller
             DB::rollBack();
             return response()->json(['error' => 'Failed to update distributor. ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/field-staff/distributors",
+     *     summary="List all distributors assigned to this Field Staff",
+     *     tags={"Field Staff Dashboard"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of assigned distributors",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="name", type="string"),
+     *                 @OA\Property(property="email", type="string"),
+     *                 @OA\Property(property="contact_no", type="string"),
+     *                 @OA\Property(property="gst", type="string"),
+     *                 @OA\Property(property="drug_license_no", type="string"),
+     *                 @OA\Property(property="address", type="string"),
+     *                 @OA\Property(property="district_id", type="integer"),
+     *                 @OA\Property(property="district_name", type="string"),
+     *                 @OA\Property(property="pincode", type="string"),
+     *                 @OA\Property(property="latitude", type="number", format="float"),
+     *                 @OA\Property(property="longitude", type="number", format="float"),
+     *                 @OA\Property(property="status", type="string")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized"),
+     *     @OA\Response(response=404, description="Field Staff profile not found")
+     * )
+     */
+    public function getDistributors(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user->hasRole('fieldstaff')) {
+            return response()->json(['error' => 'Unauthorized. Only Field Staff can view assigned Distributors.'], 403);
+        }
+
+        $fieldStaff = $user->fieldStaff;
+        if (!$fieldStaff) {
+            return response()->json(['error' => 'Field Staff profile not found.'], 404);
+        }
+
+        $distributors = \App\Models\Distributor::with(['user', 'district'])
+            ->where(function ($q) use ($fieldStaff) {
+                if ($fieldStaff->sales_manager_id) {
+                    $q->where('sales_manager_id', $fieldStaff->sales_manager_id);
+                } else {
+                    $q->where('district_id', $fieldStaff->district_id);
+                }
+            })
+            ->get()
+            ->map(function ($distributor) {
+                return [
+                    'id' => $distributor->id,
+                    'name' => $distributor->name,
+                    'email' => $distributor->user->email ?? 'N/A',
+                    'contact_no' => $distributor->contact_no,
+                    'gst' => $distributor->gst,
+                    'drug_license_no' => $distributor->drug_license_no,
+                    'address' => $distributor->address,
+                    'district_id' => $distributor->district_id,
+                    'district_name' => $distributor->district->name ?? 'N/A',
+                    'pincode' => $distributor->pincode,
+                    'latitude' => $distributor->latitude ? (float) $distributor->latitude : null,
+                    'longitude' => $distributor->longitude ? (float) $distributor->longitude : null,
+                    'status' => $distributor->user->status ?? 'inactive'
+                ];
+            });
+
+        return response()->json($distributors);
     }
 
 

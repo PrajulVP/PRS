@@ -485,4 +485,36 @@ class RetailerController extends Controller
         $areas = Area::where('district_id', $district_id)->orderBy('name', 'asc')->get();
         return response()->json($areas);
     }
+
+    public function resetLocation(Retailer $retailer)
+    {
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+        if (!$currentUser->hasAnyRole(['superadmin', 'admin']) && !$currentUser->hasRole('salesmanager')) {
+            $msg = 'Only Admin or Sales Manager can reset retailer location.';
+            if (request()->ajax() || request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 403);
+            }
+            return redirect()->back()->with('error', $msg);
+        }
+
+        if (empty($retailer->latitude) && empty($retailer->longitude)) {
+            $msg = 'No location exists to reset for this retailer.';
+            if (request()->ajax() || request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            return redirect()->back()->with('error', $msg);
+        }
+
+        $retailer->update([
+            'latitude' => null,
+            'longitude' => null,
+        ]);
+
+        $msg = 'Retailer location reset successfully! Field staff can now re-capture the location.';
+        if (request()->ajax() || request()->expectsJson()) {
+            return response()->json(['success' => true, 'message' => $msg]);
+        }
+        return redirect()->back()->with('success', $msg);
+    }
 }
