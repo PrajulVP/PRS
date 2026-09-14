@@ -656,10 +656,18 @@
                             let rowData = JSON.stringify(row).replace(/"/g, '&quot;');
                             let deleteUrl = "{{ route('admin.distributors.destroy', ':id') }}".replace(':id', id);
                             let resetUrl = "{{ route('admin.distributors.reset-location', ':id') }}".replace(':id', id);
+                            let hasLocation = row.latitude && row.longitude && parseFloat(row.latitude) !== 0 && parseFloat(row.longitude) !== 0;
+                            
                             let btns = `<div class="action-buttons">
                                 <button type="button" class="btn btn-sm btn-info view-btn" data-row="${rowData}"><i class="fa fa-eye"></i></button>`;
                             if (row.can_edit) btns += `<button type="button" class="btn btn-sm btn-primary edit-btn" data-row="${rowData}"><i class="fa fa-edit"></i></button>`;
-                            btns += `<button type="button" class="btn btn-sm btn-warning text-white reset-location-btn" data-url="${resetUrl}" data-name="${row.name}" title="Reset Saved Location"><span style="position: relative; display: inline-flex; align-items: center; justify-content: center; line-height: 1; overflow: visible;"><i class="fa fa-map-marker" style="font-size: 1.5rem; color: #ffffff;"></i><span style="position: absolute; top: 50%; left: 50%; width: 210%; height: 2px; background-color: #ffffff; transform: translate(-50%, -50%) rotate(-45deg); transform-origin: center; box-shadow: 0 0 1px rgba(0,0,0,0.5);"></span></span></button>`;
+                            
+                            if (hasLocation) {
+                                btns += `<button type="button" class="btn btn-sm btn-warning text-white reset-location-btn" data-url="${resetUrl}" data-name="${row.name}" title="Reset Saved Location"><span style="position: relative; display: inline-flex; align-items: center; justify-content: center; line-height: 1; overflow: visible;"><i class="fa fa-map-marker" style="font-size: 1.5rem; color: #ffffff;"></i><span style="position: absolute; top: 50%; left: 50%; width: 210%; height: 2px; background-color: #ffffff; transform: translate(-50%, -50%) rotate(-45deg); transform-origin: center; box-shadow: 0 0 1px rgba(0,0,0,0.5);"></span></span></button>`;
+                            } else {
+                                btns += `<button type="button" class="btn btn-sm btn-warning text-white no-location-btn" data-name="${row.name}" title="No location set for this distributor" style="opacity: 0.55; cursor: not-allowed;"><span style="position: relative; display: inline-flex; align-items: center; justify-content: center; line-height: 1; overflow: visible;"><i class="fa fa-map-marker" style="font-size: 1.5rem; color: #ffffff;"></i><span style="position: absolute; top: 50%; left: 50%; width: 210%; height: 2px; background-color: #ffffff; transform: translate(-50%, -50%) rotate(-45deg); transform-origin: center; box-shadow: 0 0 1px rgba(0,0,0,0.5);"></span></span></button>`;
+                            }
+                            
                             if (row.can_delete) btns += `<button type="button" class="btn btn-sm btn-danger delete-btn" data-url="${deleteUrl}"><i class="fa fa-trash"></i></button>`;
                             btns += `</div>`;
                             return btns;
@@ -1125,6 +1133,11 @@
                         });
                     }
                 });
+            });
+
+            $(document).on('click', '.no-location-btn', function () {
+                let name = $(this).data('name') || 'this distributor';
+                showToast('danger', `No location exists to reset for ${name}. Location is not set yet.`);
             });
 
             $(document).on('click', '.reset-location-btn', function () {
