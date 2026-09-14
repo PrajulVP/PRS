@@ -724,9 +724,9 @@ class FieldStaffActionApiController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/field-staff/sync-offline-logs",
+     *     path="/api/sync-offline-logs",
      *     summary="Sync offline logs when internet is restored",
-     *     tags={"Field Staff"},
+     *     tags={"Punch & Location Tracking"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,

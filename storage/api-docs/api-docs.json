@@ -2049,13 +2049,13 @@
                 ]
             }
         },
-        "/api/field-staff/sync-offline-logs": {
+        "/api/sync-offline-logs": {
             "post": {
                 "tags": [
-                    "Field Staff"
+                    "Punch & Location Tracking"
                 ],
                 "summary": "Sync offline logs when internet is restored",
-                "operationId": "e9c0d9a3de80c484d33933764c51fbad",
+                "operationId": "3ea5d4cafaaea25f7250789e9bb16139",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -8013,6 +8013,10 @@
             "description": "Field Staff"
         },
         {
+            "name": "Punch & Location Tracking",
+            "description": "Punch & Location Tracking"
+        },
+        {
             "name": "Field Staff Dashboard",
             "description": "Field Staff Dashboard"
         },
@@ -8051,10 +8055,6 @@
         {
             "name": "Products",
             "description": "Products"
-        },
-        {
-            "name": "Punch & Location Tracking",
-            "description": "Punch & Location Tracking"
         },
         {
             "name": "Retailer Feedback",

@@ -31,6 +31,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('punch', [\App\Http\Controllers\Api\PunchApiController::class, 'getPunchStatus']);
     Route::post('punch', [\App\Http\Controllers\Api\PunchApiController::class, 'punch']);
     Route::post('ping', [\App\Http\Controllers\Api\PunchApiController::class, 'pingLocation']);
+    Route::post('sync-offline-logs', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'syncOfflineLogs']);
     Route::get('retailer-orders', [RetailerOrderController::class, 'index']);
     Route::get('retailer-orders/calculate-price', [RetailerOrderController::class, 'calculatePrice']);
     Route::post('retailer-orders', [RetailerOrderController::class, 'store']);
