@@ -1372,13 +1372,13 @@
 
             // 3. Plot Punches
             @foreach($punches as $p)
-                addActivityMarker({{ $p->latitude }}, {{ $p->longitude }}, "{{ $p->type == 'punch_in' ? '#51bb25' : '#f73164' }}", "{{ strtoupper(str_replace('_', ' ', $p->type)) }}", "Attendance Log<br><span class='text-muted small'>Time: {{ \Carbon\Carbon::parse($p->timestamp)->format('h:i A') }}</span>", 1000);
+                addActivityMarker({{ $p->latitude }}, {{ $p->longitude }}, "{{ $p->type == 'punch_in' ? '#51bb25' : '#f73164' }}", "{{ strtoupper(str_replace('_', ' ', $p->type)) }}", "Attendance Log<br><span class='text-dark fw-bold'>Date & Time: {{ \Carbon\Carbon::parse($p->timestamp)->format('M d, Y h:i:s A') }}</span>", 1000);
                 bounds.extend({ lat: {{ $p->latitude }}, lng: {{ $p->longitude }} });
             @endforeach
 
             // 4. Plot Visits
             @foreach($visits as $v)
-                addActivityMarker({{ $v->latitude }}, {{ $v->longitude }}, "#7366ff", "{{ $v->customer_name ?? $v->party?->name ?? 'Customer Visit' }}", "{{ ucfirst($v->customer_category ?? 'Retailer') }} Visit<br><span class='text-muted small'>Check-in: {{ isset($v->check_in_at) ? \Carbon\Carbon::parse($v->check_in_at)->format('h:i A') : (isset($v->start_at) ? \Carbon\Carbon::parse($v->start_at)->format('h:i A') : 'N/A') }}</span>", 500);
+                addActivityMarker({{ $v->latitude }}, {{ $v->longitude }}, "#7366ff", "{{ $v->customer_name ?? $v->party?->name ?? 'Customer Visit' }}", "{{ ucfirst($v->customer_category ?? 'Retailer') }} Visit<br><span class='text-dark fw-bold'>Date & Time: {{ isset($v->check_in_at) ? \Carbon\Carbon::parse($v->check_in_at)->format('M d, Y h:i:s A') : (isset($v->start_at) ? \Carbon\Carbon::parse($v->start_at)->format('M d, Y h:i:s A') : 'N/A') }}</span>", 500);
                 bounds.extend({ lat: {{ $v->latitude }}, lng: {{ $v->longitude }} });
             @endforeach
 
