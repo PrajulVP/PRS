@@ -344,27 +344,29 @@ class FieldStaffActionApiController extends Controller
     /**
      * @OA\Get(
      *     path="/api/field-visits/parties",
-     *     summary="Get list of parties based on party_type",
+     *     summary="Get list of parties based on party_type or party ID",
      *     tags={"Field Staff"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="party_type",
      *         in="query",
      *         required=true,
-     *         description="Type of party (retailer or distributor)",
-     *         @OA\Schema(type="string", enum={"retailer", "distributor"})
+     *         description="Type of party (retailer/1, distributor/2, hospital/hospital_clinic/3)",
+     *         @OA\Schema(type="string", example="3")
      *     ),
      *     @OA\Response(response=200, description="List of parties")
      * )
      */
     public function parties(Request $request)
     {
-        $type = $request->query('party_type');
+        $type = strtolower(trim((string)$request->query('party_type')));
         
-        if ($type === 'retailer') {
-            $parties = \App\Models\Retailer::select('id', 'shop_name as name')->get();
-        } elseif ($type === 'distributor') {
-            $parties = \App\Models\Distributor::select('id', 'name')->get();
+        if ($type === 'retailer' || $type === '1') {
+            $parties = \App\Models\Retailer::select('id', 'shop_name as name', 'address', 'latitude', 'longitude', 'location_locked')->get();
+        } elseif ($type === 'distributor' || $type === '2') {
+            $parties = \App\Models\Distributor::select('id', 'name', 'address', 'latitude', 'longitude', 'location_locked')->get();
+        } elseif ($type === 'hospital' || $type === 'hospital_clinic' || $type === '3') {
+            $parties = \App\Models\HospitalClinic::select('id', 'name', 'address', 'latitude', 'longitude', 'location_locked')->get();
         } else {
             $parties = [];
         }
@@ -433,12 +435,15 @@ class FieldStaffActionApiController extends Controller
         // Fetch Party (for Geofencing and VisitLog)
         $party = null;
         $customerName = 'Unknown';
-        if ($request->party_type === 'retailer') {
+        if ($request->party_type === 'retailer' || $request->party_type === '1') {
             $party = Retailer::find($request->party_id);
             $customerName = $party ? $party->shop_name : 'Unknown Retailer';
-        } elseif ($request->party_type === 'distributor') {
+        } elseif ($request->party_type === 'distributor' || $request->party_type === '2') {
             $party = Distributor::find($request->party_id);
-            $customerName = $party ? $party->user->name : 'Unknown Distributor';
+            $customerName = $party ? ($party->user ? $party->user->name : $party->name) : 'Unknown Distributor';
+        } elseif ($request->party_type === 'hospital' || $request->party_type === 'hospital_clinic' || $request->party_type === '3') {
+            $party = \App\Models\HospitalClinic::find($request->party_id);
+            $customerName = $party ? $party->name : 'Unknown Hospital/Clinic';
         }
 
         // Geofencing Check

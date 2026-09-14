@@ -505,6 +505,19 @@
           </a>
         </li>
         @endif
+        @if (Auth::user()->hasPermissionToCategory('hospitals_clinics', 'view') || Auth::user()->hasAnyRole(['admin', 'superadmin']))
+        <li class="sidebar-list">
+          <a class="sidebar-link sidebar-title link-nav {{ request()->routeIs('admin.hospitals-clinics.*') ? 'active' : '' }}" href="{{ route('admin.hospitals-clinics.index') }}">
+            <svg class="stroke-icon">
+              <use href="{{ $iconSprite }}#stroke-form"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{{ $iconSprite }}#fill-form"></use>
+            </svg>
+            <span>Hospitals / Clinics</span>
+          </a>
+        </li>
+        @endif
         @endif
 
         {{-- 9. Settings Section --}}

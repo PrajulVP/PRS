@@ -26,6 +26,11 @@ Route::middleware('auth:api')->group(function () {
     Route::post('profile/update', [AuthApiController::class, 'updateProfile']);
     Route::post('user/player-id', [\App\Http\Controllers\Api\UserApiController::class, 'updatePlayerId']);
     Route::post('logout', [AuthApiController::class, 'logout']);
+
+    // Unified Punch & Location Tracking APIs (Autodetects role from Bearer Token)
+    Route::get('punch', [\App\Http\Controllers\Api\PunchApiController::class, 'getPunchStatus']);
+    Route::post('punch', [\App\Http\Controllers\Api\PunchApiController::class, 'punch']);
+    Route::post('ping', [\App\Http\Controllers\Api\PunchApiController::class, 'pingLocation']);
     Route::get('retailer-orders', [RetailerOrderController::class, 'index']);
     Route::get('retailer-orders/calculate-price', [RetailerOrderController::class, 'calculatePrice']);
     Route::post('retailer-orders', [RetailerOrderController::class, 'store']);
@@ -130,13 +135,15 @@ Route::middleware('auth:api')->group(function () {
         Route::post('retailer-orders/{id}/accept', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'acceptOrder']);
         Route::put('retailer-orders/{id}', [\App\Http\Controllers\Api\FieldStaffRetailerOrderController::class, 'update']);
 
-        // Tracking & Actions
-        Route::get('punch', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getPunchStatus']);
-        Route::post('punch', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'punch']);
-        Route::post('ping', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'pingLocation']);
-        // Replaced by new Field Visits Module
-        // Route::post('log-visit', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'logVisit']);
-        // Route::get('retailers/{id}/last-visit', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getLastVisitRemark']);
+        // Unified Punch & Ping APIs (Autodetect user role from token)
+        Route::get('punch', [\App\Http\Controllers\Api\PunchApiController::class, 'getPunchStatus']);
+        Route::post('punch', [\App\Http\Controllers\Api\PunchApiController::class, 'punch']);
+        Route::post('ping', [\App\Http\Controllers\Api\PunchApiController::class, 'pingLocation']);
+
+        // Tracking & Actions (Legacy Aliases for Live App Compatibility)
+        Route::get('punch', [\App\Http\Controllers\Api\PunchApiController::class, 'getPunchStatus']);
+        Route::post('punch', [\App\Http\Controllers\Api\PunchApiController::class, 'punch']);
+        Route::post('ping', [\App\Http\Controllers\Api\PunchApiController::class, 'pingLocation']);
         Route::post('expenses', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'submitExpense']);
         Route::get('leaves', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getLeaves']);
         Route::get('leave-types', [\App\Http\Controllers\Api\FieldStaffActionApiController::class, 'getLeaveTypes']);
@@ -151,17 +158,11 @@ Route::middleware('auth:api')->group(function () {
         Route::post('loyalty-redemptions/{id}/confirm', [\App\Http\Controllers\Api\LoyaltyApiController::class, 'confirmFieldstaffRedemption']);
     });
 
-    // Manager Tracking & Actions
+    // Manager Tracking & Actions (Legacy Aliases for Live App Compatibility)
     Route::prefix('manager')->group(function () {
-        Route::get('punch', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'getPunchStatus']);
-        Route::post('punch', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'punch']);
-        Route::post('ping', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'pingLocation']);
-        // Replaced by new Field Visits Module
-        // Route::post('log-visit', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'logVisit']);
-        Route::post('expenses', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'submitExpense']);
-        Route::get('leaves', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'getLeaves']);
-        Route::get('leave-types', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'getLeaveTypes']);
-        Route::post('leaves', [\App\Http\Controllers\Api\ManagerActionApiController::class, 'requestLeave']);
+        Route::get('punch', [\App\Http\Controllers\Api\PunchApiController::class, 'getPunchStatus']);
+        Route::post('punch', [\App\Http\Controllers\Api\PunchApiController::class, 'punch']);
+        Route::post('ping', [\App\Http\Controllers\Api\PunchApiController::class, 'pingLocation']);
     });
 
     // General Loyalty APIs (Field Staff / Sales Manager / Admin inspection)
@@ -194,6 +195,14 @@ Route::middleware('auth:api')->group(function () {
     Route::prefix('orders')->group(function () {
         Route::post('/', [\App\Http\Controllers\Api\OrderApiController::class, 'store']);
         Route::post('/{id}/add-free-items', [\App\Http\Controllers\Api\OrderApiController::class, 'addFreeItems']);
+    });
+
+    // Hospitals & Clinics Module APIs
+    Route::prefix('hospitals-clinics')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\HospitalClinicApiController::class, 'index']);
+        Route::get('/{id}', [\App\Http\Controllers\Api\HospitalClinicApiController::class, 'show']);
+        Route::post('/', [\App\Http\Controllers\Api\HospitalClinicApiController::class, 'store']);
+        Route::put('/{id}', [\App\Http\Controllers\Api\HospitalClinicApiController::class, 'update']);
     });
 
     // Field Staff Visits Module

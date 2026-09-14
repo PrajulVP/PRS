@@ -48,6 +48,8 @@ class FieldVisit extends Model
             return Retailer::find($this->party_id);
         } elseif ($this->party_type === 'distributor' && $this->party_id) {
             return Distributor::find($this->party_id);
+        } elseif (($this->party_type === 'hospital' || $this->party_type === 'hospital_clinic') && $this->party_id) {
+            return HospitalClinic::find($this->party_id);
         }
         
         return null;

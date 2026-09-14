@@ -133,6 +133,10 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('retailers/{retailer}/deactivate', [RetailerController::class, 'deactivate'])->name('retailers.deactivate');
         Route::post('retailers/{retailer}/reset-location', [RetailerController::class, 'resetLocation'])->name('retailers.reset-location');
 
+        Route::resource('hospitals-clinics', \App\Http\Controllers\HospitalClinicController::class);
+        Route::get('hospitals-clinics/areas/{district_id}', [\App\Http\Controllers\HospitalClinicController::class, 'getAreas'])->name('hospitals-clinics.get-areas');
+        Route::post('hospitals-clinics/{hospitals_clinic}/reset-location', [\App\Http\Controllers\HospitalClinicController::class, 'resetLocation'])->name('hospitals-clinics.reset-location');
+
         Route::get('retailer-orders/get-products', [RetailerOrderManagementController::class, 'getProducts'])->name('retailer-orders.get-products');
 
         Route::resource('retailer', RetailerOrderManagementController::class)

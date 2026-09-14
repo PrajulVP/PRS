@@ -1786,20 +1786,17 @@
                 "tags": [
                     "Field Staff"
                 ],
-                "summary": "Get list of parties based on party_type",
+                "summary": "Get list of parties based on party_type or party ID",
                 "operationId": "6a87f133c9fcaea949f4dbf8264df356",
                 "parameters": [
                     {
                         "name": "party_type",
                         "in": "query",
-                        "description": "Type of party (retailer or distributor)",
+                        "description": "Type of party (retailer/1, distributor/2, hospital/hospital_clinic/3)",
                         "required": true,
                         "schema": {
                             "type": "string",
-                            "enum": [
-                                "retailer",
-                                "distributor"
-                            ]
+                            "example": "3"
                         }
                     }
                 ],
@@ -3266,6 +3263,262 @@
                     },
                     "422": {
                         "description": "Validation or stock error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/hospitals-clinics": {
+            "get": {
+                "tags": [
+                    "Hospitals & Clinics"
+                ],
+                "summary": "Get list of Hospitals / Clinics",
+                "operationId": "be6d1b84bf971c4a4b23cf1279a37b05",
+                "parameters": [
+                    {
+                        "name": "district_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "area_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of Hospitals and Clinics",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "City General Hospital"
+                                                    },
+                                                    "address": {
+                                                        "type": "string",
+                                                        "example": "Main Road, Sector 4"
+                                                    },
+                                                    "district_id": {
+                                                        "type": "integer",
+                                                        "nullable": true
+                                                    },
+                                                    "area_id": {
+                                                        "type": "integer",
+                                                        "nullable": true
+                                                    },
+                                                    "latitude": {
+                                                        "type": "number",
+                                                        "nullable": true
+                                                    },
+                                                    "longitude": {
+                                                        "type": "number",
+                                                        "nullable": true
+                                                    },
+                                                    "location_locked": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Hospitals & Clinics"
+                ],
+                "summary": "Create a new Hospital / Clinic",
+                "operationId": "1b7ea77f2fbb4dd63278c8c2aa41797c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Apollo Clinic"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "123 Hospital Road"
+                                    },
+                                    "district_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "area_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "nullable": true
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Hospital/Clinic created successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/hospitals-clinics/{id}": {
+            "get": {
+                "tags": [
+                    "Hospitals & Clinics"
+                ],
+                "summary": "Get single Hospital / Clinic details",
+                "operationId": "15bc431819801c1cd28b034d0091e27d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Hospital/Clinic detail"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Hospitals & Clinics"
+                ],
+                "summary": "Update a Hospital / Clinic",
+                "description": "Edit details. If location was already locked, coordinate changes are rejected with 403 Forbidden.",
+                "operationId": "d180e91b2af6fba896975e3368426721",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Apollo Clinic Updated"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "456 New Road"
+                                    },
+                                    "district_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "area_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "nullable": true
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated successfully"
+                    },
+                    "403": {
+                        "description": "Location locked error"
                     }
                 },
                 "security": [
@@ -5083,6 +5336,180 @@
                 "responses": {
                     "200": {
                         "description": "List of distributors"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/punch": {
+            "get": {
+                "tags": [
+                    "Punch & Location Tracking"
+                ],
+                "summary": "Get current punch status of the user",
+                "operationId": "052807bb0e016df6daa80f743c66ac1b",
+                "parameters": [
+                    {
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "description": "Unique Device identifier for binding",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Last punch status retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "enum": [
+                                                "punched_in",
+                                                "punched_out"
+                                            ]
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "admin_approved": {
+                                            "type": "boolean"
+                                        },
+                                        "last_log": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Punch & Location Tracking"
+                ],
+                "summary": "Punch-in or Punch-out with GPS validation",
+                "operationId": "7911b209657beb3b34725a5626c4b721",
+                "parameters": [
+                    {
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "description": "Unique Device identifier for binding",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "punch_in",
+                                            "punch_out"
+                                        ]
+                                    },
+                                    "latitude": {
+                                        "type": "number"
+                                    },
+                                    "longitude": {
+                                        "type": "number"
+                                    },
+                                    "is_mock": {
+                                        "description": "Detected fake GPS usage",
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Punch logged successfully"
+                    },
+                    "403": {
+                        "description": "Punch rejected"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/ping": {
+            "post": {
+                "tags": [
+                    "Punch & Location Tracking"
+                ],
+                "summary": "Log continuous GPS location ping",
+                "description": "Receives user location pings and updates live tracking map.",
+                "operationId": "aa8200c1a917591f0457fab8e6aa0124",
+                "parameters": [
+                    {
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "description": "Unique Device identifier for binding",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "latitude": {
+                                            "type": "number"
+                                        },
+                                        "longitude": {
+                                            "type": "number"
+                                        },
+                                        "is_mock": {
+                                            "type": "boolean"
+                                        },
+                                        "timestamp": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Location pings saved"
                     }
                 },
                 "security": [
@@ -7590,6 +8017,10 @@
             "description": "Field Staff Dashboard"
         },
         {
+            "name": "Hospitals & Clinics",
+            "description": "Hospitals & Clinics"
+        },
+        {
             "name": "Inventory",
             "description": "Inventory"
         },
@@ -7620,6 +8051,10 @@
         {
             "name": "Products",
             "description": "Products"
+        },
+        {
+            "name": "Punch & Location Tracking",
+            "description": "Punch & Location Tracking"
         },
         {
             "name": "Retailer Feedback",
