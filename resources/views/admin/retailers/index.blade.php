@@ -678,27 +678,46 @@
             }).fail(() => areaSelect.html('<option value="">Error</option>'));
         }
 
-        function getGeoLocation(latId, longId, mapType) {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function (position) {
-                    let lat = position.coords.latitude;
-                    let lng = position.coords.longitude;
-                    document.getElementById(latId).value = lat;
-                    document.getElementById(longId).value = lng;
-                    let pos = { lat: lat, lng: lng };
+        function setLocationFieldsAndMap(lat, lng, latId, longId, mapType) {
+            let latElem = document.getElementById(latId);
+            let longElem = document.getElementById(longId);
+            if (latElem) latElem.value = lat;
+            if (longElem) longElem.value = lng;
+            let pos = { lat: parseFloat(lat), lng: parseFloat(lng) };
 
-                    if (mapType === 'create' && createMap) {
-                        createMarker.setPosition(pos);
-                        createMap.setCenter(pos);
-                        createMap.setZoom(15);
-                    } else if (mapType === 'edit' && editMap) {
-                        editMarker.setPosition(pos);
-                        editMap.setCenter(pos);
-                        editMap.setZoom(15);
+            if (mapType === 'create' && typeof createMap !== 'undefined' && createMap) {
+                if (createMarker) createMarker.setPosition(pos);
+                createMap.setCenter(pos);
+                createMap.setZoom(15);
+            } else if (mapType === 'edit' && typeof editMap !== 'undefined' && editMap) {
+                if (editMarker) editMarker.setPosition(pos);
+                editMap.setCenter(pos);
+                editMap.setZoom(15);
+            }
+        }
+
+        function fallbackToIpLocation(latId, longId, mapType) {
+            fetch('https://ipapi.co/json/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.latitude && data.longitude) {
+                        setLocationFieldsAndMap(data.latitude, data.longitude, latId, longId, mapType);
                     }
+                })
+                .catch(err => console.warn("IP Geolocation failed:", err));
+        }
+
+        function getGeoLocation(latId, longId, mapType) {
+            if (navigator.geolocation && (window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    setLocationFieldsAndMap(position.coords.latitude, position.coords.longitude, latId, longId, mapType);
                 }, function (error) {
-                    console.warn("Geolocation notice: " + error.message);
+                    console.warn("HTML5 Geolocation notice: " + error.message + ". Trying IP location fallback...");
+                    fallbackToIpLocation(latId, longId, mapType);
                 });
+            } else {
+                console.warn("HTTP Insecure context. Using IP location fallback...");
+                fallbackToIpLocation(latId, longId, mapType);
             }
         }
 
