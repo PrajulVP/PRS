@@ -5380,6 +5380,18 @@
                                         "message": {
                                             "type": "string"
                                         },
+                                        "date": {
+                                            "type": "string",
+                                            "example": "2026-09-14"
+                                        },
+                                        "time": {
+                                            "type": "string",
+                                            "example": "03:56:06 PM"
+                                        },
+                                        "timestamp": {
+                                            "type": "string",
+                                            "example": "2026-09-14 15:56:06"
+                                        },
                                         "admin_approved": {
                                             "type": "boolean"
                                         },

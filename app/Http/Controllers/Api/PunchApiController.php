@@ -179,6 +179,9 @@ class PunchApiController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="status", type="string", enum={"punched_in", "punched_out"}),
      *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="date", type="string", example="2026-09-14"),
+     *             @OA\Property(property="time", type="string", example="03:56:06 PM"),
+     *             @OA\Property(property="timestamp", type="string", example="2026-09-14 15:56:06"),
      *             @OA\Property(property="admin_approved", type="boolean"),
      *             @OA\Property(property="last_log", type="object")
      *         )
@@ -205,9 +208,14 @@ class PunchApiController extends Controller
             $message = 'The user is currently punched in.';
         }
 
+        $lastTime = $lastPunch ? Carbon::parse($lastPunch->timestamp) : null;
+
         return response()->json([
             'status' => $status,
             'message' => $message,
+            'date' => $lastTime ? $lastTime->toDateString() : null,
+            'time' => $lastTime ? $lastTime->format('h:i:s A') : null,
+            'timestamp' => $lastTime ? $lastTime->toDateTimeString() : null,
             'admin_approved' => (bool) $user->clock_in_permission,
             'last_log' => $lastPunch
         ]);

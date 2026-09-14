@@ -669,6 +669,7 @@
                                         <div class="mb-1"><i style="background: #7366ff"></i> Customer Visit</div>
                                         <div class="mb-1"><i style="background: #ff9800"></i> Stopped</div>
                                         <div class="mb-1"><i style="background: #2563eb; border-radius: 0; height: 4px; margin-top: 8px;"></i> Smoothened Route</div>
+                                        <div class="mb-1"><i style="background: #6c757d; border-radius: 0; height: 3px; margin-top: 8px; border-top: 2px dashed #6c757d;"></i> Offline / Idle Gap</div>
                                         <div><i style="background: #1a3a63; border-radius: 0; height: 3px; margin-top: 8px;"></i> Raw Route</div>
                                     </div>
                                 </div>
@@ -1222,7 +1223,8 @@
                 if (chunk.length < 2) return Promise.resolve({ idx, points: chunk });
 
                 const coordParam = chunk.map(p => `${p.lng},${p.lat}`).join(';');
-                const requestUrl = `${osrmUrl}/match/v1/driving/${coordParam}?overview=full&geometries=geojson`;
+                const radiusParam = chunk.map(() => '50').join(';');
+                const requestUrl = `${osrmUrl}/match/v1/driving/${coordParam}?overview=full&geometries=geojson&gaps=ignore&radiuses=${radiusParam}`;
 
                 return fetch(requestUrl)
                     .then(res => {
