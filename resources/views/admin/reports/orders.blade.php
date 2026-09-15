@@ -41,6 +41,7 @@
                         <table class="table table-hover w-100" id="ordersReportTable">
                             <thead>
                                 <tr>
+                                    <th width="60">No.</th>
                                     <th>Order Details</th>
                                     <th>Invoice No</th>
                                     <th>Sales Context</th>
@@ -83,10 +84,17 @@
             },
             columns: [
                 { 
+                    data: null,
+                    defaultContent: '',
+                    orderable: false,
+                    searchable: false,
+                    render: (data, type, row, meta) => meta.row + meta.settings._iDisplayStart + 1
+                },
+                { 
                     data: 'order_code', 
                     name: 'order_code',
                     render: function(data, type, row) {
-                        return `<div class="fw-bold text-dark">${data}</div><div class="small text-muted">${row.placed_at}</div>`;
+                        return `<div class="fw-bold text-dark">${data}</div><div class="small text-muted">${row.placed_at || ''}</div>`;
                     }
                 },
                 {
@@ -101,7 +109,11 @@
                     name: 'retailer_name',
                     searchable: false,
                     render: function(data, type, row) {
-                        return `<div class="fw-bold" style="font-size: 0.85rem;">${data}</div><div class="small text-muted">via ${row.distributor_name}</div>`;
+                        let typeStr = $('input[name="order_type"]').val();
+                        if (typeStr === 'distributor') {
+                            return `<div class="fw-bold" style="font-size: 0.85rem;">${row.distributor_name || 'N/A'}</div>`;
+                        }
+                        return `<div class="fw-bold" style="font-size: 0.85rem;">${data || 'N/A'}</div><div class="small text-muted">via ${row.distributor_name || 'N/A'}</div>`;
                     }
                 },
                 { 
@@ -109,7 +121,7 @@
                     name: 'total_quantity',
                     searchable: false,
                     render: function(data, type, row) {
-                        return `<div class="fw-bold">${data} Units</div><div class="small text-muted text-nowrap">${row.total_items} SKUs</div>`;
+                        return `<div class="fw-bold">${data || 0} Units</div><div class="small text-muted text-nowrap">${row.total_items || 0} SKUs</div>`;
                     }
                 },
                 { data: 'total_amount', name: 'total_amount', className: 'fw-bold text-primary text-end', searchable: false },
@@ -119,10 +131,10 @@
                     className: 'text-center',
                     render: function(data) {
                         let status = (data || 'pending').toLowerCase();
-                        let badgeClass = 'bg-light-secondary text-secondary';
-                        if (status === 'paid') badgeClass = 'bg-light-success text-success';
-                        else badgeClass = 'bg-light-warning text-warning';
-                        return `<span class="badge ${badgeClass} text-uppercase px-2 py-1" style="font-size: 0.65rem;">${status}</span>`;
+                        let badgeClass = 'bg-light-secondary text-dark';
+                        if (status === 'paid') badgeClass = 'bg-light-success text-dark';
+                        else badgeClass = 'bg-light-warning text-dark';
+                        return `<span class="badge ${badgeClass} text-uppercase px-2 py-1 fw-bold" style="font-size: 0.65rem;">${status}</span>`;
                     }
                 },
                 { 
@@ -144,36 +156,11 @@
             ],
             dom: '<"row mb-3 align-items-center"<"col-sm-12 col-md-6"B><"col-sm-12 col-md-6 text-end"f>>t<"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>', 
             buttons: [
-                {
-                    extend: 'print',
-                    text: '<i class="fa fa-print me-1"></i> Print',
-                    className: 'btn btn-sm btn-info',
-                    orientation: 'landscape',
-                    pageSize: 'A4',
-                    exportOptions: {
-                        columns: ':visible'
-                    },
-                    title: 'Orders Report - ' + new Date().toLocaleDateString(),
-                    customize: function (win) {
-                        $(win.document.body).addClass('landscape');
-                        $(win.document.body).find('.dataTables_paginate, .pagination, .dataTables_info').hide();
-                        $(win.document.body).find('table').addClass('compact').css('font-size', 'inherit');
-                    }
-                },
-                {
-                    text: '<i class="fa fa-file-excel-o me-1"></i> Excel',
-                    className: 'btn btn-sm btn-success',
-                    action: function (e, dt, button, config) {
-                        exportProductWiseCSV(dt);
-                    }
-                },
-                {
-                    text: '<i class="fa fa-file-text-o me-1"></i> CSV',
-                    className: 'btn btn-sm btn-secondary',
-                    action: function (e, dt, button, config) {
-                        exportProductWiseCSV(dt);
-                    }
-                }
+                { extend: 'copy', className: 'btn btn-secondary btn-sm', text: '<i class="fa fa-copy me-1"></i> Copy' },
+                { extend: 'csv', className: 'btn btn-info btn-sm text-white', text: '<i class="fa fa-file-csv me-1"></i> CSV' },
+                { extend: 'excel', className: 'btn btn-success btn-sm', text: '<i class="fa fa-file-excel me-1"></i> Excel' },
+                { extend: 'pdf', className: 'btn btn-danger btn-sm', text: '<i class="fa fa-file-pdf me-1"></i> PDF' },
+                { extend: 'print', className: 'btn btn-dark btn-sm', text: '<i class="fa fa-print me-1"></i> Print' }
             ],
             pageLength: 25,
             order: [[1, 'desc']],
@@ -183,122 +170,6 @@
                 searchPlaceholder: "Search report data..."
             }
         });
-
-        function exportProductWiseCSV(dt) {
-            let orderType = $('input[name="order_type"]').val() || 'retailer';
-            let rows = dt.rows({ search: 'applied' }).data().toArray();
-            let csvContent = "\uFEFF"; // UTF-8 BOM
-            
-            if (orderType === 'retailer') {
-                csvContent += "No.,Order Code,Retailer,Shop Name,District,Area,Distributor,Sales Manager,Field Staff,Phone,GST,Drug License,Product Code,Product Name,Brand,Variant,Qty,Free Qty,Unit,Unit Price,Total Amount,Status,Placed At,Delivered At,Payment Status\n";
-                let slNo = 1;
-                rows.forEach(function(row) {
-                    let baseData = [
-                        slNo++,
-                        row.order_code,
-                        row.retailer_name || (row.retailer && row.retailer.user ? row.retailer.user.name : ''),
-                        row.retailer && row.retailer.shop_name ? row.retailer.shop_name : '',
-                        row.retailer && row.retailer.district ? (row.retailer.district.name || '') : '',
-                        row.retailer && row.retailer.area ? (row.retailer.area.name || '') : '',
-                        row.distributor_name || (row.distributor && row.distributor.user ? row.distributor.user.name : ''),
-                        row.sales_manager_name || (row.sales_manager && row.sales_manager.user ? row.sales_manager.user.name : '') || (row.retailer && row.retailer.field_staff && row.retailer.field_staff.sales_manager && row.retailer.field_staff.sales_manager.user ? row.retailer.field_staff.sales_manager.user.name : ''),
-                        row.fieldstaff_name || (row.field_staff && row.field_staff.user ? row.field_staff.user.name : ''),
-                        row.retailer ? (row.retailer.contact_no || row.retailer.phone || '') : '',
-                        row.retailer ? (row.retailer.gst || '') : '',
-                        row.retailer ? (row.retailer.drug_license_no || '') : ''
-                    ];
-                    if (row.items && row.items.length > 0) {
-                        row.items.forEach(function(item) {
-                            let variantStr = (item.side ? item.side + ' ' : '') + (item.size || '');
-                            let productCode = item.product_code || (item.product ? item.product.product_code : '');
-                            let productName = item.product_name || item.name || (item.product ? item.product.product_name : '');
-                            let brandName = item.brand || (item.product ? item.product.brand : '');
-                            let qty = item.quantity || 0;
-                            let freeQty = item.free_quantity || 0;
-                            let unit = item.unit || 'Strips';
-                            let unitPrice = item.unit_price || (item.product ? item.product.unit_price : 0);
-                            let totalAmount = item.total_amount || (qty * unitPrice) || 0;
-                            
-                            let itemData = [
-                                productCode,
-                                productName,
-                                brandName,
-                                variantStr,
-                                qty,
-                                freeQty,
-                                unit,
-                                unitPrice,
-                                totalAmount,
-                                row.status || '',
-                                row.placed_at || '',
-                                row.delivered_at || '',
-                                row.payment_status || 'Pending'
-                            ];
-                            csvContent += baseData.concat(itemData).map(val => `"${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '""')}"`).join(",") + "\n";
-                        });
-                    } else {
-                        let itemData = ['', '', '', '', '', '', '', '', '', '', row.status || '', row.placed_at || '', row.delivered_at || '', row.payment_status || 'Pending'];
-                        csvContent += baseData.concat(itemData).map(val => `"${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '""')}"`).join(",") + "\n";
-                    }
-                });
-            } else {
-                csvContent += "No.,Order Code,Distributor,Email,Phone,GST,Drug License,Sales Manager,Product Code,Product Name,Brand,Variant,Qty,Unit,Unit Price,Total Amount,Status,Placed At,Delivered At,Payment Status\n";
-                let slNo = 1;
-                rows.forEach(function(row) {
-                    let baseData = [
-                        slNo++,
-                        row.order_code,
-                        row.distributor_name || (row.distributor && row.distributor.user ? row.distributor.user.name : ''),
-                        row.distributor ? (row.distributor.email || (row.distributor.user ? row.distributor.user.email : '')) : '',
-                        row.distributor ? (row.distributor.contact_no || row.distributor.phone || '') : '',
-                        row.distributor ? (row.distributor.gst || '') : '',
-                        row.distributor ? (row.distributor.drug_license_no || '') : '',
-                        row.sales_manager_name || (row.sales_manager && row.sales_manager.user ? row.sales_manager.user.name : '') || (row.distributor && row.distributor.sales_manager && row.distributor.sales_manager.user ? row.distributor.sales_manager.user.name : '')
-                    ];
-                    if (row.items && row.items.length > 0) {
-                        row.items.forEach(function(item) {
-                            let variantStr = (item.side ? item.side + ' ' : '') + (item.size || '');
-                            let productCode = item.product_code || (item.product ? item.product.product_code : '');
-                            let productName = item.product_name || item.name || (item.product ? item.product.product_name : '');
-                            let brandName = item.brand || (item.product ? item.product.brand : '');
-                            let qty = item.quantity || 0;
-                            let unit = item.unit || 'Strips';
-                            let unitPrice = item.unit_price || (item.product ? item.product.unit_price : 0);
-                            let totalAmount = item.total_amount || (qty * unitPrice) || 0;
-                            
-                            let itemData = [
-                                productCode,
-                                productName,
-                                brandName,
-                                variantStr,
-                                qty,
-                                unit,
-                                unitPrice,
-                                totalAmount,
-                                row.status || '',
-                                row.placed_at || '',
-                                row.delivered_at || '',
-                                row.payment_status || 'Pending'
-                            ];
-                            csvContent += baseData.concat(itemData).map(val => `"${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '""')}"`).join(",") + "\n";
-                        });
-                    } else {
-                        let itemData = ['', '', '', '', '', '', '', '', row.status || '', row.placed_at || '', row.delivered_at || '', row.payment_status || 'Pending'];
-                        csvContent += baseData.concat(itemData).map(val => `"${(val === null || val === undefined ? '' : val).toString().replace(/"/g, '""')}"`).join(",") + "\n";
-                    }
-                });
-            }
-            
-            let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            let url = URL.createObjectURL(blob);
-            let link = document.createElement("a");
-            link.setAttribute("href", url);
-            let filename = orderType === 'retailer' ? 'Retailer_Orders_Report_' : 'Distributor_Orders_Report_';
-            link.setAttribute("download", `${filename}${new Date().toISOString().slice(0,10)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
 
         window.reportsTable = table;
 

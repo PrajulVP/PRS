@@ -531,7 +531,10 @@ class RetailerOrderManagementController extends Controller
 
                 $start = $request->input('start', 0);
                 $length = $request->input('length', 10);
-                $orders = $query->offset($start)->limit($length)->get();
+                if ($length != -1 && $start !== null && $length !== null) {
+                    $query->offset($start)->limit($length);
+                }
+                $orders = $query->get();
                 $formattedOrders = $orders->map(function ($order) {
                     $groupedItems = $order->items->groupBy(function ($item) {
                         $side = $item->side ? trim(strtolower($item->side)) : '';

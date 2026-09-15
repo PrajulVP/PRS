@@ -1391,6 +1391,9 @@
                             rowData = rowsData[row];
                         } catch(e) {}
                         
+                        if (originalColIdx === 1) {
+                            return row + 1;
+                        }
                         if (originalColIdx === 3) {
                             if (rowData) return (rowData.retailer_name || '').trim();
                             let temp = document.createElement('div');
@@ -1551,7 +1554,10 @@
                     data: null,
                     defaultContent: '',
                     orderable: false,
-                    searchable: false
+                    searchable: false,
+                    render: function (data, type, row, meta) {
+                        return meta.row + meta.settings._iDisplayStart + 1;
+                    }
                 },
                 {
                     data: 'order_code',

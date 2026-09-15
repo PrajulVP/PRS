@@ -1393,6 +1393,9 @@
                             rowData = rowsData[row];
                         } catch(e) {}
 
+                        if (colIdx === 1) {
+                            return row + 1;
+                        }
                         if (colIdx === 4 && rowData && rowData.product_summary) {
                             return rowData.product_summary.split('|||').map(it => it.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim()).join('\n');
                         }
@@ -1555,7 +1558,10 @@
                         data: null,
                         defaultContent: '',
                         orderable: false,
-                        searchable: false
+                        searchable: false,
+                        render: function (data, type, row, meta) {
+                            return meta.row + meta.settings._iDisplayStart + 1;
+                        }
                     },
                     {
                         data: 'order_code',

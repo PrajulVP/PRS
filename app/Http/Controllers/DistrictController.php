@@ -30,7 +30,10 @@ class DistrictController extends Controller
 
             $start = $request->input('start', 0);
             $length = $request->input('length', 10);
-            $districts = $query->offset($start)->limit($length)->get(); 
+            if ($length != -1 && $start !== null && $length !== null) {
+                $query->offset($start)->limit($length);
+            }
+            $districts = $query->get(); 
 
             $data = $districts->map(function ($d) {
                 return [

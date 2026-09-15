@@ -89,7 +89,10 @@ class ProductController extends Controller
             // Apply pagination
             $start = $request->input('start');
             $length = $request->input('length');
-            $products = $query->offset($start)->limit($length)->get();
+            if ($length != -1 && $start !== null && $length !== null) {
+                $query->offset($start)->limit($length);
+            }
+            $products = $query->get();
 
             $formattedProducts = $products->map(function ($product) {
                 return [

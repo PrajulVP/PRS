@@ -75,6 +75,10 @@
             align-items: center !important;
             justify-content: center !important;
         }
+        .swal2-icon:empty,
+        .swal2-icon[style*="display: none"] {
+            display: none !important;
+        }
         .swal2-icon .swal2-icon-content {
             display: flex !important;
             align-items: center !important;
@@ -125,6 +129,11 @@
         columns: ':not(:last-child)', // Excludes "Action" column globally
         search: 'applied',
         order: 'applied',
+        modifier: {
+            page: 'all',
+            search: 'applied',
+            order: 'applied'
+        },
         format: {
             header: function (data, columnIdx) {
                 // Globally rename first column header to "No." if it's ID-like
@@ -137,6 +146,9 @@
                 return data.replace(/<[^>]*>/g, '');
             },
             body: function (data, row, column, node) {
+                if (column === 0) {
+                    return row + 1;
+                }
                 if (typeof data === 'string') {
                     // 1. Pre-process: Replace <br> with newlines
                     let html = data.replace(/<br\s*\/?>/gi, '\n');
@@ -185,14 +197,85 @@
         if (typeof $.fn.dataTable !== 'undefined' && typeof $.fn.dataTable.Buttons !== 'undefined') {
             const commonExportOptions = window.commonExportOptions;
 
-            // Override ALL default export options for all button types (including shorthands)
+            // Override ALL default export options and actions for all button types (including shorthands)
             const buttonTypes = ['copy', 'csv', 'excel', 'pdf', 'print', 'copyHtml5', 'csvHtml5', 'excelHtml5', 'pdfHtml5'];
             buttonTypes.forEach(type => {
                 if ($.fn.dataTable.ext.buttons[type]) {
+                    let originalBtn = $.fn.dataTable.ext.buttons[type];
+                    let originalAction = originalBtn.action;
+
                     let config = { 
                         exportOptions: commonExportOptions,
                         title: function() { return getExportTitle(); },
-                        filename: function() { return getExportTitle().replace(/\s+/g, '_') + '_' + getExportDate(); }
+                        filename: function() { return getExportTitle().replace(/\s+/g, '_') + '_' + getExportDate(); },
+                        action: function (e, dt, button, config) {
+                            var self = this;
+                            var settings = dt.settings()[0];
+                            var isServerSide = settings && settings.oFeatures && settings.oFeatures.bServerSide;
+
+                            // Merge page export options ensuring modifier.page = 'all'
+                            config.exportOptions = $.extend(true, {}, commonExportOptions, config.exportOptions || {});
+                            if (!config.exportOptions.modifier) {
+                                config.exportOptions.modifier = {};
+                            }
+                            config.exportOptions.modifier.page = 'all';
+                            config.exportOptions.modifier.search = 'applied';
+                            config.exportOptions.modifier.order = 'applied';
+
+                            if (isServerSide) {
+                                var oldStart = settings._iDisplayStart;
+                                var oldLength = settings._iDisplayLength;
+
+                                if (typeof Swal !== 'undefined' && Swal.fire) {
+                                    Swal.fire({
+                                        title: 'Exporting Data...',
+                                        text: 'Fetching all records for export, please wait.',
+                                        allowOutsideClick: false,
+                                        allowEscapeKey: false,
+                                        showConfirmButton: false,
+                                        showCancelButton: false,
+                                        didOpen: () => {
+                                            Swal.showLoading();
+                                            let icon = Swal.getIcon();
+                                            if (icon) icon.style.setProperty('display', 'none', 'important');
+                                        }
+                                    });
+                                }
+
+                                dt.one('preXhr', function (evt, s, data) {
+                                    data.start = 0;
+                                    data.length = -1; // Request all matching records from server
+
+                                    dt.one('preDraw', function (evt, drawSettings) {
+                                        try {
+                                            originalAction.call(self, e, dt, button, config);
+                                        } catch (err) {
+                                            console.error("Export error:", err);
+                                        } finally {
+                                            if (typeof Swal !== 'undefined' && Swal.close) {
+                                                Swal.close();
+                                            }
+                                        }
+
+                                        dt.one('preXhr', function (evt, s, data) {
+                                            drawSettings._iDisplayStart = oldStart;
+                                            drawSettings._iDisplayLength = oldLength;
+                                            data.start = oldStart;
+                                            data.length = oldLength;
+                                        });
+
+                                        setTimeout(function() {
+                                            dt.ajax.reload(null, false);
+                                        }, 0);
+
+                                        return false;
+                                    });
+                                });
+                                dt.ajax.reload();
+                            } else {
+                                originalAction.call(self, e, dt, button, config);
+                            }
+                        }
                     };
                     
                     // Force Landscape for PDF types
