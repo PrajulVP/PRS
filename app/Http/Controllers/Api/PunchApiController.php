@@ -223,6 +223,7 @@ class PunchApiController extends Controller
         $checkOutTimestamp = $checkOutLog ? Carbon::parse($checkOutLog->timestamp)->toIso8601String() : null;
 
         return response()->json([
+            'user_id' => $user->id,
             'status' => 'success',
             'message' => 'Attendance updated successfully',
             'date' => Carbon::now()->toDateString(),

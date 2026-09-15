@@ -239,6 +239,7 @@ class FieldStaffActionApiController extends Controller
         }
 
         return response()->json([
+            'user_id' => $user->id,
             'status' => $status,
             'message' => $message,
             'admin_approved' => (bool) $user->clock_in_permission,
