@@ -77,10 +77,12 @@ class FieldStaffActionApiController extends Controller
 
         $user = auth('api')->user();
 
-        // Extra security: Verify Device ID if bound
-        $deviceId = $request->header('X-Device-ID');
-        if ($user->device_uuid && $user->device_uuid !== $deviceId) {
-            return response()->json(['error' => 'Device mismatch. Use registered device.'], 403);
+        // Extra security: Verify Device ID if bound (Field Staff ONLY)
+        if ($user->hasRole('fieldstaff')) {
+            $deviceId = $request->header('X-Device-ID');
+            if ($user->device_uuid && $user->device_uuid !== $deviceId) {
+                return response()->json(['error' => 'Device mismatch. Use registered device.'], 403);
+            }
         }
 
         // Attendance Geofence
@@ -217,10 +219,12 @@ class FieldStaffActionApiController extends Controller
     {
         $user = auth('api')->user();
         
-        // Device Binding Security
-        $deviceId = $request->header('X-Device-ID');
-        if ($user->device_uuid && $user->device_uuid !== $deviceId) {
-            return response()->json(['error' => 'Device mismatch.'], 403);
+        // Device Binding Security (Field Staff ONLY)
+        if ($user->hasRole('fieldstaff')) {
+            $deviceId = $request->header('X-Device-ID');
+            if ($user->device_uuid && $user->device_uuid !== $deviceId) {
+                return response()->json(['error' => 'Device mismatch.'], 403);
+            }
         }
 
         $lastPunch = AttendanceLog::where('user_id', $user->id)
@@ -294,10 +298,12 @@ class FieldStaffActionApiController extends Controller
 
         $user = auth('api')->user();
 
-        // Extra security: Verify Device ID if bound
-        $deviceId = $request->header('X-Device-ID');
-        if ($user->device_uuid && $user->device_uuid !== $deviceId) {
-            return response()->json(['error' => 'Device mismatch.'], 403);
+        // Extra security: Verify Device ID if bound (Field Staff ONLY)
+        if ($user->hasRole('fieldstaff')) {
+            $deviceId = $request->header('X-Device-ID');
+            if ($user->device_uuid && $user->device_uuid !== $deviceId) {
+                return response()->json(['error' => 'Device mismatch.'], 403);
+            }
         }
 
         $logs = [];

@@ -17,8 +17,8 @@ class DeviceBindingMiddleware
     {
         $user = auth('api')->user();
         
-        // Only apply to authenticated users (Field Staff primarily)
-        if ($user) {
+        // Only apply device binding validation strictly to Field Staff
+        if ($user && $user->hasRole('fieldstaff')) {
             $deviceId = $request->header('X-Device-ID') ?? $request->input('device_id') ?? $user->device_uuid;
 
             if (!$deviceId) {

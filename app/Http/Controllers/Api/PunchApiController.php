@@ -53,10 +53,12 @@ class PunchApiController extends Controller
 
         $user = auth('api')->user();
 
-        // Device ID binding verification (if device_uuid is configured on user)
-        $deviceId = $request->header('X-Device-ID');
-        if ($user->device_uuid && $user->device_uuid !== $deviceId) {
-            return response()->json(['error' => 'Device mismatch. Use registered device.'], 403);
+        // Device ID binding verification (Enforced ONLY for Field Staff)
+        if ($user->hasRole('fieldstaff')) {
+            $deviceId = $request->header('X-Device-ID');
+            if ($user->device_uuid && $user->device_uuid !== $deviceId) {
+                return response()->json(['error' => 'Device mismatch. Use registered device.'], 403);
+            }
         }
 
         // Attendance Geofence for Field Staff (if configured)
@@ -193,9 +195,11 @@ class PunchApiController extends Controller
     {
         $user = auth('api')->user();
         
-        $deviceId = $request->header('X-Device-ID');
-        if ($user->device_uuid && $user->device_uuid !== $deviceId) {
-            return response()->json(['error' => 'Device mismatch.'], 403);
+        if ($user->hasRole('fieldstaff')) {
+            $deviceId = $request->header('X-Device-ID');
+            if ($user->device_uuid && $user->device_uuid !== $deviceId) {
+                return response()->json(['error' => 'Device mismatch.'], 403);
+            }
         }
 
         $today = Carbon::today();
@@ -282,9 +286,11 @@ class PunchApiController extends Controller
 
         $user = auth('api')->user();
 
-        $deviceId = $request->header('X-Device-ID');
-        if ($user->device_uuid && $user->device_uuid !== $deviceId) {
-            return response()->json(['error' => 'Device mismatch.'], 403);
+        if ($user->hasRole('fieldstaff')) {
+            $deviceId = $request->header('X-Device-ID');
+            if ($user->device_uuid && $user->device_uuid !== $deviceId) {
+                return response()->json(['error' => 'Device mismatch.'], 403);
+            }
         }
 
         $logs = [];
