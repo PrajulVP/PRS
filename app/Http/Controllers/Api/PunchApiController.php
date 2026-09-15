@@ -307,7 +307,7 @@ class PunchApiController extends Controller
         $logs = [];
         foreach ($locations as $loc) {
             $timestampStr = $loc['timestamp'] ?? null;
-            $timestamp = now();
+            $timestamp = now(); // Defaults to Asia/Kolkata via config/app.php
             if ($timestampStr && $timestampStr !== '0' && (int)$timestampStr !== 0 && !str_starts_with($timestampStr, '1970')) {
                 try {
                     $parsed = \Carbon\Carbon::parse($timestampStr);
@@ -318,6 +318,10 @@ class PunchApiController extends Controller
                     $timestamp = now();
                 }
             }
+
+            // Diagnostic Log to track raw string vs parsed timestamp
+            \Log::info("Location Ping Received for User {$user->id}: raw_timestamp='{$timestampStr}', saved_timestamp='{$timestamp->toDateTimeString()}'");
+
             $log = LocationLog::create([
                 'user_id' => $user->id,
                 'latitude' => $loc['latitude'],

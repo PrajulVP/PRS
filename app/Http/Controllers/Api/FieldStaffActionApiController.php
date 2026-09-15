@@ -321,6 +321,9 @@ class FieldStaffActionApiController extends Controller
                     $timestamp = now();
                 }
             }
+
+            \Log::info("Location Ping Received for User {$user->id}: raw_timestamp='{$timestampStr}', saved_timestamp='{$timestamp->toDateTimeString()}'");
+
             $log = LocationLog::create([
                 'user_id' => $user->id,
                 'latitude' => $loc['latitude'],
