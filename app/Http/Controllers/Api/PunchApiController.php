@@ -222,10 +222,20 @@ class PunchApiController extends Controller
         $checkOutTime = $checkOutLog ? Carbon::parse($checkOutLog->timestamp)->format('H:i:s') : null;
         $checkOutTimestamp = $checkOutLog ? Carbon::parse($checkOutLog->timestamp)->toIso8601String() : null;
 
+        $isPunchedIn = $checkInLog && (!$checkOutLog || Carbon::parse($checkInLog->timestamp)->gt(Carbon::parse($checkOutLog->timestamp)));
+        $isPunched = $checkInLog ? true : false;
+        $statusStr = $isPunchedIn ? 'punched_in' : ($isPunched ? 'punched_out' : 'not_punched');
+        $msg = $isPunchedIn 
+            ? 'User is currently punched in' 
+            : ($isPunched ? 'User is currently punched out' : 'No punch record found for today');
+
         return response()->json([
             'user_id' => $user->id,
             'status' => 'success',
-            'message' => 'Attendance updated successfully',
+            'punch_status' => $statusStr,
+            'is_punched' => $isPunched,
+            'is_punched_in' => $isPunchedIn,
+            'message' => $msg,
             'date' => Carbon::now()->toDateString(),
             'check_in_time' => $checkInTime,
             'check_out_time' => $checkOutTime,
