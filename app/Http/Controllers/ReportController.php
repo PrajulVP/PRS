@@ -1369,12 +1369,17 @@ class ReportController extends Controller
             
         $stops = collect($this->calculateStops($locations));
 
-        // Filter stops and offline logs based on punches
+        // Filter locations, stops and offline logs based on punches
         $firstPunchIn = $punches->where('type', 'punch_in')->first();
         if ($firstPunchIn) {
             $lastPunchOut = $punches->where('type', 'punch_out')->last();
             $punchOutTime = $lastPunchOut ? clone $lastPunchOut->timestamp : now();
-            
+
+            $locations = $locations->filter(function($loc) use ($firstPunchIn, $punchOutTime) {
+                $locTime = \Carbon\Carbon::parse($loc->timestamp);
+                return $locTime->gte($firstPunchIn->timestamp) && $locTime->lte($punchOutTime);
+            })->values();
+
             $stops = $stops->filter(function($stop) use ($firstPunchIn, $punchOutTime) {
                 $stopStart = \Carbon\Carbon::parse($stop['start_time']);
                 return $stopStart->between($firstPunchIn->timestamp, $punchOutTime);
@@ -1385,6 +1390,7 @@ class ReportController extends Controller
                 return $logStart->between($firstPunchIn->timestamp, $punchOutTime);
             })->values();
         } else {
+            $locations = collect([]);
             $stops = collect([]);
             $offlineLogs = collect([]);
         }
@@ -1512,12 +1518,17 @@ class ReportController extends Controller
             
         $stops = collect($this->calculateStops($locations));
 
-        // Filter stops and offline logs based on punches
+        // Filter locations, stops and offline logs based on punches
         $firstPunchIn = $punches->where('type', 'punch_in')->first();
         if ($firstPunchIn) {
             $lastPunchOut = $punches->where('type', 'punch_out')->last();
             $punchOutTime = $lastPunchOut ? clone $lastPunchOut->timestamp : now();
-            
+
+            $locations = $locations->filter(function($loc) use ($firstPunchIn, $punchOutTime) {
+                $locTime = \Carbon\Carbon::parse($loc->timestamp);
+                return $locTime->gte($firstPunchIn->timestamp) && $locTime->lte($punchOutTime);
+            })->values();
+
             $stops = $stops->filter(function($stop) use ($firstPunchIn, $punchOutTime) {
                 $stopStart = \Carbon\Carbon::parse($stop['start_time']);
                 return $stopStart->between($firstPunchIn->timestamp, $punchOutTime);
@@ -1528,6 +1539,7 @@ class ReportController extends Controller
                 return $logStart->between($firstPunchIn->timestamp, $punchOutTime);
             })->values();
         } else {
+            $locations = collect([]);
             $stops = collect([]);
             $offlineLogs = collect([]);
         }
@@ -2389,12 +2401,17 @@ class ReportController extends Controller
             
         $stops = collect($this->calculateStops($locations));
 
-        // Filter stops and offline logs based on punches
+        // Filter locations, stops and offline logs based on punches
         $firstPunchIn = $punches->where('type', 'punch_in')->first();
         if ($firstPunchIn) {
             $lastPunchOut = $punches->where('type', 'punch_out')->last();
             $punchOutTime = $lastPunchOut ? clone $lastPunchOut->timestamp : now();
-            
+
+            $locations = $locations->filter(function($loc) use ($firstPunchIn, $punchOutTime) {
+                $locTime = \Carbon\Carbon::parse($loc->timestamp);
+                return $locTime->gte($firstPunchIn->timestamp) && $locTime->lte($punchOutTime);
+            })->values();
+
             $stops = $stops->filter(function($stop) use ($firstPunchIn, $punchOutTime) {
                 $stopStart = \Carbon\Carbon::parse($stop['start_time']);
                 return $stopStart->between($firstPunchIn->timestamp, $punchOutTime);
@@ -2405,6 +2422,7 @@ class ReportController extends Controller
                 return $logStart->between($firstPunchIn->timestamp, $punchOutTime);
             })->values();
         } else {
+            $locations = collect([]);
             $stops = collect([]);
             $offlineLogs = collect([]);
         }
@@ -2452,12 +2470,17 @@ class ReportController extends Controller
             
         $stops = collect($this->calculateStops($locations));
 
-        // Filter stops and offline logs based on punches
+        // Filter locations, stops and offline logs based on punches
         $firstPunchIn = $punches->where('type', 'punch_in')->first();
         if ($firstPunchIn) {
             $lastPunchOut = $punches->where('type', 'punch_out')->last();
             $punchOutTime = $lastPunchOut ? clone $lastPunchOut->timestamp : now();
-            
+
+            $locations = $locations->filter(function($loc) use ($firstPunchIn, $punchOutTime) {
+                $locTime = \Carbon\Carbon::parse($loc->timestamp);
+                return $locTime->gte($firstPunchIn->timestamp) && $locTime->lte($punchOutTime);
+            })->values();
+
             $stops = $stops->filter(function($stop) use ($firstPunchIn, $punchOutTime) {
                 $stopStart = \Carbon\Carbon::parse($stop['start_time']);
                 return $stopStart->between($firstPunchIn->timestamp, $punchOutTime);
@@ -2468,6 +2491,7 @@ class ReportController extends Controller
                 return $logStart->between($firstPunchIn->timestamp, $punchOutTime);
             })->values();
         } else {
+            $locations = collect([]);
             $stops = collect([]);
             $offlineLogs = collect([]);
         }

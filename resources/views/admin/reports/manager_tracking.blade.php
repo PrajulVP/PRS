@@ -155,20 +155,37 @@
         }
 
         .legend {
-            padding: 12px;
-            background: var(--med-bg-card, #ffffff);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            border-radius: 12px;
-            line-height: 24px;
-            color: #333;
-            border: 1px solid var(--med-border, rgba(0, 0, 0, 0.05));
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--med-text-main, #333);
             position: absolute;
-            bottom: 30px;
-            right: 10px;
+            top: 15px;
+            left: 15px;
             z-index: 1000;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 4px 6px -2px rgba(15, 23, 42, 0.05) !important;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: all 0.35s ease-in-out !important;
+        }
+
+        .legend-toggle-header {
+            transition: background-color 0.25s ease, color 0.25s ease !important;
+            border-radius: 12px !important;
+        }
+
+        .legend-toggle-header.is-open {
+            border-bottom-left-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+        }
+
+        .legend-toggle-header:hover {
+            background-color: #f1f5f9 !important;
+        }
+
+        .legend-toggle-icon {
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        .legend-toggle-icon.rotate-180 {
+            transform: rotate(180deg);
         }
 
         .legend i {
@@ -259,6 +276,22 @@
         }
         .gm-style-iw-tc::after {
             background: #ffffff !important;
+        }
+
+        /* Hide Google Maps Keyboard Shortcuts Button & Container */
+        .LGLeeN-keyboard-shortcuts-view,
+        button.LGLeeN-keyboard-shortcuts-view,
+        button[title*="Keyboard shortcuts"],
+        button[aria-label*="Keyboard shortcuts"],
+        .gm-svpc + div button,
+        .gmnoprint button[title*="Keyboard"],
+        div.gmnoprint[style*="z-index: 1000000"],
+        div[style*="bottom: 0px"][style*="right: 0px"] button,
+        div.gmnoprint > div > button {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
     </style>
 @endpush
@@ -405,39 +438,80 @@
                             <!-- Map Column -->
                             <div class="col-xl-8 col-lg-7">
                                 <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
-                                    <h6 class="mb-0 fw-bold text-dark d-flex align-items-center">
-                                        <i class="fa fa-map-marked-alt me-2" style="color: #7366ff;"></i> Monitoring Location Map
-                                    </h6>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="small fw-bold text-muted">Route Mode:</span>
-                                        <div class="btn-group btn-group-sm p-1 rounded-3 bg-light border shadow-sm route-mode-btn-group" role="group" aria-label="Route Mode">
-                                            <input type="radio" class="btn-check" name="routeMode" id="modeSmoothenedMgr" value="smoothened" checked onchange="toggleRouteMode('smoothened')">
-                                            <label class="btn btn-sm rounded-2 py-1 px-3 fw-bold border-0 text-muted" for="modeSmoothenedMgr" style="font-size: 0.8rem;">
-                                                <i class="fa fa-magic me-1"></i> Smoothened
-                                            </label>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <h6 class="mb-0 fw-bold text-dark d-flex align-items-center">
+                                            <i class="fa fa-map-marked-alt me-2" style="color: #7366ff;"></i> Monitoring Location Map
+                                        </h6>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="small fw-bold text-muted">Route Mode:</span>
+                                            <div class="btn-group btn-group-sm p-1 rounded-3 bg-light border shadow-sm route-mode-btn-group" role="group" aria-label="Route Mode">
+                                                <input type="radio" class="btn-check" name="routeMode" id="modeSmoothenedMgr" value="smoothened" checked onchange="toggleRouteMode('smoothened')">
+                                                <label class="btn btn-sm rounded-2 py-1 px-3 fw-bold border-0 text-muted" for="modeSmoothenedMgr" style="font-size: 0.8rem;">
+                                                    <i class="fa fa-magic me-1"></i> Smoothened
+                                                </label>
 
-                                            <input type="radio" class="btn-check" name="routeMode" id="modeClosestMgr" value="closest" onchange="toggleRouteMode('closest')">
-                                            <label class="btn btn-sm rounded-2 py-1 px-3 fw-bold border-0 text-muted" for="modeClosestMgr" style="font-size: 0.8rem;">
-                                                <i class="fa fa-crosshairs me-1"></i> Raw
-                                            </label>
+                                                <input type="radio" class="btn-check" name="routeMode" id="modeClosestMgr" value="closest" onchange="toggleRouteMode('closest')">
+                                                <label class="btn btn-sm rounded-2 py-1 px-3 fw-bold border-0 text-muted" for="modeClosestMgr" style="font-size: 0.8rem;">
+                                                    <i class="fa fa-crosshairs me-1"></i> Raw
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="position-relative">
-                                    <div id="map"></div>
-                                    <div class="legend">
-                                        <div class="mb-1 d-flex align-items-center"><i style="background: transparent; border-radius: 0; width: 20px; height: 22px; display: inline-flex; align-items: center; justify-content: center; margin-top: -4px;"><svg viewBox="0 0 24 24" width="20" height="22" fill="#51bb25" stroke="#2e7d32" stroke-width="1.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></i> Current Position</div>
-                                        <div class="mb-1"><i style="background: #51bb25"></i> Punch In</div>
-                                        <div class="mb-1"><i style="background: #f73164"></i> Punch Out</div>
-                                        <div class="mb-1"><i style="background: #7366ff"></i> Customer Visit</div>
-                                        <div class="mb-1"><i style="background: #ff9800"></i> Stopped</div>
-                                        <div class="mb-1"><i style="background: #2563eb; border-radius: 0; height: 4px; margin-top: 8px;"></i> Smoothened Route</div>
-                                        <div class="mb-1"><i style="background: #6c757d; border-radius: 0; height: 3px; margin-top: 8px; border-top: 2px dashed #6c757d;"></i> Offline / Idle Gap</div>
-                                        <div><i style="background: #1a3a63; border-radius: 0; height: 3px; margin-top: 8px;"></i> Raw Route</div>
+                                    <div id="routeProcessingLoader" class="position-absolute w-100 h-100 rounded-3 d-flex flex-column align-items-center justify-content-center" style="top: 0; left: 0; z-index: 1050; background: rgba(255, 255, 255, 0.45); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: none !important;">
+                                        <div class="bg-white px-4 py-3 rounded-4 shadow-lg border text-center d-flex flex-column align-items-center gap-2">
+                                            <div class="spinner-border text-primary" style="width: 2.2rem; height: 2.2rem;" role="status"></div>
+                                            <div class="fw-bold text-dark" style="font-size: 0.95rem;">Processing Smoothened Route...</div>
+                                            <div class="text-muted small" style="font-size: 0.78rem;">Snapping telemetry pings to road network</div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
+                                    <div id="map"></div>
+                                    <div class="legend shadow-lg rounded-4 border position-absolute p-0" style="top: 15px; left: 15px; z-index: 1000; font-size: 0.75rem; min-width: 165px; max-width: 185px; overflow: hidden; background: rgba(255, 255, 255, 0.96) !important; border-color: rgba(226, 232, 240, 0.8) !important;">
+                                         <div class="legend-toggle-header d-flex align-items-center justify-content-between cursor-pointer px-3 py-2 border-bottom" onclick="$(this).next('.legend-body').slideToggle(400); $(this).toggleClass('is-open'); $(this).find('.legend-toggle-icon').toggleClass('rotate-180');" style="user-select: none; background: rgba(248, 250, 252, 0.9) !important; border-color: #e2e8f0 !important;">
+                                             <div class="fw-bold d-flex align-items-center gap-2" style="font-size: 0.78rem; letter-spacing: 0.3px; color: #0f172a !important;">
+                                                 <i class="fa fa-layer-group text-primary"></i> <span class="text-uppercase" style="font-size: 0.72rem; font-weight: 700; color: #0f172a !important;">Map Legend</span>
+                                             </div>
+                                             <i class="fa fa-chevron-down legend-toggle-icon ms-2" style="font-size: 0.65rem; color: #475569 !important;"></i>
+                                         </div>
+                                         <div class="legend-body p-3" style="display: none; background: rgba(255, 255, 255, 0.98) !important;">
+                                             <div class="d-flex align-items-center mb-2">
+                                                 <span class="d-inline-flex align-items-center justify-content-center me-2" style="width: 22px; text-align: center;"><svg viewBox="0 0 24 24" width="14" height="16" fill="#51bb25" stroke="#2e7d32" stroke-width="1.5" style="margin-left: -8px;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></span>
+                                                 <span class="fw-semibold" style="color: #0f172a !important;">Current Position</span>
+                                             </div>
+                                             <div class="d-flex align-items-center mb-2">
+                                                 <span class="d-inline-flex align-items-center justify-content-center me-2" style="width: 22px; text-align: center;"><i style="width: 10px; height: 10px; background: #51bb25; border-radius: 50%; display: inline-block;"></i></span>
+                                                 <span class="fw-semibold" style="color: #0f172a !important;">Punch In</span>
+                                             </div>
+                                             <div class="d-flex align-items-center mb-2">
+                                                 <span class="d-inline-flex align-items-center justify-content-center me-2" style="width: 22px; text-align: center;"><i style="width: 10px; height: 10px; background: #f73164; border-radius: 50%; display: inline-block;"></i></span>
+                                                 <span class="fw-semibold" style="color: #0f172a !important;">Punch Out</span>
+                                             </div>
+                                             <div class="d-flex align-items-center mb-2">
+                                                 <span class="d-inline-flex align-items-center justify-content-center me-2" style="width: 22px; text-align: center;"><i style="width: 10px; height: 10px; background: #7366ff; border-radius: 50%; display: inline-block;"></i></span>
+                                                 <span class="fw-semibold" style="color: #0f172a !important;">Customer Visit</span>
+                                             </div>
+                                             <div class="d-flex align-items-center mb-2">
+                                                 <span class="d-inline-flex align-items-center justify-content-center me-2" style="width: 22px; text-align: center;"><i style="width: 10px; height: 10px; background: #ff9800; border-radius: 50%; display: inline-block;"></i></span>
+                                                 <span class="fw-semibold" style="color: #0f172a !important;">Stopped</span>
+                                             </div>
+                                             <div class="d-flex align-items-center mb-2">
+                                                 <span class="d-inline-flex align-items-center justify-content-center me-2" style="width: 22px; text-align: center;"><i style="width: 16px; height: 3.5px; background: #2563eb; border-radius: 2px; display: inline-block;"></i></span>
+                                                 <span class="fw-semibold" style="color: #0f172a !important;">Smoothened Route</span>
+                                             </div>
+                                             <div class="d-flex align-items-center mb-2">
+                                                 <span class="d-inline-flex align-items-center justify-content-center me-2" style="width: 22px; text-align: center;"><i style="width: 16px; height: 0px; border-top: 2px dashed #6c757d; display: inline-block;"></i></span>
+                                                 <span class="fw-semibold" style="color: #0f172a !important;">Offline Gap</span>
+                                             </div>
+                                             <div class="d-flex align-items-center">
+                                                 <span class="d-inline-flex align-items-center justify-content-center me-2" style="width: 22px; text-align: center;"><i style="width: 16px; height: 2.5px; background: #1a3a63; border-radius: 1px; display: inline-block;"></i></span>
+                                                 <span class="fw-semibold" style="color: #0f172a !important;">Raw Route</span>
+                                             </div>
+                                         </div>
+                                      </div>
+                                 </div>
+                             </div>
 
                             <!-- Sidebar Info Column -->
                             <div class="col-xl-4 col-lg-5">
@@ -530,7 +604,8 @@
             locationList.forEach(loc => {
                 let locLatLng = new google.maps.LatLng(loc.lat, loc.lng);
                 let dist = google.maps.geometry.spherical.computeDistanceBetween(clickLatLng, locLatLng);
-                if (dist < minDistance) {
+                // Standard HRMS logic: If distance is smaller (or virtually identical within 5m), preserve the earliest (first pass) timestamp
+                if (dist < minDistance - 5) {
                     minDistance = dist;
                     nearest = loc;
                 }
@@ -736,6 +811,22 @@
             map = new google.maps.Map(document.getElementById("map"), {
                 zoom: 5,
                 center: defaultCenter,
+                zoomControl: false,
+                mapTypeControl: false,
+                scaleControl: false,
+                fullscreenControl: true,
+                fullscreenControlOptions: {
+                    position: google.maps.ControlPosition.RIGHT_TOP
+                },
+                streetViewControl: true,
+                streetViewControlOptions: {
+                    position: google.maps.ControlPosition.RIGHT_TOP
+                },
+                rotateControl: true,
+                rotateControlOptions: {
+                    position: google.maps.ControlPosition.RIGHT_BOTTOM
+                },
+                keyboardShortcuts: false,
                 styles: [
                     { "featureType": "poi", "stylers": [{ "visibility": "off" }] }
                 ]
@@ -750,6 +841,26 @@
                     activeInfoWindow = null;
                 }
             });
+
+            // Physically remove unwanted Google Maps controls from DOM
+            const removeUnwantedControls = () => {
+                const elements = document.querySelectorAll('.LGLeeN-keyboard-shortcuts-view, button[title*="Keyboard shortcuts"], button[aria-label*="Keyboard shortcuts"]');
+                elements.forEach(el => {
+                    if (el && el.parentNode) {
+                        const target = el.closest('.gmnoprint') || el.parentNode;
+                        if (target && target.parentNode) {
+                            target.parentNode.removeChild(target);
+                        } else {
+                            el.parentNode.removeChild(el);
+                        }
+                    }
+                });
+            };
+
+            google.maps.event.addListener(map, 'tilesloaded', removeUnwantedControls);
+            google.maps.event.addListener(map, 'idle', removeUnwantedControls);
+            setTimeout(removeUnwantedControls, 1000);
+            setTimeout(removeUnwantedControls, 3000);
 
             // Initial Plotting
             loadInitialData();
@@ -860,6 +971,8 @@
 
             // 6. Draw Polylines (Fast Parallel OSRM Smoothened & Raw)
             if (pathSegments.length > 0) {
+                $('#routeProcessingLoader').attr('style', 'top: 0; left: 0; z-index: 1050; background: rgba(255, 255, 255, 0.45); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: flex !important;');
+                let snapPromises = [];
                 for (let segment of pathSegments) {
                     if (segment.length > 0) {
                         currentRawPath = createRawPolyline();
@@ -869,12 +982,16 @@
                         // Do not pre-fill smoothened line with raw off-road line to prevent instant off-road flicker
 
                         // Asynchronously snap to road via parallel OSRM fetch and update to snapped road route
-                        snapPathToRoads(segment).then(snappedSegment => {
+                        let p = snapPathToRoads(segment).then(snappedSegment => {
                             snappedPoints = snappedPoints.concat(snappedSegment);
                             currentSmoothenedPath.setPath(snappedSegment);
                         });
+                        snapPromises.push(p);
                     }
                 }
+                Promise.all(snapPromises).finally(() => {
+                    $('#routeProcessingLoader').attr('style', 'display: none !important;');
+                });
             }
         }
 

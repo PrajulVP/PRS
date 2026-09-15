@@ -313,7 +313,7 @@ class FieldStaffActionApiController extends Controller
             $timestamp = now();
             if ($timestampStr && $timestampStr !== '0' && (int)$timestampStr !== 0 && !str_starts_with($timestampStr, '1970')) {
                 try {
-                    $parsed = \Carbon\Carbon::parse($timestampStr);
+                    $parsed = \Carbon\Carbon::parse($timestampStr)->setTimezone('Asia/Kolkata');
                     if ($parsed->year > 2000) {
                         $timestamp = $parsed;
                     }
@@ -321,8 +321,6 @@ class FieldStaffActionApiController extends Controller
                     $timestamp = now();
                 }
             }
-
-            \Log::info("Location Ping Received for User {$user->id}: raw_timestamp='{$timestampStr}', saved_timestamp='{$timestamp->toDateTimeString()}'");
 
             $log = LocationLog::create([
                 'user_id' => $user->id,
