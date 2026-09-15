@@ -104,6 +104,12 @@ class RetailerController extends Controller
                         $sub->where('name', 'like', "%{$keyword}%");
                     });
                 })
+                ->filterColumn('contact_no', function($q, $keyword) {
+                    $q->where('contact_no', 'like', "%{$keyword}%");
+                })
+                ->addColumn('contact_no', function ($row) {
+                    return $row->contact_no ?? 'N/A';
+                })
                 ->addColumn('can_edit', function($row) use ($currentUser) {
                     return $currentUser->hasAnyRole(['admin', 'superadmin']) || $currentUser->hasPermissionToCategory('retailers', 'edit');
                 })

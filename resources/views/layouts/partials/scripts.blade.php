@@ -182,7 +182,7 @@
                     let isGstOrDl = /^[A-Z0-9]+$/i.test(stripped) && (stripped.length === 15 || stripped.length === 21);
                     
                     if (isNumericCode || isOrderCode || isGstOrDl) {
-                        return '\t' + stripped;
+                        return stripped;
                     }
                     
                     return stripped;
@@ -206,7 +206,7 @@
 
                     let config = { 
                         exportOptions: commonExportOptions,
-                        title: function() { return getExportTitle(); },
+                        title: (type === 'excel' || type === 'excelHtml5' || type === 'csv' || type === 'csvHtml5') ? null : function() { return getExportTitle(); },
                         filename: function() { return getExportTitle().replace(/\s+/g, '_') + '_' + getExportDate(); },
                         action: function (e, dt, button, config) {
                             var self = this;
@@ -278,6 +278,30 @@
                         }
                     };
                     
+                    // Excel customization: Force all cells (headers and data) to be left-aligned
+                    if (type === 'excelHtml5' || type === 'excel') {
+                        config.title = '';
+                        config.customize = function (xlsx) {
+                            var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                            var styles = xlsx.xl['styles.xml'];
+                            
+                            // Add a clean left-aligned style at the end of cellXfs
+                            var cellXfs = $('cellXfs', styles);
+                            var count = parseInt(cellXfs.attr('count') || '0', 10);
+                            var leftStyleIdx = count;
+                            cellXfs.append('<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>');
+                            cellXfs.attr('count', count + 1);
+
+                            // Apply this left-aligned style index to every cell in the worksheet
+                            $('row c', sheet).each(function() {
+                                $(this).attr('s', leftStyleIdx.toString());
+                            });
+                        };
+                    }
+                    if (type === 'csvHtml5' || type === 'csv') {
+                        config.title = '';
+                    }
+
                     // Force Landscape for PDF types
                     if (type === 'pdfHtml5' || type === 'pdf') {
                         config.orientation = 'landscape';
